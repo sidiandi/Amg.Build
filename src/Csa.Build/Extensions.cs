@@ -26,6 +26,11 @@ namespace Csa.Build
             return path;
         }
 
+        public static string GetFullPath(this string path)
+        {
+            return Path.GetFullPath(path);
+        }
+
         public static object Dump(this object x) => GetWritable(_ => _.Dump(x));
         
         public static TextWriter Dump(this TextWriter w, object x)
