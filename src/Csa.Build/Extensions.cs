@@ -26,6 +26,15 @@ namespace Csa.Build
             return path;
         }
 
+        public static string EnsureDirectoryIsEmpty(this string dir)
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, true);
+            }
+            return dir.EnsureDirectoryExists();
+        }
+
         public static string GetFullPath(this string path)
         {
             return Path.GetFullPath(path);
