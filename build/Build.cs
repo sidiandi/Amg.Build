@@ -10,8 +10,6 @@ partial class BuildTargets : Csa.Build.Targets
     string copyright => $"Copyright (c) {company} {year}";
     string configuration => "Debug";
 
-    string nugetPushSource => @"C:\temp";
-    string nugetPushSymbolSource => nugetPushSource;
     string outDir => $"out/{configuration}";
     string assemblyInformationFile => $"{outDir}/CommonAssemblyInfo.cs";
     string versionPropsFile => $"{outDir}/Version.props";
