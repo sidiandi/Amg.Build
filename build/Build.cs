@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using System;
 using System.IO;
 using Csa.Build;
+using System.Diagnostics;
 
 partial class BuildTargets : Csa.Build.Targets
 {
@@ -97,6 +98,16 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             "-s", nugetPushSource,
             "-ss", nugetPushSymbolSource
             );
+    });
+
+    Target OpenInVisualStudio => DefineTarget(async () =>
+    {
+        await Build();
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = Path.GetFullPath(slnFile),
+            UseShellExecute = true
+        });
     });
 }
 
