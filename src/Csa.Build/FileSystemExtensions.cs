@@ -1,5 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Csa.Build
@@ -12,22 +15,55 @@ namespace Csa.Build
             return path;
         }
 
+        /// <summary>
+        /// Ensure that the file given by path does not exist. Deletes also read-only files
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string EnsureFileNotExists(this string path)
         {
             if (File.Exists(path))
             {
-                File.Delete(path);
+                new FileInfo(path).DeleteReadOnly();
             }
             return path;
         }
 
+        public static string CatDir(this string directory, params string[] pathElements)
+        {
+            return Path.Combine(new[] { directory }.Concat(pathElements).ToArray());
+        }
+
+        /// <summary>
+        /// Ensures that dir exists and is empty. Deletes also read-only files
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
         public static string EnsureDirectoryIsEmpty(this string dir)
         {
             if (Directory.Exists(dir))
             {
-                Directory.Delete(dir, true);
+                foreach (var i in new DirectoryInfo(dir).EnumerateFileSystemInfos())
+                {
+                    i.DeleteReadOnly();
+                }
             }
             return dir.EnsureDirectoryExists();
+        }
+
+        public static void DeleteReadOnly(this FileSystemInfo fileSystemInfo)
+        {
+            var directoryInfo = fileSystemInfo as DirectoryInfo;
+            if (directoryInfo != null)
+            {
+                foreach (FileSystemInfo childInfo in directoryInfo.GetFileSystemInfos())
+                {
+                    childInfo.DeleteReadOnly();
+                }
+            }
+
+            fileSystemInfo.Attributes = FileAttributes.Normal;
+            fileSystemInfo.Delete();
         }
 
         public static string GetFullPath(this string path)
