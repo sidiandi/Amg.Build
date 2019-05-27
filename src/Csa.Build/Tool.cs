@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Csa.Build
 {
+
     public class Tool
     {
         private readonly string fileName;
@@ -43,21 +44,14 @@ namespace Csa.Build
                 : x;
         }
 
-        public interface IResult
-        {
-            int ExitCode { get; }
-            string Output { get; }
-            string Error { get; }
-        }
-
-        class ResultImpl : IResult
+        class ResultImpl : IToolResult
         {
             public int ExitCode { get; set; }
             public string Output { get; set; }
             public string Error { get; set; }
         }
 
-        public Task<IResult> Run(params string[] args)
+        public Task<IToolResult> Run(params string[] args)
         {
             return Task.Factory.StartNew(() =>
             {
@@ -81,7 +75,7 @@ namespace Csa.Build
                     throw new Exception($"exit code {p.ExitCode}: {p.StartInfo.FileName} {p.StartInfo.Arguments}");
                 }
 
-                return (IResult) new ResultImpl
+                return (IToolResult) new ResultImpl
                 {
                     ExitCode = p.ExitCode,
                     Error = error.Result,
