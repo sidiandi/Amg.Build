@@ -37,8 +37,12 @@ namespace Csa.Build
                 await tool.Run("/c", "echo_Wrong_Command", "Hello");
                 Assert.Fail("must throw");
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Assert.That(e, Is.InstanceOf<ToolException>());
+                var te = (ToolException)e;
+                Console.WriteLine(te);
+                Console.WriteLine(te.Result.Error);
             }
         }
     }

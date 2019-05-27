@@ -65,22 +65,24 @@ namespace Csa.Build
                 });
                 Console.WriteLine($"{p.StartInfo.FileName} {p.StartInfo.Arguments}");
 
-                var output = p.StandardOutput.ReadToEndAsync();
-                var error = p.StandardError.ReadToEndAsync();
+                var output = p.StandardOutput.Tee(Console.Out).ReadToEndAsync();
+                var error = p.StandardError.Tee(Console.Error).ReadToEndAsync();
 
                 p.WaitForExit();
 
-                if (p.ExitCode != 0)
-                {
-                    throw new Exception($"exit code {p.ExitCode}: {p.StartInfo.FileName} {p.StartInfo.Arguments}");
-                }
-
-                return (IToolResult) new ResultImpl
+                var result = (IToolResult) new ResultImpl
                 {
                     ExitCode = p.ExitCode,
                     Error = error.Result,
                     Output = output.Result
                 };
+
+                if (p.ExitCode != 0)
+                {
+                    throw new ToolException($"exit code {p.ExitCode}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", result);
+                }
+
+                return result;
 
             }, TaskCreationOptions.LongRunning);
         }

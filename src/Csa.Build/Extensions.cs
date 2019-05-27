@@ -57,5 +57,10 @@ namespace Csa.Build
                 }
             }
         }
+
+        public static TextReader Tee(this TextReader input, TextWriter output)
+        {
+            return new TeeStream(input, output);
+        }
     }
 }
