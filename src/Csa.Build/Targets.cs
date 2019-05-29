@@ -8,18 +8,12 @@ using System.Reflection;
 namespace Csa.Build
 {
     public delegate Task Target();
-    public delegate Task<T> Target<T>();
+    public delegate Task<Result> Target<Result>();
+    public delegate Task<Result> Target<Arg, Result>(Arg a);
 
     public partial class Targets
     {
-        static void Banner(string message)
-        {
-            Console.WriteLine();
-            Console.WriteLine(new string('=', 80));
-            Console.WriteLine(message);
-            Console.WriteLine(new string('=', 80));
-            Console.WriteLine();
-        }
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public async Task<int> Run(string[] args)
         {
@@ -41,10 +35,11 @@ namespace Csa.Build
             }
             finally
             {
-                foreach (var i in targets.Values.OrderBy(_ => _.end))
-                {
-                    Console.WriteLine($"{i.id}: {i.Duration.TotalSeconds:F2} {i.State}");
-                }
+                Console.WriteLine(
+                    targets.Values.OrderBy(_ => _.End)
+                    .Select(_ => new { _.Id, _.Duration, _.State })
+                    .ToTable()
+                    );
             }
         }
 
@@ -90,32 +85,43 @@ namespace Csa.Build
             lock (targets)
             {
                 var id = name;
-                if (targets.TryGetValue(id, out var targetState))
-                {
-
-                }
-                else
-                {
-                    targetState = targets[id] = new TargetState(id, f);
-                }
+                var targetState = targets.GetOrAdd(id, () => new TargetState(id, f));
                 return ((TargetState)targetState).Run;
             }
         }
 
-        protected Target<T> DefineTarget<T>(Func<Task<T>> f, [CallerMemberName] string name = null)
+        protected Target DefineTarget(Action f, [CallerMemberName] string name = null)
+        {
+            return DefineTarget(AsyncHelper.ToAsync(f), name);
+        }
+
+        protected Target<Result> DefineTarget<Result>(Func<Task<Result>> f, [CallerMemberName] string name = null)
         {
             lock (targets)
             {
                 var id = name;
-                if (targets.TryGetValue(id, out var targetState))
-                {
+                var targetState = targets.GetOrAdd(id, () => new TargetState<Result>(id, f));
+                return ((TargetState<Result>)targetState).Run;
+            }
+        }
 
-                }
-                else
-                {
-                    targetState = targets[id] = new TargetState<T>(id, f);
-                }
-                return ((TargetState<T>)targetState).Run;
+        protected Target<Arg, Result> DefineTarget<Arg, Result>(Func<Arg, Result> f, [CallerMemberName] string name = null)
+        {
+            lock (targets)
+            {
+                var id = name;
+                var targetState = targets.GetOrAdd(id, () => new TargetState<Arg, Result>(id, f));
+                return ((TargetState<Arg, Result>)targetState).Run;
+            }
+        }
+
+        protected Target<Arg, Result> DefineTarget<Arg, Result>(Func<Arg, Task<Result>> f, [CallerMemberName] string name = null)
+        {
+            lock (targets)
+            {
+                var id = name;
+                var targetState = targets.GetOrAdd(id, () => new TargetState<Arg, Result>(id, f));
+                return ((TargetState<Arg, Result>)targetState).Run;
             }
         }
     }

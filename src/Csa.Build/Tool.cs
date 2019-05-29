@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Csa.Build
 {
-
     public class Tool
     {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         private readonly string fileName;
         private string[] leadingArguments = new string[] { };
         private string workingDirectory = ".";
@@ -63,12 +64,16 @@ namespace Csa.Build
                     RedirectStandardOutput = true,
                     WorkingDirectory = workingDirectory
                 });
-                Console.WriteLine($"{p.StartInfo.FileName} {p.StartInfo.Arguments}");
 
-                var output = p.StandardOutput.Tee(Console.Out).ReadToEndAsync();
-                var error = p.StandardError.Tee(Console.Error).ReadToEndAsync();
+                var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
+
+                processLog.Information("process started: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments);
+
+                var output = p.StandardOutput.Tee(_ => processLog.Information(_)).ReadToEndAsync();
+                var error = p.StandardError.Tee(_ => processLog.Error(_)).ReadToEndAsync();
 
                 p.WaitForExit();
+                processLog.Information("process exit with {ExitCode}: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments, p.ExitCode);
 
                 var result = (IToolResult) new ResultImpl
                 {

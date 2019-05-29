@@ -6,15 +6,15 @@ namespace Csa.Build
     {
         class TargetStateBase
         {
-            public DateTime? begin;
-            public DateTime? end;
-            public string id;
-            public TimeSpan Duration
+            public virtual DateTime? Begin { get; set; }
+            public virtual DateTime? End { get; set; }
+            public string Id { get; set; }
+            public virtual TimeSpan Duration
             {
                 get
                 {
-                    return begin.HasValue && end.HasValue
-                        ? (end.Value - begin.Value)
+                    return Begin.HasValue && End.HasValue
+                        ? (End.Value - Begin.Value)
                         : TimeSpan.Zero;
                 }
             }
@@ -33,9 +33,9 @@ namespace Csa.Build
             {
                 get
                 {
-                    if (begin.HasValue)
+                    if (Begin.HasValue)
                     {
-                        if (end.HasValue)
+                        if (End.HasValue)
                         {
                             if (exception == null)
                             {

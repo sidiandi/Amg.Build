@@ -14,28 +14,28 @@ namespace Csa.Build
 
             public TargetState(string id, Func<Task> worker)
             {
-                this.id = id;
+                this.Id = id;
                 this.worker = worker;
             }
 
             async Task RunOnce()
             {
-                Banner($"begin {id}");
-                begin = DateTime.UtcNow;
+                Logger.Information("begin {id}", Id);
+                Begin = DateTime.UtcNow;
                 try
                 {
                     await worker();
-                    Banner($"end {id}");
+                    Logger.Information("end {id}", Id);
                 }
                 catch (Exception exception)
                 {
                     this.exception = exception;
-                    Banner($"fail {id}\r\n{exception}");
-                    throw new Exception($"fail {id}", exception);
+                    Logger.Error("fail {id}\r\n{exception}", Id, exception);
+                    throw new Exception($"fail {Id}", exception);
                 }
                 finally
                 {
-                    end = DateTime.UtcNow;
+                    End = DateTime.UtcNow;
                 }
             }
 

@@ -5,41 +5,41 @@ namespace Csa.Build
 {
     public partial class Targets
     {
-        class TargetState<T> : TargetStateBase
+        class TargetState<Result> : TargetStateBase
         {
-            private readonly Func<Task<T>> worker;
-            public Task<T> result;
+            private readonly Func<Task<Result>> worker;
+            public Task<Result> result;
             bool done = false;
 
-            public TargetState(string id, Func<Task<T>> worker)
+            public TargetState(string id, Func<Task<Result>> worker)
             {
-                this.id = id;
+                this.Id = id;
                 this.worker = worker;
             }
 
-            async Task<T> RunOnce()
+            async Task<Result> RunOnce()
             {
                 try
                 {
-                    Banner($"begin {id}");
-                    begin = DateTime.UtcNow;
-                    var r = await worker();
-                    Banner($"end {id}\r\n\r\nResult\r\n{r.Dump()}");
-                    return r;
+                    Logger.Information("begin {id}", Id);
+                    Begin = DateTime.UtcNow;
+                    var result = await worker();
+                    Logger.Information("end {id}: {result}", Id, this.result);
+                    return result;
                 }
                 catch (Exception exception)
                 {
                     this.exception = exception;
-                    Banner($"fail {id}\r\n{exception}");
-                    throw new Exception($"fail {id}", exception);
+                    Logger.Error("fail {id}\r\n{exception}", Id, exception);
+                    throw new Exception($"fail {Id}", exception);
                 }
                 finally
                 {
-                    end = DateTime.UtcNow;
+                    End = DateTime.UtcNow;
                 }
             }
 
-            public Task<T> Run()
+            public Task<Result> Run()
             {
                 if (!done)
                 {

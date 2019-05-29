@@ -23,5 +23,23 @@ B: 2
 C: 3
 ", o.Dump().ToString());
         }
+
+        [Test]
+        public void PrintTable()
+        {
+            var cells = new[]
+            {
+            new[]{"Name", "Number"},
+            new[]{"Hello", "1"},
+            new[]{"H", "1234234"}
+        };
+
+            var table = Extensions.Table(cells);
+
+            Assert.AreEqual(@"Name  Number  
+Hello 1       
+H     1234234 
+", table.ToString());
+        }
     }
 }
