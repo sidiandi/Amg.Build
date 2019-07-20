@@ -1,1 +1,1 @@
-@dotnet run --project build -- %*
+@dotnet run --force --project build -- %*

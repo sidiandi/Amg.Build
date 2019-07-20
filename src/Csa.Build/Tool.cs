@@ -73,7 +73,7 @@ namespace Csa.Build
                 var error = p.StandardError.Tee(_ => processLog.Error(_)).ReadToEndAsync();
 
                 p.WaitForExit();
-                processLog.Information("process exit with {ExitCode}: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments, p.ExitCode);
+                processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
                 var result = (IToolResult) new ResultImpl
                 {
