@@ -4,10 +4,6 @@ namespace build
 {
     class Program
     {
-        static async Task Main(string[] args)
-        {
-            var targets = new BuildTargets();
-            await targets.Run(args);
-        }
+        static int Main(string[] args) => Csa.Build.Targets.Run<BuildTargets>(args);
     }
 }
