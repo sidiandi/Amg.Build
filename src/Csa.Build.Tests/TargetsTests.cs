@@ -19,11 +19,19 @@ namespace Csa.Build
         }
 
         [Test]
-        public async Task DefaultTargetIsRun()
+        public async Task WhenNoTargetIsSpecifiedDefaultTargetIsRun()
         {
             var t = new MyTargets();
             await t.RunTargets(new string[] { });
             Assert.AreEqual("CompileLinkPack", t.result);
+        }
+
+        [Test]
+        public async Task TargetsCanBeAbbreviated()
+        {
+            var t = new MyTargets();
+            await t.RunTargets(new string[] { "Co" });
+            Assert.AreEqual("Compile", t.result);
         }
 
         [Test]
@@ -58,10 +66,10 @@ namespace Csa.Build
             Assert.AreEqual(@"Usage: build <targets> [options]
 
 Targets:
-  Default Compile, link, and pack
   Compile Compile source code    
   Link    Link object files      
   Pack    Pack nuget package     
+  Default Compile, link, and pack
 
 Options:
   --configuration=<string> Release or Debug  

@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="GitVersionCore" Version="4.0.0" />
-    <PackageReference Include="Csa.Build" Version="0.1.0-ci0011" />
+    <PackageReference Include="Csa.Build" Version="0.1.0-*" />
   </ItemGroup>
 
 </Project>

@@ -147,8 +147,13 @@ Options:");
                 BindingFlags.DeclaredOnly
                 )
                 .Where(_ => typeof(Target).IsAssignableFrom(_.PropertyType))
-                .Select(_ => (Target)_.GetValue(this, new object[] { }))
+                .Select(GetTarget)
                 .ToList();
+        }
+
+        Target GetTarget(PropertyInfo p)
+        {
+            return (Target)p.GetValue(this, new object[] { });
         }
 
         IEnumerable<PropertyInfo> GetTargetProperties()
@@ -165,16 +170,7 @@ Options:");
 
         Target GetTarget(string name)
         {
-            return (new[] { GetType().GetProperty(name,
-                BindingFlags.NonPublic |
-                BindingFlags.Public |
-                BindingFlags.Instance |
-                BindingFlags.DeclaredOnly |
-                BindingFlags.IgnoreCase
-                ) })
-                .Where(_ => typeof(Target).IsAssignableFrom(_.PropertyType))
-                .Select(_ => (Target)_.GetValue(this, new object[] { }))
-                .Single();
+            return GetTarget(GetTargetProperties().FindByName(_ => _.Name, name));
         }
 
         async Task Run(IEnumerable<Target> targets)
