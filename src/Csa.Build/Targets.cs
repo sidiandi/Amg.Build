@@ -171,10 +171,7 @@ Options:");
 
         async Task Run(IEnumerable<Target> targets)
         {
-            foreach (var target in targets)
-            {
-                await target();
-            }
+            await Task.WhenAll(targets.Select(_ => _()));
         }
 
         Dictionary<string, TargetStateBase> targets = new Dictionary<string, TargetStateBase>();
