@@ -22,10 +22,10 @@ namespace Csa.Build
         {
             var testDir = CreateEmptyTestDirectory();
             var d = Path.Combine(testDir, "a", "b");
-            var f = d.CatDir("c");
+            var f = d.Combine("c");
             f.EnsureParentDirectoryExists();
             Assert.That(Directory.Exists(d));
-            Assert.That(f.GetParentDirectory(), Is.EqualTo(d));
+            Assert.That(f.Parent(), Is.EqualTo(d));
         }
     }
 }

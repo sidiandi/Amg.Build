@@ -1,58 +1,20 @@
-using System;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using System;
 
 namespace Csa.Build
 {
     [TestFixture]
     public class TargetsTests : TestBase
     {
-        class MyTargets : Targets
-        {
-            public string result = String.Empty;
-
-            Target Compile => DefineTarget(() =>
-            {
-                result += "Compile";
-            });
-
-            Target Link => DefineTarget(async () =>
-            {
-                await Compile();
-                result += "Link";
-            });
-
-            public Target Pack => DefineTarget(async () =>
-            {
-                await Compile();
-                await Link();
-                result += "Pack";
-            });
-
-            public Target<int, int> Times2 => DefineTarget((int a) =>
-            {
-                args.Add(a);
-                return a * 2;
-            });
-
-            public Target<int, int> Div2 => DefineTarget(async (int a) =>
-            {
-                await Task.Delay(100);
-                return await Times2(a) / 4;
-            });
-
-            public IList<int> args = new List<int>();
-        }
-
         [Test]
         public async Task TargetsAreRunOnlyOnceAndInCorrectOrder()
         {
             var t = new MyTargets();
-            await t.Run(new[] { "Pack" });
+            await t.RunTargets(new[] { "Pack" });
             Assert.AreEqual("CompileLinkPack", t.result);
         }
 
@@ -69,6 +31,36 @@ namespace Csa.Build
                 }
             }
             Assert.AreEqual(aCount, t.args.Count);
+        }
+
+        [Test]
+        public void TargetsAreRunWithCommandLineArgs()
+        {
+            var exitCode = Targets.Run<MyTargets>(new[] { "Pack", "-vvvv", "--configuration", "MyConfiguration" });
+        }
+
+        [Test]
+        public void Help()
+        {
+            var o = TestUtil.CaptureOutput(() =>
+            {
+                var exitCode = Targets.Run<MyTargets>(new[] { "--help" });
+                Assert.That(exitCode, Is.EqualTo(1));
+            });
+            Assert.AreEqual(@"Usage: build <targets> [options]
+
+Targets:
+  Compile Compile source code
+  Link    Link object files  
+  Pack    Pack nuget package 
+
+Options:
+  --configuration=<string> Release or Debug  
+  --targets=<string>       Build targets     
+  -h | --help              Show help and exit
+  -v | --verbose           Increase verbosity
+", o.Out);
+            Assert.AreEqual(String.Empty, o.Error);
         }
     }
 }

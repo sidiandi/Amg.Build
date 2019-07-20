@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
+using System.ComponentModel;
+using Csa.CommandLine;
+using System.IO;
+using Serilog;
 
 namespace Csa.Build
 {
@@ -15,18 +19,91 @@ namespace Csa.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public async Task<int> Run(string[] args)
+        class Options<TargetsDerivedClass>
+        {
+            public TargetsDerivedClass targets { get; set; }
+
+            public Options(TargetsDerivedClass targets)
+            {
+                this.targets = targets;
+            }
+
+            [Operands]
+            [Description("Build targets")]
+            public string[] Targets { get; set; }  = new string[] { };
+
+            [Short('h'), Description("Show help and exit")]
+            public bool Help { get; set; }
+
+            [Short('v'), Description("Increase verbosity")]
+            public bool Verbose { get; set; }
+        }
+
+        public static int Run<TargetsDerivedClass>(string[] args) where TargetsDerivedClass : Targets, new()
+        {
+            var options = new Options<TargetsDerivedClass>(new TargetsDerivedClass());
+            GetOptParser.Parse(args, options);
+            if (options.Help)
+            {
+                PrintHelp(Console.Out, options);
+                return 1;
+            }
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
+                .CreateLogger();
+
+            return options.targets.RunTargets(options.Targets).Result;
+        }
+
+        private static void PrintHelp<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : Targets, new()
+        {
+            @out.WriteLine(@"Usage: build <targets> [options]
+
+Targets:");
+            PrintTargetsList(@out, options.targets);
+            @out.WriteLine(@"
+Options:");
+            PrintOptionsList(@out, options);
+        }
+
+        const string indent = " ";
+
+        private static void PrintOptionsList<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : Targets, new()
+        {
+            GetOptParser.GetOptions(options)
+                .Select(_ => new { indent, _.Syntax, _.Description })
+                .ToTable(header: false)
+                .Write(@out);
+        }
+
+        private static void PrintTargetsList<TargetsDerivedClass>(TextWriter @out, TargetsDerivedClass targets) where TargetsDerivedClass : Targets, new()
+        {
+            var publicTargets = targets.GetTargetProperties();
+            publicTargets
+                .Select(_ => new { indent, _.Name, Description = GetDescription(_) })
+                .ToTable(header: false)
+                .Write(@out);
+        }
+
+        private static string GetDescription(PropertyInfo p)
+        {
+            var a = p.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
+            return a == null
+                ? String.Empty
+                : a.Description;
+        }
+
+        public async Task<int> RunTargets(IEnumerable<string> targetNames)
         {
             try
             {
-                if (args.Any())
-                {
-                    await Run(args.Select(GetTarget));
-                }
-                else
-                {
-                    await Run(GetTargets());
-                }
+                var targets = targetNames.Any()
+                    ? targetNames.Select(GetTarget)
+                    : GetTargets();
+
+                await Run(targets);
+
                 return 0;
             }
             catch
@@ -35,9 +112,19 @@ namespace Csa.Build
             }
             finally
             {
+                var end = targets.Values.Where(_ => _.End != null).Max(_ => _.End.Value);
+                var begin = targets.Values.Where(_ => _.Begin != null).Min(_ => _.Begin.Value);
+
                 Console.WriteLine(
                     targets.Values.OrderBy(_ => _.End)
-                    .Select(_ => new { _.Id, _.Duration, _.State })
+                    .Select(_ => new {
+                        _.Id,
+                        Duration = Extensions.HumanReadable(_.Duration),
+                        _.State,
+                        Timeline = _.Begin.HasValue && _.End.HasValue
+                            ? Extensions.TimeBar(80, begin, end, _.Begin.Value, _.End.Value)
+                            : String.Empty
+                    })
                     .ToTable()
                     );
             }
@@ -53,6 +140,18 @@ namespace Csa.Build
                 )
                 .Where(_ => typeof(Target).IsAssignableFrom(_.PropertyType))
                 .Select(_ => (Target)_.GetValue(this, new object[] { }))
+                .ToList();
+        }
+
+        IEnumerable<PropertyInfo> GetTargetProperties()
+        {
+            return GetType().GetProperties(
+                BindingFlags.NonPublic |
+                BindingFlags.Public |
+                BindingFlags.Instance |
+                BindingFlags.DeclaredOnly
+                )
+                .Where(_ => typeof(Target).IsAssignableFrom(_.PropertyType))
                 .ToList();
         }
 

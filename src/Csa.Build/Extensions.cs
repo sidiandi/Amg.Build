@@ -13,6 +13,16 @@ namespace Csa.Build
             return "\"" + x.Replace("\"", "\\\"") + "\"";
         }
 
+        public static string Join(this IEnumerable<object> e, string separator)
+        {
+            return string.Join(separator, e);
+        }
+
+        public static string Join(this IEnumerable<object> e)
+        {
+            return e.Join(System.Environment.NewLine);
+        }
+
         public static IWritable Dump(this object x) => GetWritable(_ => _.Dump(x));
         
         public static TextWriter Dump(this TextWriter w, object x)
@@ -36,13 +46,20 @@ namespace Csa.Build
             return w;
         }
 
-        public static IWritable ToTable<T>(this IEnumerable<T> e)
+        public static IWritable ToTable<T>(this IEnumerable<T> e, bool header = false)
         {
             var type = typeof(T);
             var properties = type.GetProperties();
             var index = new object[] { };
-            return Table(new []{ properties.Select(_ => _.Name) }
-                .Concat(e.Select(_ => properties.Select(p => p.GetValue(_, index).SafeToString()))));
+            if (header)
+            {
+                return Table(new[] { properties.Select(_ => _.Name) }
+                    .Concat(e.Select(_ => properties.Select(p => p.GetValue(_, index).SafeToString()))));
+            }
+            else
+            {
+                return Table(e.Select(_ => properties.Select(p => p.GetValue(_, index).SafeToString())));
+            }
         }
 
         public static string SafeToString(this object x)
@@ -62,17 +79,29 @@ namespace Csa.Build
             return GetWritable(w =>
             {
                 var columnWidth = data.Select(_ => _.Select(c => c.Length)).Aggregate(Max);
+                var columnSeparator = " ";
 
                 foreach (var row in data)
                 {
-                    foreach (var c in row.Zip(columnWidth, (cell, width) => new { cell, width }))
-                    {
-                        w.Write(c.cell);
-                        w.Write(new string(' ', c.width - c.cell.Length + 1));
-                    }
-                    w.WriteLine();
+                    w.WriteLine(
+                        row.Zip(columnWidth, (cell, width) => new { cell, width })
+                        .Select(c => c.cell + new string(' ', c.width - c.cell.Length))
+                        .Join(columnSeparator));
                 }
             });
+        }
+
+        public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime begin, DateTime end)
+        {
+            int Pos(DateTime t)
+            {
+                return (int)((t - rangeBegin).TotalSeconds / (rangeEnd - rangeBegin).TotalSeconds * width);
+            }
+            var beginPos = Pos(begin);
+            var endPos = Math.Max(Pos(end), beginPos + 1);
+            const char empty = ' ';
+            const char full = '#';
+            return new string(empty, beginPos) + new string(full, endPos - beginPos) + new string(empty, width - endPos);
         }
 
         static IEnumerable<int> Max(IEnumerable<int> e0, IEnumerable<int> e1)
@@ -102,6 +131,34 @@ namespace Csa.Build
                     }
                 }
             }
+        }
+
+        internal static string HumanReadable(TimeSpan duration)
+        {
+            var days = duration.TotalDays;
+            if (days > 10)
+            {
+                return $"{days:F0}d";
+            }
+            if (days > 1)
+            {
+                return $"{days:F0}d{duration.Hours}h";
+            }
+            var hours = duration.TotalHours;
+            if (hours > 1)
+            {
+                return $"{duration.Hours}h{duration.Minutes}m";
+            }
+            var minutes = duration.TotalMinutes;
+            if (minutes > 30)
+            {
+                return $"{duration.Minutes}m";
+            }
+            if (minutes > 1)
+            {
+                return $"{duration.Minutes}m{duration.Seconds}s";
+            }
+            return $"{duration.Seconds}s";
         }
 
         public static IWritable GetWritable(this Action<TextWriter> w)

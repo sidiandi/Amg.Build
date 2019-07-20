@@ -11,7 +11,7 @@ namespace Csa.Build
     {
         public static string EnsureParentDirectoryExists(this string path)
         {
-            path.GetParentDirectory().EnsureDirectoryExists();
+            path.Parent().EnsureDirectoryExists();
             return path;
         }
 
@@ -29,7 +29,7 @@ namespace Csa.Build
             return path;
         }
 
-        public static string CatDir(this string directory, params string[] pathElements)
+        public static string Combine(this string directory, params string[] pathElements)
         {
             return Path.Combine(new[] { directory }.Concat(pathElements).ToArray());
         }
@@ -66,9 +66,30 @@ namespace Csa.Build
             fileSystemInfo.Delete();
         }
 
-        public static string GetFullPath(this string path)
+        public static string Absolute(this string path)
         {
             return Path.GetFullPath(path);
+        }
+
+        public static bool HasExtension(this string path, params string[] extensionsWithDots)
+        {
+            var e = path.Extension();
+            return extensionsWithDots.Any(_ => _.Equals(e, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static string Extension(this string path)
+        {
+            return Path.GetExtension(path);
+        }
+
+        public static string FileName(this string path)
+        {
+            return Path.GetFileName(path);
+        }
+
+        public static string FileNameWithoutExtension(this string path)
+        {
+            return Path.GetFileNameWithoutExtension(path);
         }
 
         public static string EnsureDirectoryExists(this string dir)
@@ -80,7 +101,7 @@ namespace Csa.Build
             return dir;
         }
 
-        public static string GetParentDirectory(this string path)
+        public static string Parent(this string path)
         {
             return System.IO.Path.GetDirectoryName(path);
         }

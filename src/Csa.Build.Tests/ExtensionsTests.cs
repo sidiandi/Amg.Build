@@ -36,9 +36,10 @@ C: 3
 
             var table = Extensions.Table(cells);
 
-            Assert.AreEqual(@"Name  Number  
-Hello 1       
-H     1234234 
+            Assert.AreEqual(
+@"Name  Number 
+Hello 1      
+H     1234234
 ", table.ToString());
         }
     }
