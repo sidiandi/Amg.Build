@@ -19,6 +19,14 @@ namespace Csa.Build
         }
 
         [Test]
+        public async Task DefaultTargetIsRun()
+        {
+            var t = new MyTargets();
+            await t.RunTargets(new string[] { });
+            Assert.AreEqual("CompileLinkPack", t.result);
+        }
+
+        [Test]
         public async Task TargetsAreRunOnlyOncePerInputArgument()
         {
             var t = new MyTargets();
@@ -50,13 +58,13 @@ namespace Csa.Build
             Assert.AreEqual(@"Usage: build <targets> [options]
 
 Targets:
-  Compile Compile source code
-  Link    Link object files  
-  Pack    Pack nuget package 
+  Default Compile, link, and pack
+  Compile Compile source code    
+  Link    Link object files      
+  Pack    Pack nuget package     
 
 Options:
   --configuration=<string> Release or Debug  
-  --targets=<string>       Build targets     
   -h | --help              Show help and exit
   -v | --verbose           Increase verbosity
 ", o.Out);

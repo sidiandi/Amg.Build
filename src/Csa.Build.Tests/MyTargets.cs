@@ -33,6 +33,14 @@ namespace Csa.Build
             result += "Pack";
         });
 
+        [Description("Compile, link, and pack")]
+        public Target Default => DefineTarget(async () =>
+        {
+            await Compile();
+            await Link();
+            await Pack();
+        });
+
         Target<int, int> Times2 => DefineTarget((int a) =>
         {
             args.Add(a);

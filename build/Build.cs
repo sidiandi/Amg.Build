@@ -70,7 +70,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 ");
     });
 
-    Target Test => DefineTarget(async () =>
+	Target Test => DefineTarget(async () =>
     {
         await Build();
         await dotnet.Run("test", slnFile, "--no-build");
@@ -109,5 +109,10 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             UseShellExecute = true
         });
     });
+	
+	Target Default => DefineTarget(async () =>
+	{
+		await Test();
+	});
 }
 

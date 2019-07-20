@@ -72,6 +72,7 @@ Options:");
         private static void PrintOptionsList<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : Targets, new()
         {
             GetOptParser.GetOptions(options)
+                .Where(_ => !_.IsOperands)
                 .Select(_ => new { indent, _.Syntax, _.Description })
                 .ToTable(header: false)
                 .Write(@out);
@@ -94,16 +95,23 @@ Options:");
                 : a.Description;
         }
 
+        const string DefaultTargetName = "Default";
+
+        IEnumerable<Target> GetTargets(IEnumerable<string> targetNames)
+        {
+            targetNames = targetNames.Any()
+                ? targetNames
+                : new[] { DefaultTargetName };
+
+            return targetNames.Select(GetTarget);
+        }
+
         public async Task<int> RunTargets(IEnumerable<string> targetNames)
         {
             try
             {
-                var targets = targetNames.Any()
-                    ? targetNames.Select(GetTarget)
-                    : GetTargets();
-
+                var targets = GetTargets(targetNames);
                 await Run(targets);
-
                 return 0;
             }
             catch
