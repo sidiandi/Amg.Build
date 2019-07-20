@@ -11,28 +11,28 @@ namespace Csa.Build
     public class TargetsTests : TestBase
     {
         [Test]
-        public async Task Run()
+        public void Run()
         {
             var exitCode = Targets.Run<MyTargets>(new string[] { });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
-        public async Task RunTargetThatReturnsAResult()
+        public void RunTargetThatReturnsAResult()
         {
             var exitCode = Targets.Run<MyTargets>(new string[] { "SayHello" });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
-        public async Task GetTargetThatReturnsAResult()
+        public void GetTargetThatReturnsAResult()
         {
             var t = new MyTargets();
             var target = t.GetTarget(t.GetType().GetProperty("SayHello"));
         }
 
         [Test]
-        public async Task IsTarget()
+        public void IsTarget()
         {
             var t = typeof(MyTargets);
             Assert.That(Targets.IsTargetProperty(t.GetProperty("SayHello")));

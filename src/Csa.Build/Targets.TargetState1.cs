@@ -24,7 +24,7 @@ namespace Csa.Build
                     Logger.Information("begin {id}", Id);
                     Begin = DateTime.UtcNow;
                     var result = await worker();
-                    Logger.Information("end {id}: {result}", Id, this.result);
+                    Logger.Information("end {id}: {result}", Id, result);
                     return result;
                 }
                 catch (Exception exception)

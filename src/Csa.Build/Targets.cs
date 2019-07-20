@@ -62,6 +62,7 @@ namespace Csa.Build
             }
             catch (Exception ex)
             {
+                Logger.Fatal(ex, "Build failed.");
                 return -1;
             }
         }
