@@ -11,18 +11,28 @@ namespace Csa.Build
     public class TargetsTests : TestBase
     {
         [Test]
-        public async Task TargetsAreRunOnlyOnceAndInCorrectOrder()
+        public async Task Run()
         {
-            var t = new MyTargets();
-            await t.RunTargets(new[] { "Pack" });
-            Assert.AreEqual("CompileLinkPack", t.result);
+            var exitCode = Targets.Run<MyTargets>(new string[] { });
+            Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
-        public async Task WhenNoTargetIsSpecifiedDefaultTargetIsRun()
+        public async Task ErrorMessageForMissingDefaultTarget()
+        {
+            var t = new MyTargetsNoDefault();
+            var e = Assert.Throws<AggregateException>(() =>
+            {
+                t.RunTargets(new string[] { }).Wait();
+            });
+            Assert.That(e.InnerException.Message.Contains("Default"));
+        }
+
+        [Test]
+        public async Task DefaultTarget()
         {
             var t = new MyTargets();
-            await t.RunTargets(new string[] { });
+            await t.RunTargets(Enumerable.Empty<String>());
             Assert.AreEqual("CompileLinkPack", t.result);
         }
 

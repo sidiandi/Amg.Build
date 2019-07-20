@@ -62,6 +62,14 @@ namespace Csa.Build
             }
         }
 
+        public static IWritable ToPropertiesTable(this object x)
+        {
+            return x.GetType()
+                .GetProperties()
+                .Select(p => new { p.Name, Value = p.GetValue(x, new object[] { }) })
+                .ToTable(header: false);
+        }
+
         public static string SafeToString(this object x)
         {
             try
@@ -133,7 +141,7 @@ namespace Csa.Build
             }
         }
 
-        internal static string HumanReadable(TimeSpan duration)
+        internal static string HumanReadable(this TimeSpan duration)
         {
             var days = duration.TotalDays;
             if (days > 10)

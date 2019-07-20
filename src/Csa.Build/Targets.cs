@@ -9,6 +9,8 @@ using Csa.CommandLine;
 using System.IO;
 using Serilog;
 
+[assembly: InternalsVisibleTo("Csa.Build.Tests")]
+
 namespace Csa.Build
 {
     public delegate Task Target();
@@ -53,7 +55,15 @@ namespace Csa.Build
                 .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
                 .CreateLogger();
 
-            return options.targets.RunTargets(options.Targets).Result;
+            try
+            {
+                options.targets.RunTargets(options.Targets).Wait();
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                return -1;
+            }
         }
 
         private static void PrintHelp<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : Targets, new()
@@ -106,36 +116,71 @@ Options:");
             return targetNames.Select(GetTarget);
         }
 
-        public async Task<int> RunTargets(IEnumerable<string> targetNames)
+        internal async Task RunTargets(IEnumerable<string> targetNames)
         {
             try
             {
                 var targets = GetTargets(targetNames);
                 await Run(targets);
-                return 0;
-            }
-            catch
-            {
-                return 1;
             }
             finally
             {
-                var end = targets.Values.Where(_ => _.End != null).Max(_ => _.End.Value);
-                var begin = targets.Values.Where(_ => _.Begin != null).Min(_ => _.Begin.Value);
-
-                Console.WriteLine(
-                    targets.Values.OrderBy(_ => _.End)
-                    .Select(_ => new {
-                        _.Id,
-                        Duration = Extensions.HumanReadable(_.Duration),
-                        _.State,
-                        Timeline = _.Begin.HasValue && _.End.HasValue
-                            ? Extensions.TimeBar(80, begin, end, _.Begin.Value, _.End.Value)
-                            : String.Empty
-                    })
-                    .ToTable()
-                    );
+                PrintSummary(Console.Out, targets.Values);
             }
+        }
+
+        static DateTime? Max(DateTime? a, DateTime? b)
+        {
+            return (a == null)
+                ? b
+                : b == null
+                    ? null
+                    : a.Value > b.Value
+                        ? a
+                        : b;
+        }
+
+        static DateTime? Min(DateTime? a, DateTime? b)
+        {
+            return (a == null)
+                ? b
+                : b == null
+                    ? null
+                    : a.Value < b.Value
+                        ? a
+                        : b;
+        }
+
+        static void PrintSummary(TextWriter @out, IEnumerable<TargetStateBase> targets)
+        {
+            var end = targets.Aggregate((DateTime?)null, (m, _) => Max(m, _.End));
+            var begin = targets.Aggregate((DateTime?)null, (m, _) => Min(m, _.Begin));
+
+            if (end == null || begin == null)
+            {
+                return;
+            }
+
+            new
+            {
+                Begin = begin,
+                End = end,
+                Duration = (end.Value - begin.Value).HumanReadable(),
+            }.ToPropertiesTable().Write(@out);
+
+            @out.WriteLine();
+
+            targets.OrderBy(_ => _.End)
+                .Select(_ => new
+                {
+                    _.Id,
+                    Duration = _.Duration.HumanReadable(),
+                    _.State,
+                    Timeline = _.Begin.HasValue && _.End.HasValue
+                        ? Extensions.TimeBar(80, begin.Value, end.Value, _.Begin.Value, _.End.Value)
+                        : String.Empty
+                })
+                .ToTable().Write(@out);
         }
 
         IEnumerable<Target> GetTargets()
