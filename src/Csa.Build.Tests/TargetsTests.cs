@@ -18,6 +18,28 @@ namespace Csa.Build
         }
 
         [Test]
+        public async Task RunTargetThatReturnsAResult()
+        {
+            var exitCode = Targets.Run<MyTargets>(new string[] { "SayHello" });
+            Assert.That(exitCode, Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetTargetThatReturnsAResult()
+        {
+            var t = new MyTargets();
+            var target = t.GetTarget(t.GetType().GetProperty("SayHello"));
+        }
+
+        [Test]
+        public async Task IsTarget()
+        {
+            var t = typeof(MyTargets);
+            Assert.That(Targets.IsTargetProperty(t.GetProperty("SayHello")));
+            Assert.That(Targets.IsTargetProperty(t.GetProperty("Compile")));
+        }
+
+        [Test]
         public async Task ErrorMessageForMissingDefaultTarget()
         {
             var t = new MyTargetsNoDefault();
@@ -76,10 +98,13 @@ namespace Csa.Build
             Assert.AreEqual(@"Usage: build <targets> [options]
 
 Targets:
-  Compile Compile source code    
-  Link    Link object files      
-  Pack    Pack nuget package     
-  Default Compile, link, and pack
+  Compile  Compile source code    
+  Link     Link object files      
+  SayHello Say hello              
+  Pack     Pack nuget package     
+  Default  Compile, link, and pack
+  Times2                          
+  Div2                            
 
 Options:
   --configuration=<string> Release or Debug  

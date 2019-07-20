@@ -196,9 +196,25 @@ Options:");
                 .ToList();
         }
 
-        Target GetTarget(PropertyInfo p)
+        internal Target GetTarget(PropertyInfo p)
         {
-            return (Target)p.GetValue(this, new object[] { });
+            var targetDelegate = p.GetValue(this, new object[] { });
+            if (targetDelegate is Target)
+            {
+                return (Target)targetDelegate;
+            }
+
+            if (targetDelegate is MulticastDelegate)
+            {
+                var mcd = (MulticastDelegate)targetDelegate;
+                return new Target(() =>
+                {
+                    var r = (Task) mcd.DynamicInvoke(new object[] { });
+                    return r;
+                });
+            }
+
+            throw new NotImplementedException();
         }
 
         IEnumerable<PropertyInfo> GetTargetProperties()
@@ -209,8 +225,14 @@ Options:");
                 BindingFlags.Instance |
                 BindingFlags.DeclaredOnly
                 )
-                .Where(_ => typeof(Target).IsAssignableFrom(_.PropertyType))
+                .Where(IsTargetProperty)
                 .ToList();
+        }
+
+        internal static bool IsTargetProperty(PropertyInfo p)
+        {
+            var isMulticast = typeof(MulticastDelegate).IsAssignableFrom(p.PropertyType);
+            return isMulticast;
         }
 
         Target GetTarget(string name)

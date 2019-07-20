@@ -57,7 +57,7 @@ namespace Csa.Build
         public string result { get; private set; } = String.Empty;
 
         [Description("Compile source code")]
-        Target Compile => DefineTarget(() =>
+        public Target Compile => DefineTarget(() =>
         {
             result += "Compile";
         });
@@ -67,6 +67,12 @@ namespace Csa.Build
         {
             await Compile();
             result += "Link";
+        });
+
+        [Description("Say hello")]
+        public Target<string> SayHello => DefineTarget(async () =>
+        {
+            return "Hello";
         });
 
         [Description("Pack nuget package")]
