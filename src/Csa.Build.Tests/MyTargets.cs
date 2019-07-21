@@ -7,14 +7,20 @@ namespace Csa.Build
 {
     class MyTargetsNoDefault : Targets
     {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        Git Git = new Git();
+
         [Description("Release or Debug")]
         public string Configuration { get; set; }
 
         public string result { get; private set; } = String.Empty;
 
         [Description("Compile source code")]
-        Target Compile => DefineTarget(() =>
+        Target Compile => DefineTarget(async () =>
         {
+            var v = await Git.GetVersion();
+            Logger.Information("Using version {version}", v);
             result += "Compile";
         });
 
@@ -70,7 +76,7 @@ namespace Csa.Build
         });
 
         [Description("Say hello")]
-        public Target<string> SayHello => DefineTarget(async () =>
+        public Target<string> SayHello => DefineTarget(() =>
         {
             return "Hello";
         });
@@ -105,7 +111,7 @@ namespace Csa.Build
 
         public IList<int> args = new List<int>();
 
-        Target WhatCouldGoWrong => DefineTarget(async () =>
+        Target WhatCouldGoWrong => DefineTarget(() =>
         {
             throw new Exception("epic fail");
         });

@@ -54,7 +54,7 @@ namespace Csa.Build
         }
 
         [Test]
-        public async Task ErrorMessageForMissingDefaultTarget()
+        public void ErrorMessageForMissingDefaultTarget()
         {
             var t = new MyTargetsNoDefault();
             var e = Assert.Throws<AggregateException>(() =>

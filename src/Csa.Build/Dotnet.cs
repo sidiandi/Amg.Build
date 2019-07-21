@@ -1,10 +1,10 @@
 namespace Csa.Build
 {
-    public class Dotnet : Tool
+    public class Dotnet : Targets
     {
-        public Dotnet()
-        : base("dotnet")
+        public Target<Tool> Tool => DefineTarget(() =>
         {
-        }
+            return new Tool("dotnet");
+        });
     }
 }

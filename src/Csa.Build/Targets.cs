@@ -331,6 +331,15 @@ Options:");
             }
         }
 
+        protected Target<Result> DefineTarget<Result>(Func<Result> f, [CallerMemberName] string name = null)
+        {
+            lock (targets)
+            {
+                var id = name;
+                var targetState = targets.GetOrAdd(id, () => new TargetState<Result>(id, AsyncHelper.ToAsync(f)));
+                return ((TargetState<Result>)targetState).Run;
+            }
+        }
         protected Target<Arg, Result> DefineTarget<Arg, Result>(Func<Arg, Result> f, [CallerMemberName] string name = null)
         {
             lock (targets)
