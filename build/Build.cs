@@ -96,8 +96,23 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return $"src/{name}/bin/{configuration}/{name}.{version}.nupkg";
     });
 
+    Target EnsureNoPendingChanges => DefineTarget(async () =>
+    {
+        var git = new Tool("git");
+        var r = await git.Run("ls-files", "--modified", "--others", "--exclude-standard");
+        if (!String.IsNullOrEmpty(r.Output))
+        {
+            throw new Exception($@"The build requires that all git has no uncommitted changes.
+Commit following files:
+
+{r.Output}
+            ");
+        }
+    });
+
     Target Push => DefineTarget(async () =>
     {
+        await EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack());
         var nupkgFile = await Pack();
         await dotnet.Run("nuget", "push",
