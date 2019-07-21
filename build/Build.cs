@@ -6,6 +6,8 @@ using System.Diagnostics;
 
 partial class BuildTargets : Csa.Build.Targets
 {
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
     string productName => name;
     string year => DateTime.UtcNow.ToString("yyyy");
     string copyright => $"Copyright (c) {company} {year}";
@@ -25,7 +27,12 @@ partial class BuildTargets : Csa.Build.Targets
         return Task.Factory.StartNew(() =>
         {
             var gitVersionExecuteCore = new GitVersion.ExecuteCore(new GitVersion.Helpers.FileSystem());
-            GitVersion.Logger.SetLoggers(Console.WriteLine, Console.WriteLine, Console.WriteLine, Console.Error.WriteLine);
+            string templateString = @"GitVersion: {message}";
+            GitVersion.Logger.SetLoggers(
+            _ => Logger.Debug(templateString, _),
+            _ => Logger.Information(templateString, _),
+            _ => Logger.Warning(templateString, _),
+            _ => Logger.Error(templateString, _));
             if (!gitVersionExecuteCore.TryGetVersion(".", out var versionVariables, true, null))
             {
                 throw new System.Exception("Cannot read version");
