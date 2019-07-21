@@ -59,6 +59,8 @@ namespace Csa.Build
                     }
                 }
             }
+
+            public bool Failed => exception != null;
         }
     }
 }

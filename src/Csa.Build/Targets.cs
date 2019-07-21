@@ -153,6 +153,7 @@ Options:");
             finally
             {
                 PrintSummary(Console.Out, targets.Values);
+                PrintErrorSummary(Console.Error, targets.Values);
             }
         }
 
@@ -176,6 +177,37 @@ Options:");
                     : a.Value < b.Value
                         ? a
                         : b;
+        }
+
+        static Exception GetRootCause(Exception e)
+        {
+            if (e is TargetFailed)
+            {
+                return e;
+            }
+            else
+            {
+                return e.InnerException == null
+                    ? e
+                    : GetRootCause(e.InnerException);
+            }
+        }
+
+        static void PrintErrorSummary(TextWriter @out, IEnumerable<TargetStateBase> targets)
+        {
+            foreach (var failedTarget in targets
+                .Where(_ => _.Failed)
+                .OrderBy(_ => _.End))
+            {
+                var r = GetRootCause(failedTarget.exception.InnerException);
+                @out.WriteLine($"{failedTarget} failed because: {r.Message}");
+                if (!(r is TargetFailed))
+                {
+                    @out.WriteLine($@"
+{r}
+");
+                }
+            }
         }
 
         static void PrintSummary(TextWriter @out, IEnumerable<TargetStateBase> targets)

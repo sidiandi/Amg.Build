@@ -20,7 +20,7 @@ namespace Csa.Build
         [Test]
         public void Fail()
         {
-            var exitCode = Targets.Run<MyTargets>(new string[] { "AlwaysFails" });
+            var exitCode = Targets.Run<MyTargets>(new string[] { "AlwaysFails", "-vq"});
             Assert.That(exitCode, Is.Not.EqualTo(0));
         }
 
