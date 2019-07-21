@@ -6,7 +6,7 @@ namespace Csa.Build
 
     public partial class Targets
     {
-        class TargetState : TargetStateBase
+        internal class TargetState : TargetStateBase
         {
             private readonly Func<Task> worker;
             public Task result;
@@ -20,18 +20,18 @@ namespace Csa.Build
 
             async Task RunOnce()
             {
-                Logger.Information("begin {id}", Id);
+                Logger.Information("start: {target}", this);
                 Begin = DateTime.UtcNow;
                 try
                 {
                     await worker();
-                    Logger.Information("end {id}", Id);
+                    Logger.Information("success: {target}", this);
                 }
                 catch (Exception exception)
                 {
-                    this.exception = exception;
-                    Logger.Error("fail {id}\r\n{exception}", Id, exception);
-                    throw new Exception($"fail {Id}", exception);
+                    this.exception = new TargetFailed(this, exception);
+                    Logger.Error(this.exception, "fail: {target}", this);
+                    throw this.exception;
                 }
                 finally
                 {

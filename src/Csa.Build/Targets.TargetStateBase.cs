@@ -4,7 +4,7 @@ namespace Csa.Build
 {
     public partial class Targets
     {
-        class TargetStateBase
+        internal class TargetStateBase
         {
             public virtual DateTime? Begin { get; set; }
             public virtual DateTime? End { get; set; }
@@ -18,6 +18,8 @@ namespace Csa.Build
                         : TimeSpan.Zero;
                 }
             }
+
+            public override string ToString() => $"Target {Id}";
 
             public Exception exception;
 

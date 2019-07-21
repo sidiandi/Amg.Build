@@ -105,5 +105,15 @@ namespace Csa.Build
 
         public IList<int> args = new List<int>();
 
+        Target WhatCouldGoWrong => DefineTarget(async () =>
+        {
+            throw new Exception("epic fail");
+        });
+
+        public Target AlwaysFails => DefineTarget(async () =>
+        {
+            await WhatCouldGoWrong();
+        });
+
     }
 }

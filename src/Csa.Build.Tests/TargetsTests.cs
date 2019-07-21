@@ -18,6 +18,13 @@ namespace Csa.Build
         }
 
         [Test]
+        public void Fail()
+        {
+            var exitCode = Targets.Run<MyTargets>(new string[] { "AlwaysFails" });
+            Assert.That(exitCode, Is.Not.EqualTo(0));
+        }
+
+        [Test]
         public void RunQuiet()
         {
             var exitCode = Targets.Run<MyTargets>(new string[] { "-vq" });
