@@ -20,26 +20,9 @@ partial class BuildTargets : Csa.Build.Targets
     string slnFile => $"src/{name}.sln";
     string libDir => $"src/{name}";
 
-    Dotnet dotnet = new Dotnet();
+    Tool dotnet = new Dotnet().Tool().Result;
 
-    Target<GitVersion.VersionVariables> GetVersion => DefineTarget(() =>
-    {
-        return Task.Factory.StartNew(() =>
-        {
-            var gitVersionExecuteCore = new GitVersion.ExecuteCore(new GitVersion.Helpers.FileSystem());
-            string templateString = @"GitVersion: {message}";
-            GitVersion.Logger.SetLoggers(
-            _ => Logger.Debug(templateString, _),
-            _ => Logger.Information(templateString, _),
-            _ => Logger.Warning(templateString, _),
-            _ => Logger.Error(templateString, _));
-            if (!gitVersionExecuteCore.TryGetVersion(".", out var versionVariables, true, null))
-            {
-                throw new System.Exception("Cannot read version");
-            }
-            return versionVariables;
-        }, TaskCreationOptions.LongRunning);
-    });
+    Git git = new Git();
 
     Target Build => DefineTarget(async () =>
     {
@@ -50,7 +33,7 @@ partial class BuildTargets : Csa.Build.Targets
 
     Target<string> WriteAssemblyInformationFile => DefineTarget(async () =>
     {
-        var v = await GetVersion();
+        var v = await git.GetVersion();
         return await assemblyInformationFile.WriteAllTextIfChangedAsync(
 $@"// Generated. Changes will be lost.
 [assembly: System.Reflection.AssemblyCopyright({copyright.Quote()})]
@@ -64,7 +47,7 @@ $@"// Generated. Changes will be lost.
 
     Target<string> WriteVersionPropsFile => DefineTarget(async () =>
     {
-        var v = await GetVersion();
+        var v = await git.GetVersion();
         return await versionPropsFile.WriteAllTextIfChangedAsync(
 $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
@@ -85,7 +68,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
     Target<string> Pack => DefineTarget(async () =>
     {
-        var version = (await GetVersion()).NuGetVersionV2;
+        var version = (await git.GetVersion()).NuGetVersionV2;
         await Build();
         await dotnet.Run("pack",
             libDir,
@@ -96,23 +79,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return $"src/{name}/bin/{configuration}/{name}.{version}.nupkg";
     });
 
-    Target EnsureNoPendingChanges => DefineTarget(async () =>
-    {
-        var git = new Tool("git");
-        var r = await git.Run("ls-files", "--modified", "--others", "--exclude-standard");
-        if (!String.IsNullOrEmpty(r.Output))
-        {
-            throw new Exception($@"The build requires that all git has no uncommitted changes.
-Commit following files:
-
-{r.Output}
-            ");
-        }
-    });
-
     Target Push => DefineTarget(async () =>
     {
-        await EnsureNoPendingChanges();
+        await git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack());
         var nupkgFile = await Pack();
         await dotnet.Run("nuget", "push",
