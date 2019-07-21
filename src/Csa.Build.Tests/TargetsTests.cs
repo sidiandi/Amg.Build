@@ -18,6 +18,13 @@ namespace Csa.Build
         }
 
         [Test]
+        public void RunQuiet()
+        {
+            var exitCode = Targets.Run<MyTargets>(new string[] { "-vq" });
+            Assert.That(exitCode, Is.EqualTo(0));
+        }
+
+        [Test]
         public void RunTargetThatReturnsAResult()
         {
             var exitCode = Targets.Run<MyTargets>(new string[] { "SayHello" });
@@ -84,7 +91,7 @@ namespace Csa.Build
         [Test]
         public void TargetsAreRunWithCommandLineArgs()
         {
-            var exitCode = Targets.Run<MyTargets>(new[] { "Pack", "-vvvv", "--configuration", "MyConfiguration" });
+            var exitCode = Targets.Run<MyTargets>(new[] { "Pack", "-vd", "--configuration", "MyConfiguration" });
         }
 
         [Test]
@@ -107,9 +114,9 @@ Targets:
   Div2                            
 
 Options:
-  --configuration=<string> Release or Debug  
-  -h | --help              Show help and exit
-  -v | --verbose           Increase verbosity
+  --configuration=<string>                Release or Debug                                                
+  -h | --help                             Show help and exit                                              
+  -v<verbosity> | --verbosity=<verbosity> Set the verbosity level. verbosity=quiet|minimal|normal|detailed
 ", o.Out);
             Assert.AreEqual(String.Empty, o.Error);
         }

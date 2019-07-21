@@ -8,6 +8,7 @@ using System.ComponentModel;
 using Csa.CommandLine;
 using System.IO;
 using Serilog;
+using Serilog.Events;
 
 [assembly: InternalsVisibleTo("Csa.Build.Tests")]
 
@@ -20,6 +21,14 @@ namespace Csa.Build
     public partial class Targets
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        enum Verbosity
+        {
+            Quiet,
+            Minimal,
+            Normal,
+            Detailed
+        };
 
         class Options<TargetsDerivedClass>
         {
@@ -37,8 +46,8 @@ namespace Csa.Build
             [Short('h'), Description("Show help and exit")]
             public bool Help { get; set; }
 
-            [Short('v'), Description("Increase verbosity")]
-            public bool Verbose { get; set; }
+            [Short('v'), Description("Set the verbosity level.")]
+            public Verbosity Verbosity { get; set; } = Verbosity.Normal;
         }
 
         public static int Run<TargetsDerivedClass>(string[] args) where TargetsDerivedClass : Targets, new()
@@ -52,7 +61,7 @@ namespace Csa.Build
             }
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
+                .WriteTo.Console(SerilogLogEventLevel(options.Verbosity))
                 .CreateLogger();
 
             try
@@ -64,6 +73,23 @@ namespace Csa.Build
             {
                 Logger.Fatal(ex, "Build failed.");
                 return -1;
+            }
+        }
+
+        private static LogEventLevel SerilogLogEventLevel(Verbosity verbosity)
+        {
+            switch (verbosity)
+            {
+                case Verbosity.Detailed:
+                    return LogEventLevel.Debug;
+                case Verbosity.Normal:
+                    return LogEventLevel.Information;
+                case Verbosity.Minimal:
+                    return LogEventLevel.Error;
+                case Verbosity.Quiet:
+                    return LogEventLevel.Fatal + 1;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

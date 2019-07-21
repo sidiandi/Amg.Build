@@ -43,8 +43,11 @@ namespace Csa.CommandLine
             {
                 get
                 {
-                    var d = _property.GetCustomAttribute<DescriptionAttribute>();
-                    return d == null ? string.Empty : d.Description;
+                    return new[]
+                    {
+                        _property.GetCustomAttribute<DescriptionAttribute>().Map(_ => _.Description),
+                        ValueSyntax(this.Type)
+                    }.Join(" ");
                 }
             }
 

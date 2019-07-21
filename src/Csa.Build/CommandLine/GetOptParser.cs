@@ -142,9 +142,14 @@ namespace Csa.CommandLine
 
         private static string Usage(Type type)
         {
+            return GetLongOptionNameForMember(type.Name);
+        }
+
+        private static string ValueSyntax(Type type)
+        {
             return type.IsEnum
-                ? string.Join("|", Enum.GetNames(type))
-                : type.Name.ToLower();
+                ? $"{GetLongOptionNameForMember(type.Name)}={string.Join("|", Enum.GetNames(type).Select(GetLongOptionNameForMember))}"
+                : String.Empty;
         }
 
         internal static TOptions Parse<TOptions>(IEnumerable<string> args)

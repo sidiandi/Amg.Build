@@ -15,7 +15,7 @@ namespace Csa.Build
 
         public static string Join(this IEnumerable<object> e, string separator)
         {
-            return string.Join(separator, e);
+            return string.Join(separator, e.Where(_ => _ != null));
         }
 
         public static string Join(this IEnumerable<object> e)
@@ -253,6 +253,18 @@ namespace Csa.Build
 {candidates.Select(name).Join()}
 
 ");
+        }
+
+        public static Y Map<Y, X>(this X x, Func<X, Y> mapper) where X: new()
+        {
+            if (x == null)
+            {
+                return default(Y);
+            }
+            else
+            {
+                return mapper(x);
+            }
         }
 
     }
