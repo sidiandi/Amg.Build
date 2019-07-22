@@ -1,4 +1,4 @@
-partial class BuildTargets : Csa.Build.Targets
+partial class BuildTargets : Amg.Build.Targets
 {
     string name => "Amg.Build";
     string company => "Amg";

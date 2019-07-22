@@ -2,12 +2,19 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="GitVersionCore" Version="4.0.0" />
-    <PackageReference Include="Csa.Build" Version="0.1.0-*" />
+    <PackageReference Include="Serilog" Version="2.8.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Amg.Build">
+      <HintPath>..\src\Amg.Build\bin\Debug\netstandard2.0\Amg.Build.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

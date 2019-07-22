@@ -4,6 +4,6 @@ namespace build
 {
     class Program
     {
-        static int Main(string[] args) => Csa.Build.Targets.Run<BuildTargets>(args);
+        static int Main(string[] args) => Amg.Build.Targets.Run<BuildTargets>(args);
     }
 }
