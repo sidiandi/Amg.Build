@@ -4,7 +4,7 @@ using System.IO;
 using Csa.Build;
 using System.Diagnostics;
 
-partial class BuildTargets : Csa.Build.Targets
+partial class BuildTargets : Targets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
