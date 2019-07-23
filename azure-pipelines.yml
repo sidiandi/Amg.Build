@@ -1,0 +1,12 @@
+trigger:
+- master
+
+jobs:
+  - job: Build
+    pool: Default
+    steps:
+    - script: build.cmd push
+      displayName: Build
+      name: build
+      failOnStderr: true
+      workingDirectory: $(build.sourcesDirectory)
