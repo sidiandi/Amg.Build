@@ -158,10 +158,27 @@ namespace Amg.Build
             return File.Exists(path);
         }
 
+        public static bool IsDirectory(this string path)
+        {
+            return Directory.Exists(path);
+        }
+
         public static IEnumerable<string> Glob(this string path)
         {
-            return Directory.EnumerateFileSystemEntries(path, "*", SearchOption.AllDirectories)
-                .Select(_ => _.Absolute());
+            if (path.IsDirectory())
+            {
+                return Directory.EnumerateFileSystemEntries(path, "*", SearchOption.AllDirectories)
+                    .Select(_ => _.Absolute());
+            }
+            else if (path.IsFile())
+            {
+                return new[] { path };
+            }
+            else
+            {
+                return Enumerable.Empty<string>();
+            }
+
         }
     }
 }
