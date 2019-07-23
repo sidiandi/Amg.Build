@@ -84,10 +84,12 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack());
         var nupkgFile = await Pack();
-        await dotnet.Run("nuget", "push",
+        var nuget = new Tool("nuget.exe");
+        await nuget.Run("push",
             nupkgFile,
-            "-s", nugetPushSource,
-            "-ss", nugetPushSymbolSource
+            "-Source", nugetPushSource,
+            "-SymbolSource", nugetPushSymbolSource,
+            "-ApiKey", "NotRequired"
             );
     });
 
