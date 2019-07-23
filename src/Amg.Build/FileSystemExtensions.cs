@@ -178,7 +178,6 @@ namespace Amg.Build
             {
                 return Enumerable.Empty<string>();
             }
-
         }
     }
 }
