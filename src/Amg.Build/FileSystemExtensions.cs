@@ -177,7 +177,7 @@ namespace Amg.Build
             else
             {
                 return Enumerable.Empty<string>();
-            }
+            } 
         }
     }
 }
