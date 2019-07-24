@@ -79,7 +79,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             "--no-build",
             "--include-source",
             "--include-symbols",
-            "--output", PackagesDir
+            "--output", PackagesDir.EnsureDirectoryExists()
             );
 
         return PackagesDir.Combine($"{name}.{version}.nupkg");
