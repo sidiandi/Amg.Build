@@ -5,6 +5,13 @@ jobs:
   - job: Build
     pool: Default
     steps:
+    - task: DownloadSecureFile@1
+      name: configureNuget
+      displayName: 'Download Nuget Configuration'
+      inputs:
+        secureFile: 'configure-nuget.cmd'
+    - script: $(configureNuget.secureFilePath)
+      displayName: Configure Nuget
     - script: build.cmd push
       displayName: Build
       name: build
