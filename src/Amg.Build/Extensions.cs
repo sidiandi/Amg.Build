@@ -267,25 +267,28 @@ namespace Amg.Build
             }
         }
 
-        public static T MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector) where Y : IComparable, T : new()
+        public static T MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector) where Y : IComparable
         {
-            var m = e.FirstOrDefault();
-            if (m == null)
+            try
+            {
+                var m = e.First();
+
+                var maxValue = selector(m);
+                foreach (var i in e.Skip(1))
+                {
+                    var value = selector(i);
+                    if (value.CompareTo(maxValue) == 1)
+                    {
+                        maxValue = value;
+                        m = i;
+                    }
+                }
+                return m;
+            }
+            catch (System.InvalidOperationException)
             {
                 return default(T);
             }
-
-            var maxValue = selector(m);
-            foreach (var i in e.Skip(1))
-            {
-                var value = selector(i);
-                if (value.CompareTo(maxValue) == 1)
-                {
-                    maxValue = value;
-                    m = i;
-                }
-            }
-            return m;
         }
     }
 }
