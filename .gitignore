@@ -3,3 +3,4 @@ bin
 .vs
 nuget.config 
 /out 
+/nuget.exe
