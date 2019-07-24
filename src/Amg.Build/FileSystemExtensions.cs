@@ -142,7 +142,10 @@ namespace Amg.Build
                 .MaxElement(_ => _.LastWrite);
 
             Logger.Information("{0}", m);
-            return m.LastWrite;
+
+            return m == null
+                ? DateTime.MinValue
+                : m.LastWrite;
         }
 
         public static DateTime LastWriteTimeUtc(this string path)
