@@ -13,12 +13,15 @@ partial class BuildTargets : Targets
     string copyright => $"Copyright (c) {company} {year}";
     string configuration => "Debug";
 
-    string outDir => $"out/{configuration}";
-    string assemblyInformationFile => $"{outDir}/CommonAssemblyInfo.cs";
-    string versionPropsFile => $"{outDir}/Version.props";
+    string Root { get; set; } = ".".Absolute();
+    string OutDir => Root.Combine("out");
+    string PackagesDir => OutDir.Combine("packages").EnsureDirectoryExists();
+    string SrcDir => Root.Combine("src");
+    string CommonAssemblyInfoFile => OutDir.Combine("CommonAssemblyInfo.cs");
+    string VersionPropsFile => OutDir.Combine("Version.props");
 
-    string slnFile => $"src/{name}.sln";
-    string libDir => $"src/{name}";
+    string SlnFile => SrcDir.Combine($"{name}.sln");
+    string LibDir => SrcDir.Combine(name);
 
     Tool dotnet = new Dotnet().Tool().Result;
 
@@ -28,13 +31,13 @@ partial class BuildTargets : Targets
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
-        await dotnet.Run("build", slnFile);
+        await dotnet.Run("build", SlnFile);
     });
 
     Target<string> WriteAssemblyInformationFile => DefineTarget(async () =>
     {
         var v = await git.GetVersion();
-        return await assemblyInformationFile.WriteAllTextIfChangedAsync(
+        return await CommonAssemblyInfoFile.WriteAllTextIfChangedAsync(
 $@"// Generated. Changes will be lost.
 [assembly: System.Reflection.AssemblyCopyright({copyright.Quote()})]
 [assembly: System.Reflection.AssemblyCompany({company.Quote()})]
@@ -48,7 +51,7 @@ $@"// Generated. Changes will be lost.
     Target<string> WriteVersionPropsFile => DefineTarget(async () =>
     {
         var v = await git.GetVersion();
-        return await versionPropsFile.WriteAllTextIfChangedAsync(
+        return await VersionPropsFile.WriteAllTextIfChangedAsync(
 $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
     <PropertyGroup>
@@ -63,7 +66,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 	Target Test => DefineTarget(async () =>
     {
         await Build();
-        await dotnet.Run("test", slnFile, "--no-build");
+        await dotnet.Run("test", SlnFile, "--no-build");
     });
 
     Target<string> Pack => DefineTarget(async () =>
@@ -71,12 +74,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var version = (await git.GetVersion()).NuGetVersionV2;
         await Build();
         await dotnet.Run("pack",
-            libDir,
+            LibDir,
             "--configuration", configuration,
             "--no-build",
             "--include-source",
-            "--include-symbols");
-        return $"src/{name}/bin/{configuration}/{name}.{version}.nupkg";
+            "--include-symbols",
+            "--output", PackagesDir
+            );
+
+        return PackagesDir.Combine($"{name}.{version}.nupkg");
     });
 
     Target Push => DefineTarget(async () =>
@@ -85,11 +91,11 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Task.WhenAll(Test(), Pack());
         var nupkgFile = await Pack();
         var nuget = new Tool("nuget.exe");
-        await nuget.Run("push",
+        await nuget.Run(
+            "push",
             nupkgFile,
             "-Source", nugetPushSource,
-            "-SymbolSource", nugetPushSymbolSource,
-            "-ApiKey", "NotRequired"
+            "-SymbolSource", nugetPushSymbolSource
             );
     });
 
@@ -98,7 +104,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Build();
         Process.Start(new ProcessStartInfo
         {
-            FileName = Path.GetFullPath(slnFile),
+            FileName = Path.GetFullPath(SlnFile),
             UseShellExecute = true
         });
     });
