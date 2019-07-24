@@ -14,8 +14,8 @@ partial class BuildTargets : Targets
     string configuration => "Debug";
 
     string Root { get; set; } = ".".Absolute();
-    string OutDir => Root.Combine("out");
-    string PackagesDir => OutDir.Combine("packages").EnsureDirectoryExists();
+    string OutDir => Root.Combine("out", configuration);
+    string PackagesDir => OutDir.Combine("packages");
     string SrcDir => Root.Combine("src");
     string CommonAssemblyInfoFile => OutDir.Combine("CommonAssemblyInfo.cs");
     string VersionPropsFile => OutDir.Combine("Version.props");
