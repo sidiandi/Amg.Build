@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using Amg.Build;
 using System.Diagnostics;
+using System.Linq;
 
 partial class BuildTargets : Targets
 {
@@ -10,15 +11,16 @@ partial class BuildTargets : Targets
 	
 	static int Main(string[] args) => Targets.Run<BuildTargets>(args);
 
-	Target<string, Nothing> Greet => DefineTarget((string name) =>
+	Target<string, Nothing> Greet => DefineTarget(async (string name) =>
 	{
+		await Task.Delay(TimeSpan.FromSeconds(1));
 		Console.WriteLine($"Hello, {name}");
 		return Nothing.Instance;
 	});
 	
 	public Target GreetAll => DefineTarget(async () =>
 	{
-		await Task.WhenAll(Greet("Alice"), Greet("Bob"));
+		await Task.WhenAll(Enumerable.Range(0,100).Select(_ => Greet($"Alice {_}")));
 	});
 	
 	Target Default => DefineTarget(async () =>
