@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Utilities for functional programming
+    /// </summary>
     public static class FunctionUtils
     {
         /// <summary>

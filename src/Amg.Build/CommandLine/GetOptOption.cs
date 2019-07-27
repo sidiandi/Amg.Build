@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Amg.CommandLine
 {
-    public static partial class GetOptParser
+    internal static partial class GetOptParser
     {
         public class GetOptOption
         {

@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Amg.CommandLine
 {
-    public class ParseException : Exception
+    internal class ParseException : Exception
     {
         private readonly IEnumerable<string> _args;
         private readonly IEnumerator<string> _currentPosition;

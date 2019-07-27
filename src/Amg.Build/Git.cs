@@ -5,10 +5,16 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Targets for git repositories
+    /// </summary>
     public class Git : Targets
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        /// <summary>
+        /// Use GitVersion to extract the application version
+        /// </summary>
         public Target<GitVersion.VersionVariables> GetVersion => DefineTarget(() =>
         {
             return Task.Factory.StartNew(() =>

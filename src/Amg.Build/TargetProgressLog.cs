@@ -8,39 +8,31 @@ namespace Amg.Build
 {
     class TargetProgressLog : TargetProgress
     {
-        IDictionary<string, TargetData> state = new Dictionary<string, TargetData>();
+        IDictionary<JobId, TargetData> state = new Dictionary<JobId, TargetData>();
 
-        public void Begin(string id, object input)
+        public void Begin(JobId id)
         {
-            var s = GetState(id, input);
-            var key = Key(id, input);
-            s.Input = input;
+            var s = GetState(id);
             s.Begin = DateTime.UtcNow;
         }
 
-        TargetData GetState(string id, object input)
+        TargetData GetState(JobId id)
         {
-            var key = Key(id, input);
-            return state.GetOrAdd(key, () => new TargetData(key));
+            return state.GetOrAdd(id, () => new TargetData(id));
         }
 
-        public void End(string id, object input, object output)
+        public void End(JobId id, object output)
         {
-            var s = GetState(id, input);
+            var s = GetState(id);
             s.End = DateTime.UtcNow;
             s.Output = output;
         }
 
-        public void Fail(string id, object input, Exception exception)
+        public void Fail(JobId id, Exception exception)
         {
-            var s = GetState(id, input);
+            var s = GetState(id);
             s.End = DateTime.UtcNow;
             s.Exception = exception;
-        }
-
-        private string Key(string id, object input)
-        {
-            return $"{id}({input})";
         }
 
         public enum State
@@ -52,9 +44,9 @@ namespace Amg.Build
 
         private class TargetData
         {
-            public TargetData(string key)
+            public TargetData(JobId id)
             {
-                Key = key;
+                Id = id;
             }
 
             public Exception Exception { get; internal set; }
@@ -64,7 +56,6 @@ namespace Amg.Build
             public object Output { get; internal set; }
             public bool Failed => Exception != null;
 
-            public string Key { get; }
             public TimeSpan Duration => End.Value - Begin.Value;
 
             public State State
@@ -85,6 +76,10 @@ namespace Amg.Build
                     }
                 }
             }
+
+            public JobId Id { get; }
+
+            public override string ToString() => Id.ToString();
         }
 
         static DateTime? Max(DateTime? a, DateTime? b)
@@ -162,7 +157,7 @@ namespace Amg.Build
             state.Values.OrderBy(_ => _.End)
                 .Select(_ => new
                 {
-                    _.Key,
+                    _.Id,
                     Duration = _.Duration.HumanReadable(),
                     _.State,
                     Timeline = _.Begin.HasValue && _.End.HasValue

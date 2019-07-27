@@ -70,6 +70,7 @@ namespace Amg.Build
         [Description("Compile source code")]
         Target Compile => DefineTarget(() =>
         {
+            Console.WriteLine(GetRootDirectory());
             result += "Compile";
         });
 

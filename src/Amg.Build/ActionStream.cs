@@ -12,11 +12,13 @@ namespace Amg.Build
         private Action<string> output;
         StringBuilder startedLine = null;
 
+        /// <summary />
         public ActionStream(Action<string> output)
         {
             this.output = output;
         }
 
+        /// <summary />
         public override void Write(char value)
         {
             if (value == '\r')
@@ -36,6 +38,7 @@ namespace Amg.Build
             }
         }
 
+        /// <summary />
         public override void WriteLine(string line)
         {
             if (startedLine != null)
@@ -46,11 +49,13 @@ namespace Amg.Build
             output(line);
         }
 
+        /// <summary />
         public override void Flush()
         {
             WriteLine();
         }
 
+        /// <summary />
         public override Encoding Encoding => Encoding.UTF8;
     }
 }

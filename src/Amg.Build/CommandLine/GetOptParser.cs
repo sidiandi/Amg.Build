@@ -14,7 +14,7 @@ namespace Amg.CommandLine
     /// GetOpt compatible command line option parser
     /// </summary>
     /// Follows the conventions in [Program Argument Syntax Conventions](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html):
-    public static partial class GetOptParser
+    internal static partial class GetOptParser
     {
         private const string LongPrefix = "--";
         private const string ShortPrefix = "-";

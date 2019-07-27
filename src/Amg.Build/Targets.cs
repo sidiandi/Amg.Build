@@ -280,9 +280,13 @@ Options:");
 
         protected Target<Input, Output> DefineTarget<Input, Output>(Func<Input, Task<Output>> f, [CallerMemberName] string name = null)
         {
-            Logger.Information("Define target {name}", name);
             var definition = (TargetDefinition<Input, Output>) targets.GetOrAdd(name, () => new TargetDefinition<Input, Output>(name, f, Progress));
             return definition.Run;
+        }
+
+        public string GetRootDirectory([CallerFilePath] string thisSource = null)
+        {
+            return thisSource.Parent().Parent();
         }
     }
 }

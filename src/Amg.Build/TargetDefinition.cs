@@ -18,23 +18,24 @@ namespace Amg.Build
             this.name = name;
             this.once = new Target<Input, Output>(FunctionUtils.Once(async (Input input) =>
             {
+                var jobId = new JobId(name, input);
                 try
                 {
-                    progress.Begin(name, input);
+                    progress.Begin(jobId);
                     try
                     {
                         var output = await work(input);
-                        progress.End(name, input, output);
+                        progress.End(jobId, output);
                         return output;
                     }
                     catch (Exception ex)
                     {
-                        throw new TargetFailed(name, input, ex);
+                        throw new TargetFailed(jobId, ex);
                     }
                 }
                 catch (Exception exception)
                 {
-                    progress.Fail(name, input, exception);
+                    progress.Fail(jobId, exception);
                     throw;
                 }
                 finally
