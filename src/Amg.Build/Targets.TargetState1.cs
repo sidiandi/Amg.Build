@@ -21,16 +21,16 @@ namespace Amg.Build
             {
                 try
                 {
-                    Logger.Information("begin {id}", Id);
+                    Logger.Information("begin: {target}", this);
                     Begin = DateTime.UtcNow;
                     var result = await worker();
-                    Logger.Information("end {id}: {result}", Id, result);
+                    Logger.Information("success: {target} returns {result}", this, result);
                     return result;
                 }
                 catch (Exception exception)
                 {
                     this.exception = exception;
-                    Logger.Error("fail {id}\r\n{exception}", Id, exception);
+                    Logger.Error("fail: {target}\r\n{exception}", this, exception);
                     throw new Exception($"fail {Id}", exception);
                 }
                 finally

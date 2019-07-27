@@ -69,7 +69,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await dotnet.Run("test", SlnFile, "--no-build");
     });
 
-    Target<string> Pack => DefineTarget(async () =>
+    public Target<string> Pack => DefineTarget(async () =>
     {
         var version = (await git.GetVersion()).NuGetVersionV2;
         await Build();

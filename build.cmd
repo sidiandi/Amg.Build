@@ -1,1 +1,1 @@
-@dotnet run --force --project build -- %*
+@dotnet run --force --project %~dp0build -- %*

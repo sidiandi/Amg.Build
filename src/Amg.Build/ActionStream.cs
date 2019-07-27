@@ -5,7 +5,7 @@ using System.Text;
 namespace Amg.Build
 {
     /// <summary>
-    /// Calls an Action<string> for every written line
+    /// Calls an <![CDATA[ Action<string> ]]> for every written line.
     /// </summary>
     public class ActionStream : TextWriter
     {

@@ -20,7 +20,7 @@ namespace Amg.Build
 
             async Task RunOnce()
             {
-                Logger.Information("start: {target}", this);
+                Logger.Information("begin: {target}", this);
                 Begin = DateTime.UtcNow;
                 try
                 {
