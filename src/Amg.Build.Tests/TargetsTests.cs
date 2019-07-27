@@ -49,8 +49,7 @@ namespace Amg.Build
         public void IsTarget()
         {
             var t = typeof(MyTargets);
-            Assert.That(Targets.IsTargetProperty(t.GetProperty("SayHello")));
-            Assert.That(Targets.IsTargetProperty(t.GetProperty("Compile")));
+            Assert.That(Targets.IsPublicTargetProperty(t.GetProperty("SayHello")));
         }
 
         [Test]
@@ -69,7 +68,8 @@ namespace Amg.Build
         {
             var t = new MyTargets();
             await t.RunTargets(Enumerable.Empty<String>());
-            Assert.AreEqual("CompileLinkPack", t.result);
+            var r = t.result;
+            Assert.AreEqual("CompileLinkPack", r);
         }
 
         [Test]
@@ -109,24 +109,20 @@ namespace Amg.Build
                 var exitCode = Targets.Run<MyTargets>(new[] { "--help" });
                 Assert.That(exitCode, Is.EqualTo(1));
             });
-            /*
             Assert.AreEqual(@"Usage: build <targets> [options]
 
 Targets:
-  Compile  Compile source code    
   Link     Link object files      
   SayHello Say hello              
   Pack     Pack nuget package     
   Default  Compile, link, and pack
-  Times2                          
-  Div2                            
 
 Options:
   --configuration=<string>                Release or Debug                                                
   -h | --help                             Show help and exit                                              
   -v<verbosity> | --verbosity=<verbosity> Set the verbosity level. verbosity=quiet|minimal|normal|detailed
 ", o.Out);
-            */
+
             Assert.AreEqual(String.Empty, o.Error);
         }
     }

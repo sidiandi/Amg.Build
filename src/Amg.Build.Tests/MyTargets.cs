@@ -62,8 +62,13 @@ namespace Amg.Build
 
         public string result { get; private set; } = String.Empty;
 
+        public MyTargets()
+        {
+
+        }
+
         [Description("Compile source code")]
-        public Target Compile => DefineTarget(() =>
+        Target Compile => DefineTarget(() =>
         {
             result += "Compile";
         });

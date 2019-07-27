@@ -11,5 +11,15 @@ namespace Amg.Build
         {
             return "nothing";
         }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Nothing;
+        }
+
+        public override int GetHashCode()
+        {
+            return 0;
+        }
     }
 }

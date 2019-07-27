@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -210,14 +211,27 @@ namespace Amg.Build
 
         public static Value GetOrAdd<Key, Value>(this IDictionary<Key, Value> dictionary, Key key, Func<Value> factory)
         {
-            if (dictionary.TryGetValue(key, out Value value))
+            lock (dictionary)
             {
+                if (dictionary.TryGetValue(key, out Value value))
+                {
+                }
+                else
+                {
+                    Monitor.Exit(dictionary);
+                    try
+                    {
+                        value = factory();
+                    }
+                    finally
+                    {
+                        Monitor.Enter(dictionary);
+                    }
+                    dictionary[key] = value;
+                    return value;
+                }
+                return value;
             }
-            else
-            {
-                value = dictionary[key] = factory();
-            }
-            return value;
         }
 
         public static T FindByName<T>(this IEnumerable<T> candidates, Func<T, string> name, string query)

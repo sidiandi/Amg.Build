@@ -8,8 +8,8 @@ namespace Amg.Build
     {
         private readonly Targets.TargetStateBase targetState;
 
-        public TargetFailed(Targets.TargetStateBase targetState, Exception innerException)
-            :base($"{targetState} failed.", innerException)
+        public TargetFailed(string name, object input, Exception innerException)
+            :base($"{name}({input}) failed.", innerException)
         {
             this.targetState = targetState;
         }
