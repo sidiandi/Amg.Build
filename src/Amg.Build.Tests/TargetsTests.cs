@@ -41,7 +41,7 @@ namespace Amg.Build
         [Test]
         public void Fail()
         {
-            var exitCode = Targets.Run<MyTargets>(new string[] { "AlwaysFails", "-vq"});
+            var exitCode = Targets.Run<MyTargets>(new string[] { "AlwaysFails", "-vq" });
             Assert.That(exitCode, Is.Not.EqualTo(0));
         }
 
@@ -106,7 +106,7 @@ namespace Amg.Build
         {
             var t = new MyTargets();
             const int aCount = 10;
-            foreach (var i in Enumerable.Range(0,3))
+            foreach (var i in Enumerable.Range(0, 3))
             {
                 foreach (var a in Enumerable.Range(0, aCount))
                 {
@@ -147,6 +147,18 @@ Options:
 
             */
             Assert.AreEqual(String.Empty, o.Error);
+        }
+
+        public class MinimalTargets : Targets
+        {
+
+        }
+
+        [Test]
+        public void Minimal()
+        {
+            var exitCode = Targets.Run<MinimalTargets>(new[] { "--help" });
+            Assert.AreEqual(1, exitCode);
         }
     }
 }

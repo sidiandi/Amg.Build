@@ -128,7 +128,7 @@ namespace Amg.Build
 
             return GetWritable(w =>
             {
-                var columnWidth = data.Select(_ => _.Select(c => c.Length)).Aggregate(Max);
+                var columnWidth = data.Select(_ => _.Select(c => c.Length)).Aggregate(Enumerable.Empty<int>(), Max);
                 var columnSeparator = " ";
 
                 foreach (var row in data)
