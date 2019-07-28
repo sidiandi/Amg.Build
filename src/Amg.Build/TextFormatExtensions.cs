@@ -5,6 +5,9 @@ using System.Linq;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Extensions for formatted text output
+    /// </summary>
     public static class TextFormatExtensions
     {
         /// <summary>
@@ -19,14 +22,25 @@ namespace Amg.Build
                 : x;
         }
 
+        /// <summary>
+        /// Quotes a string.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static string Quote(this string x)
         {
             return "\"" + x.Replace("\"", "\\\"") + "\"";
         }
 
+
+        /// <summary>
+        /// Writes instance properties
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static IWritable Dump(this object x) => GetWritable(_ => _.Dump(x));
 
-        public static TextWriter Dump(this TextWriter w, object x)
+        static TextWriter Dump(this TextWriter w, object x)
         {
             var type = x.GetType();
             if (type.IsPrimitive || type.Equals(typeof(string)))
@@ -46,6 +60,14 @@ namespace Amg.Build
             }
             return w;
         }
+
+        /// <summary>
+        /// prints the properties of T in a table
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <param name="header">true: print property names as header</param>
+        /// <returns></returns>
         public static IWritable ToTable<T>(this IEnumerable<T> e, bool header = false)
         {
             var type = typeof(T);
@@ -62,6 +84,11 @@ namespace Amg.Build
             }
         }
 
+        /// <summary>
+        /// object properties as table
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static IWritable ToPropertiesTable(this object x)
         {
             return x.GetType()
@@ -70,6 +97,11 @@ namespace Amg.Build
                 .ToTable(header: false);
         }
 
+        /// <summary>
+        /// like ToString, but never throws. x can also be null.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static string SafeToString(this object x)
         {
             try
@@ -82,6 +114,11 @@ namespace Amg.Build
             }
         }
 
+        /// <summary>
+        /// Print a table from a sequence of rows containing sequences of column data.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public static IWritable Table(this IEnumerable<IEnumerable<string>> data)
         {
             IEnumerable<int> Max(IEnumerable<int> e0, IEnumerable<int> e1)
@@ -104,6 +141,15 @@ namespace Amg.Build
             });
         }
 
+        /// <summary>
+        /// represents a time interval in a larger time interval as time line.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="rangeBegin"></param>
+        /// <param name="rangeEnd"></param>
+        /// <param name="begin"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime begin, DateTime end)
         {
             int Pos(DateTime t)
@@ -117,34 +163,14 @@ namespace Amg.Build
             return new string(empty, beginPos) + new string(full, endPos - beginPos) + new string(empty, width - endPos);
         }
 
+        /// <summary>
+        /// Converts an TextWriter output action to an object that can yields the output as ToString().
+        /// </summary>
+        /// <param name="w"></param>
+        /// <returns></returns>
         public static IWritable GetWritable(this Action<TextWriter> w)
         {
             return new Writable(w);
         }
-
-        class Writable : IWritable
-        {
-            private readonly Action<TextWriter> writer;
-
-            public Writable(Action<TextWriter> writer)
-            {
-                this.writer = writer;
-            }
-
-            public override string ToString()
-            {
-                using (var w = new StringWriter())
-                {
-                    Write(w);
-                    return w.ToString();
-                }
-            }
-
-            public void Write(TextWriter textWriter)
-            {
-                writer(textWriter);
-            }
-        }
-
     }
 }
