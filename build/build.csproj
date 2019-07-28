@@ -6,8 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersionCore" Version="4.0.0" />
-    <PackageReference Include="Amg.Build" Version="0.0.1-*" />
+    <PackageReference Include="Amg.Build" Version="0.2.0" />
   </ItemGroup>
 
 </Project>

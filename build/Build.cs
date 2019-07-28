@@ -23,20 +23,19 @@ partial class BuildTargets : Targets
     string SlnFile => SrcDir.Combine($"{name}.sln");
     string LibDir => SrcDir.Combine(name);
 
-    Tool dotnet = new Dotnet().Tool().Result;
-
-    Git git = new Git();
+    Dotnet Dotnet => DefineTargets(() => new Dotnet());
+    Git Git => DefineTargets(() => new Git());
 
     Target Build => DefineTarget(async () =>
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
-        await dotnet.Run("build", SlnFile);
+        await (await Dotnet.Tool()).Run("build", SlnFile);
     });
 
     Target<string> WriteAssemblyInformationFile => DefineTarget(async () =>
     {
-        var v = await git.GetVersion();
+        var v = await Git.GetVersion();
         return await CommonAssemblyInfoFile.WriteAllTextIfChangedAsync(
 $@"// Generated. Changes will be lost.
 [assembly: System.Reflection.AssemblyCopyright({copyright.Quote()})]
@@ -50,7 +49,7 @@ $@"// Generated. Changes will be lost.
 
     Target<string> WriteVersionPropsFile => DefineTarget(async () =>
     {
-        var v = await git.GetVersion();
+        var v = await Git.GetVersion();
         return await VersionPropsFile.WriteAllTextIfChangedAsync(
 $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <Project ToolsVersion=""4.0"" xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"">
@@ -66,14 +65,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 	Target Test => DefineTarget(async () =>
     {
         await Build();
-        await dotnet.Run("test", SlnFile, "--no-build");
+        await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build");
     });
 
     public Target<string> Pack => DefineTarget(async () =>
     {
-        var version = (await git.GetVersion()).NuGetVersionV2;
+        var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
-        await dotnet.Run("pack",
+        await (await Dotnet.Tool()).Run("pack",
             LibDir,
             "--configuration", configuration,
             "--no-build",
@@ -87,7 +86,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
     Target Push => DefineTarget(async () =>
     {
-        await git.EnsureNoPendingChanges();
+        await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack());
         var nupkgFile = await Pack();
         var nuget = new Tool("nuget.exe");
