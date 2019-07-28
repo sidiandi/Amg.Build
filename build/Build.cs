@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using Amg.Build;
 using System.Diagnostics;
+using System.ComponentModel;
 
 partial class BuildTargets : Targets
 {
@@ -26,7 +27,8 @@ partial class BuildTargets : Targets
     Dotnet Dotnet => DefineTargets(() => new Dotnet());
     Git Git => DefineTargets(() => new Git());
 
-    Target Build => DefineTarget(async () =>
+    [Description("Build")]
+    public Target Build => DefineTarget(async () =>
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
@@ -62,14 +64,17 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 ");
     });
 
-	Target Test => DefineTarget(async () =>
+    [Description("run unit tests")]
+	public Target Test => DefineTarget(async () =>
     {
         await Build();
         await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build");
     });
 
+    [Description("pack nuget package")]
     public Target<string> Pack => DefineTarget(async () =>
     {
+        await Git.EnsureNoPendingChanges();
         var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
         await (await Dotnet.Tool()).Run("pack",
@@ -84,6 +89,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return PackagesDir.Combine($"{name}.{version}.nupkg");
     });
 
+    [Description("push nuget package")]
     Target Push => DefineTarget(async () =>
     {
         await Git.EnsureNoPendingChanges();
