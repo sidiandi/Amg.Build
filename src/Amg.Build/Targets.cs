@@ -59,6 +59,7 @@ namespace Amg.Build
             Detailed
         };
 
+        /// <summary />
         public Targets()
         {
             Progress = targetLog;
@@ -365,6 +366,17 @@ Options:");
             return thisSource.Parent().Parent();
         }
 
+        /// <summary>
+        /// Define a subtargets class instance.
+        /// </summary>
+        /// Usage pattern in your Targets derived class:
+        /// <![CDATA[
+        /// Git Git => DefineTargets(() => new Git());
+        /// ]]>
+        /// <typeparam name="MyTargets"></typeparam>
+        /// <param name="factory"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public MyTargets DefineTargets<MyTargets>(Func<MyTargets> factory, [CallerMemberName] string name = null) where MyTargets : Targets
         {
             return (MyTargets) subTargets.GetOrAdd(name, () =>

@@ -23,8 +23,8 @@ namespace Amg.Build
         [Description("Print the dotnet version")]
         Target DotnetVersion => DefineTarget(async () =>
         {
-            var r = await (await Dotnet.Tool()).Run("--version");
-            Console.WriteLine(r.Output);
+            var v = await Dotnet.Version();
+            Console.WriteLine(v);
         });
 
         [Description("Compile source code")]
