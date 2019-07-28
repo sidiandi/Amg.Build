@@ -59,6 +59,11 @@ namespace Amg.Build
             Detailed
         };
 
+        public Targets()
+        {
+            Progress = targetLog;
+        }
+
         class Options<TargetsDerivedClass>
         {
             public TargetsDerivedClass targets { get; set; }
@@ -359,5 +364,17 @@ Options:");
         {
             return thisSource.Parent().Parent();
         }
+
+        public MyTargets DefineTargets<MyTargets>(Func<MyTargets> factory, [CallerMemberName] string name = null) where MyTargets : Targets
+        {
+            return (MyTargets) subTargets.GetOrAdd(name, () =>
+            {
+                var targets = (Targets) factory();
+                targets.Progress = new PrefixProgress(this.Progress, name + ".");
+                return targets;
+            });
+        }
+
+        IDictionary<string, Targets> subTargets = new Dictionary<string, Targets>();
     }
 }

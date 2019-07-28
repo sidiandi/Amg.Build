@@ -7,6 +7,18 @@ namespace Amg.Build
 {
     public static class TextFormatExtensions
     {
+        /// <summary>
+        /// Quote only if x contains whitespace.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static string QuoteIfRequired(this string x)
+        {
+            return x.Any(Char.IsWhiteSpace)
+                ? x.Quote()
+                : x;
+        }
+
         public static string Quote(this string x)
         {
             return "\"" + x.Replace("\"", "\\\"") + "\"";

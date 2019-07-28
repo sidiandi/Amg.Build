@@ -1,4 +1,6 @@
-﻿namespace Amg.Build
+﻿using System;
+
+namespace Amg.Build
 {
     /// <summary>
     /// Identifies an invocation of a target with a certain input.
@@ -14,6 +16,16 @@
         {
             Name = name;
             Input = input;
+        }
+
+        /// <summary>
+        /// Put a prefix to the name to distinguish sub targets
+        /// </summary>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
+        public JobId Prefix(object prefix)
+        {
+            return new JobId(prefix + Name, Input);
         }
 
         string Name { get; }

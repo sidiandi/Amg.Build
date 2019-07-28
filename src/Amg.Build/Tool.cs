@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Start a command line tool.
+    /// </summary>
+    /// Immutable. To customize, use the With... methods.
     public class Tool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -13,12 +17,23 @@ namespace Amg.Build
         private readonly string fileName;
         private string[] leadingArguments = new string[] { };
         private string workingDirectory = ".";
+        private int? expectedExitCode = 0;
 
+        /// <summary>
+        /// Prepends arguments to every Run call.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public Tool WithArguments(params string[] args)
         {
             return WithArguments((IEnumerable<string>)args);
         }
 
+        /// <summary>
+        /// Prepends arguments to every Run call.
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public Tool WithArguments(IEnumerable<string> args)
         {
             var t = (Tool) this.MemberwiseClone();
@@ -26,6 +41,11 @@ namespace Amg.Build
             return t;
         }
 
+        /// <summary>
+        /// Set the working directory for the tool. Default: current directory
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <returns></returns>
         public Tool WithWorkingDirectory(string workingDirectory)
         {
             var t = (Tool)this.MemberwiseClone();
@@ -33,16 +53,36 @@ namespace Amg.Build
             return t;
         }
 
-        public Tool(string fileName)
+        /// <summary>
+        /// Set the expected exit code. Default: 0
+        /// </summary>
+        /// <param name="expectedExitCode"></param>
+        /// <returns></returns>
+        public Tool WithExitCode(int expectedExitCode)
         {
-            this.fileName = fileName;
+            var t = (Tool)this.MemberwiseClone();
+            t.expectedExitCode = expectedExitCode;
+            return t;
         }
 
-        static string QuoteIfRequired(string x)
+        /// <summary>
+        /// Disable throwing an exception when the exit code was not as expected.
+        /// </summary>
+        /// <returns></returns>
+        public Tool DoNotCheckExitCode()
         {
-            return x.Any(Char.IsWhiteSpace)
-                ? x.Quote()
-                : x;
+            var t = (Tool)this.MemberwiseClone();
+            t.expectedExitCode = null;
+            return t;
+        }
+
+        /// <summary>
+        /// Create a tool. 
+        /// </summary>
+        /// <param name="executableFileName">.exe or .cmd file. Relative paths are resolved to current directory and PATH environment.</param>
+        public Tool(string executableFileName)
+        {
+            this.fileName = executableFileName;
         }
 
         class ResultImpl : IToolResult
@@ -52,6 +92,11 @@ namespace Amg.Build
             public string Error { get; set; }
         }
 
+        /// <summary>
+        /// Runs the tool
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public Task<IToolResult> Run(params string[] args)
         {
             return Task.Factory.StartNew(() =>
@@ -82,9 +127,12 @@ namespace Amg.Build
                     Output = output.Result
                 };
 
-                if (p.ExitCode != 0)
+                if (expectedExitCode != null)
                 {
-                    throw new ToolException($"exit code {p.ExitCode}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", result);
+                    if (p.ExitCode != expectedExitCode.Value)
+                    {
+                        throw new ToolException($"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", result);
+                    }
                 }
 
                 return result;
@@ -92,9 +140,16 @@ namespace Amg.Build
             }, TaskCreationOptions.LongRunning);
         }
 
-        private string CreateArgumentsString(IEnumerable<string> args)
+        /// <summary>
+        /// Creates an argument string for Process.StartInfo.Arguments
+        /// </summary>
+        /// Provided as a convenience for use outside of this class.
+        /// Quotes arguments with whitespace
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static string CreateArgumentsString(IEnumerable<string> args)
         {
-            return String.Join(" ", args.Select(QuoteIfRequired));
+            return String.Join(" ", args.Select(_ => _.QuoteIfRequired()));
         }
     }
 }

@@ -24,6 +24,16 @@ Targets are created with Targets.DefineTarget and they are made accessible as pr
 
 If a Target property is public and if it has a System.Component.Description attribute, then it is accessible on the command line.
 
+### Subtargets
+
+You can add classes with subtargets to your target container like so:
+
+````
+Git Git => DefineTargets(() => new Git());
+````
+
+The targets in the `Git` instance can then called as normal function. The executed jobs of the subtargets will appear in your build summary.
+
 ### Build Properties
 
 Properties of the Targets container can be accessed as build properties on the command line if
@@ -37,3 +47,4 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
+* Subtargets
