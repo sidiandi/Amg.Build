@@ -14,6 +14,7 @@ namespace Amg.Build
         /// </summary>
         public static readonly Nothing Instance = new Nothing();
 
+        /// <summary />
         public override string ToString()
         {
             return "nothing";

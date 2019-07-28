@@ -21,7 +21,7 @@ namespace Amg.Build
         {
             Target<int, string> Greet => DefineTarget(async (int n) =>
             {
-                Task.Delay(100);
+                await Task.Delay(100);
                 return $"Greet {n}";
             });
 

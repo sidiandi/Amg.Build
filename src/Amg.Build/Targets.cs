@@ -14,16 +14,42 @@ using Serilog.Events;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Build target with no input and no output
+    /// </summary>
+    /// <returns></returns>
     public delegate Task Target();
-    public delegate Task<Result> Target<Result>();
-    public delegate Task<Result> Target<Arg, Result>(Arg a);
 
+    /// <summary>
+    /// Build target with no input and output Output
+    /// </summary>
+    /// <typeparam name="Output"></typeparam>
+    /// <returns></returns>
+    public delegate Task<Output> Target<Output>();
+
+    /// <summary>
+    /// Build target with input and output
+    /// </summary>
+    /// <typeparam name="Input"></typeparam>
+    /// <typeparam name="Output"></typeparam>
+    /// <param name="a"></param>
+    /// <returns></returns>
+    public delegate Task<Output> Target<Input, Output>(Input a);
+
+    /// <summary>
+    /// Derive from this class to implement your own container of build targets.
+    /// </summary>
+    /// This is the central class in Amg.Build.
     public partial class Targets
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public TargetProgress Progress => targetLog;
         TargetProgressLog targetLog = new TargetProgressLog();
+
+        /// <summary>
+        /// Set this with your own implementation to customize the recording of execution of build targets.
+        /// </summary>
+        public TargetProgress Progress { get; set; }
 
         enum Verbosity
         {
@@ -53,10 +79,17 @@ namespace Amg.Build
             public Verbosity Verbosity { get; set; } = Verbosity.Normal;
         }
 
-        public static int Run<TargetsDerivedClass>(string[] args) where TargetsDerivedClass : Targets, new()
+        /// <summary>
+        /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
+        /// </summary>
+        /// Call this method directly from your Main()
+        /// <typeparam name="TargetsDerivedClass"></typeparam>
+        /// <param name="commandLineArguments"></param>
+        /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
+        public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : Targets, new()
         {
             var options = new Options<TargetsDerivedClass>(new TargetsDerivedClass());
-            GetOptParser.Parse(args, options);
+            GetOptParser.Parse(commandLineArguments, options);
             if (options.Help)
             {
                 PrintHelp(Console.Out, options);
@@ -239,6 +272,21 @@ Options:");
             await Task.WhenAll(tasks);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
+        /// Usage pattern:
+        /// <![CDATA[
+        /// [Description("Compile source code")]
+        /// Target Compile => DefineTarget(async () =>
+        /// {
+        ///     ...
+        /// });
+        /// ]]>
+        /// Will always return the same instance for the same name.
+        /// <param name="f">Work to be done when the target executes.</param>
+        /// <param name="name">Name of the target</param>
+        /// <returns></returns>
         protected Target DefineTarget(Func<Task> f, [CallerMemberName] string name = null)
         {
             var t = DefineTarget<Nothing, Nothing>(async (nothing) =>
@@ -250,6 +298,9 @@ Options:");
             return () => t(Nothing.Instance);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
         protected Target DefineTarget(Action f, [CallerMemberName] string name = null)
         {
             var t = DefineTarget<Nothing, Nothing>(async (nothing) =>
@@ -260,30 +311,50 @@ Options:");
             return () => t(Nothing.Instance);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
         protected Target<Output> DefineTarget<Output>(Func<Output> f, [CallerMemberName] string name = null)
         {
             return DefineTarget(AsyncHelper.ToAsync(f), name);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
         protected Target<Output> DefineTarget<Output>(Func<Task<Output>> f, [CallerMemberName] string name = null)
         {
             var t = DefineTarget<Nothing, Output>((nothing) => f(), name);
             return () => t(Nothing.Instance);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
         protected Target<Input, Output> DefineTarget<Input, Output>(Func<Input, Output> f, [CallerMemberName] string name = null)
         {
             return DefineTarget(AsyncHelper.ToAsync(f), name);
         }
 
+        /// <summary>
+        /// Define a target.
+        /// </summary>
         Dictionary<string, TargetDefinitionBase> targets = new Dictionary<string, TargetDefinitionBase>();
 
+        /// <summary>
+        /// Define a target with input and output
+        /// </summary>
         protected Target<Input, Output> DefineTarget<Input, Output>(Func<Input, Task<Output>> f, [CallerMemberName] string name = null)
         {
             var definition = (TargetDefinition<Input, Output>) targets.GetOrAdd(name, () => new TargetDefinition<Input, Output>(name, f, Progress));
             return definition.Run;
         }
 
+        /// <summary>
+        /// Root directory of the build. That is the directory which contains the `build.cmd` script.
+        /// </summary>
+        /// <param name="thisSource"></param>
+        /// <returns></returns>
         public string GetRootDirectory([CallerFilePath] string thisSource = null)
         {
             return thisSource.Parent().Parent();

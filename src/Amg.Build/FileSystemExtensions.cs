@@ -8,10 +8,20 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Extensions to work with file system objects.
+    /// </summary>
+    /// These extensions of `string` allow fluent handling of file and directory paths.
+    /// For examples, see Amg.Build.Tests/FileSystemExtensionsTests.cs
     public static class FileSystemExtensions
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        /// <summary>
+        /// Creates the parent directory of path is necessary. 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>path</returns>
         public static string EnsureParentDirectoryExists(this string path)
         {
             path.Parent().EnsureDirectoryExists();
@@ -22,7 +32,7 @@ namespace Amg.Build
         /// Ensure that the file given by path does not exist. Deletes also read-only files
         /// </summary>
         /// <param name="path"></param>
-        /// <returns></returns>
+        /// <returns>path</returns>
         public static string EnsureFileNotExists(this string path)
         {
             if (File.Exists(path))
@@ -32,6 +42,12 @@ namespace Amg.Build
             return path;
         }
 
+        /// <summary>
+        /// Appends path elements to path.
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="pathElements"></param>
+        /// <returns>directory with pathElements appended.</returns>
         public static string Combine(this string directory, params string[] pathElements)
         {
             return Path.Combine(new[] { directory }.Concat(pathElements).ToArray());
@@ -54,6 +70,10 @@ namespace Amg.Build
             return dir.EnsureDirectoryExists();
         }
 
+        /// <summary>
+        /// Deletes the directory tree fileSystemInfo even if it contains read-only elements.
+        /// </summary>
+        /// <param name="fileSystemInfo"></param>
         public static void DeleteReadOnly(this FileSystemInfo fileSystemInfo)
         {
             var directoryInfo = fileSystemInfo as DirectoryInfo;
@@ -69,32 +89,63 @@ namespace Amg.Build
             fileSystemInfo.Delete();
         }
 
+        /// <summary>
+        /// Makes a relative path absolute.
+        /// </summary>
+        /// <param name="path">Relative or absolute path.</param>
+        /// <returns>Absolute path.</returns>
         public static string Absolute(this string path)
         {
             return Path.GetFullPath(path);
         }
 
+        /// <summary>
+        /// Returns true if path has any of the extensions `extensionWithDots`. Ignores case.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="extensionsWithDots"></param>
+        /// <returns>True, if path has one of the passed extensions, false otherwise.</returns>
         public static bool HasExtension(this string path, params string[] extensionsWithDots)
         {
             var e = path.Extension();
             return extensionsWithDots.Any(_ => _.Equals(e, StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>
+        /// Returns the extension of the path, including the dot (.).
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string Extension(this string path)
         {
             return Path.GetExtension(path);
         }
 
+        /// <summary>
+        /// Returns the file name of the path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string FileName(this string path)
         {
             return Path.GetFileName(path);
         }
 
+        /// <summary>
+        /// File name without extension
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string FileNameWithoutExtension(this string path)
         {
             return Path.GetFileNameWithoutExtension(path);
         }
 
+        /// <summary>
+        /// Ensures that the directory dir exists
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns>dir</returns>
         public static string EnsureDirectoryExists(this string dir)
         {
             if (!Directory.Exists(dir))
@@ -104,30 +155,80 @@ namespace Amg.Build
             return dir;
         }
 
+        /// <summary>
+        /// Returns the parent directory or null, if no parent directory exists for path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static string Parent(this string path)
         {
             return System.IO.Path.GetDirectoryName(path);
         }
 
+        /// <summary>
+        /// Reads all text in a file.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>text</returns>
+        public static async Task<string> ReadAllTextAsync(this string path)
+        {
+            using (var r = new StreamReader(path))
+            {
+                return await r.ReadToEndAsync();
+            }
+        }
+
+        /// <summary>
+        /// Write all text to a file
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="text"></param>
+        /// <returns>path</returns>
+        public static async Task<string> WriteAllTextAsync(this string path, string text)
+        {
+            using (var r = new StreamWriter(path.EnsureParentDirectoryExists()))
+            {
+                await r.WriteAsync(text);
+            }
+            return path;
+        }
+
+        /// <summary>
+        /// Writes text to the file `path`, but only if `path` does not already contain the desired text.
+        /// </summary>
+        /// Useful when writing config files to avoid to re-buildi everything when nothing in the config has actually changed.
+        /// <param name="path"></param>
+        /// <param name="text"></param>
+        /// <returns>path</returns>
         public static async Task<string> WriteAllTextIfChangedAsync(this string path, string text)
         {
-            var hasChanged = !File.Exists(path) || !(File.ReadAllText(path)).Equals(text);
+            var hasChanged = !path.IsFile() || !((await path.ReadAllTextAsync()).Equals(text));
 
             if (hasChanged)
             {
-                File.WriteAllText(path.EnsureParentDirectoryExists(), text);
+                await path.WriteAllTextAsync(text);
             }
-
-            await Task.CompletedTask;
 
             return path;
         }
 
+        /// <summary>
+        /// Convenience wrapper for a single outputFile. See <![CDATA[ IsOutOfDate(this IEnumerable<string> outputFiles, IEnumerable<string> inputFiles) ]]>
+        /// </summary>
+        /// <param name="outputFile"></param>
+        /// <param name="inputFiles"></param>
+        /// <returns></returns>
         public static bool IsOutOfDate(this string outputFile, IEnumerable<string> inputFiles)
         {
             return new[] { outputFile }.IsOutOfDate(inputFiles);
         }
 
+        /// <summary>
+        /// Returns true if outputFiles cannot have been built from inputFiles.
+        /// </summary>
+        /// <param name="outputFiles"></param>
+        /// <param name="inputFiles"></param>
+        /// <returns>True if outputFiles cannot have been built from inputFiles, false otherwise</returns>
         public static bool IsOutOfDate(this IEnumerable<string> outputFiles, IEnumerable<string> inputFiles)
         {
             outputFiles = outputFiles.ToList();
@@ -136,6 +237,11 @@ namespace Amg.Build
             return outputModified < inputModified;
         }
 
+        /// <summary>
+        /// Last time something was written to paths
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
         public static DateTime LastWriteTimeUtc(this IEnumerable<string> paths)
         {
             var m = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
@@ -148,6 +254,11 @@ namespace Amg.Build
                 : m.LastWrite;
         }
 
+        /// <summary>
+        /// Last time something was written to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static DateTime LastWriteTimeUtc(this string path)
         {
             return path.IsFile()
@@ -156,17 +267,27 @@ namespace Amg.Build
 
         }
 
+        /// <summary>
+        /// Returns true if path points to an existing file.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static bool IsFile(this string path)
         {
             return File.Exists(path);
         }
 
+        /// <summary>
+        /// Returns true if path points to an existing directory.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public static bool IsDirectory(this string path)
         {
             return Directory.Exists(path);
         }
 
-        public static IEnumerable<string> Glob(this string path)
+        internal static IEnumerable<string> Glob(this string path)
         {
             if (path.IsDirectory())
             {

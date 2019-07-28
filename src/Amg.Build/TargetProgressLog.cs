@@ -161,7 +161,7 @@ namespace Amg.Build
                     Duration = _.Duration.HumanReadable(),
                     _.State,
                     Timeline = _.Begin.HasValue && _.End.HasValue
-                        ? Extensions.TimeBar(80, begin.Value, end.Value, _.Begin.Value, _.End.Value)
+                        ? TextFormatExtensions.TimeBar(80, begin.Value, end.Value, _.Begin.Value, _.End.Value)
                         : String.Empty
                 })
                 .ToTable().Write(@out);

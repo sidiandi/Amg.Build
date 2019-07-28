@@ -7,6 +7,10 @@ namespace Amg.Build
     /// </summary>
     public interface IWritable
     {
+        /// <summary>
+        /// Write the object to a text writer.
+        /// </summary>
+        /// <param name="textWriter"></param>
         void Write(TextWriter textWriter);
     }
 }

@@ -34,7 +34,7 @@ C: 3
             new[]{"H", "1234234"}
         };
 
-            var table = Extensions.Table(cells);
+            var table = cells.Table();
 
             Assert.AreEqual(
 @"Name  Number 
