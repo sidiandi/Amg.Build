@@ -17,5 +17,6 @@
     <OutDir>$(OutputPath)</OutDir>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <DocumentationFile>$(RootDir)out\$(Configuration)\doc\$(MSBuildProjectName).xml</DocumentationFile>
+	<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
