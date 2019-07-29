@@ -112,7 +112,6 @@ namespace Amg.Build
             }
 
             var amgBuildAssembly = typeof(Target).Assembly;
-            Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
             var thisDll = Assembly.GetExecutingAssembly().Location;
             var sourceDir = thisDll.Parent().Parent().Parent().Parent();
@@ -130,6 +129,8 @@ namespace Amg.Build
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(SerilogLogEventLevel(options.Verbosity))
                 .CreateLogger();
+
+            Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
             try
             {
