@@ -111,6 +111,9 @@ namespace Amg.Build
                 return ExitCodeHelpDisplayed;
             }
 
+            var amgBuildAssembly = typeof(Target).Assembly;
+            Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+
             var thisDll = Assembly.GetExecutingAssembly().Location;
             var sourceDir = thisDll.Parent().Parent().Parent().Parent();
             var sourceFiles = sourceDir.Glob()
@@ -120,6 +123,7 @@ namespace Amg.Build
 
             if (options.Clean || thisDll.IsOutOfDate(sourceFiles))
             {
+                Console.Error.WriteLine("Build script requires rebuild.");
                 return ExitCodeRebuildRequired;
             }
 

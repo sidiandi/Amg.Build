@@ -26,7 +26,6 @@ partial class BuildTargets : Targets
 	Target Default => DefineTarget(async () =>
 	{
 		Console.WriteLine(GetRootDirectory());
-		Console.WriteLine("hello");
 		await GreetAll();
 	});
 }
