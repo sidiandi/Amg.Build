@@ -287,21 +287,25 @@ namespace Amg.Build
             return Directory.Exists(path);
         }
 
-        internal static IEnumerable<string> Glob(this string path)
+        /// <summary>
+        /// Split path into directory parts
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string[] SplitDirectories(this string path)
         {
-            if (path.IsDirectory())
-            {
-                return Directory.EnumerateFileSystemEntries(path, "*", SearchOption.AllDirectories)
-                    .Select(_ => _.Absolute());
-            }
-            else if (path.IsFile())
-            {
-                return new[] { path };
-            }
-            else
-            {
-                return Enumerable.Empty<string>();
-            } 
+            path = path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            return path.Split(Path.DirectorySeparatorChar);
+        }
+
+        /// <summary>
+        /// Start a glob
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static Glob Glob(this string path)
+        {
+            return new Glob(path);
         }
     }
 }

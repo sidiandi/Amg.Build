@@ -59,6 +59,11 @@ namespace Amg.Build
             Detailed
         };
 
+        const int ExitCodeHelpDisplayed = 1;
+        const int ExitCodeUnknownError = -1;
+        const int ExitCodeSuccess = 0;
+        const int ExitCodeRebuildRequired = 2;
+
         /// <summary />
         public Targets()
         {
@@ -81,6 +86,9 @@ namespace Amg.Build
             [Short('h'), Description("Show help and exit")]
             public bool Help { get; set; }
 
+            [Description("Force a rebuild of the build script")]
+            public bool Clean { get; set; }
+
             [Short('v'), Description("Set the verbosity level.")]
             public Verbosity Verbosity { get; set; } = Verbosity.Normal;
         }
@@ -96,10 +104,23 @@ namespace Amg.Build
         {
             var options = new Options<TargetsDerivedClass>(new TargetsDerivedClass());
             GetOptParser.Parse(commandLineArguments, options);
+
             if (options.Help)
             {
                 PrintHelp(Console.Out, options);
-                return 1;
+                return ExitCodeHelpDisplayed;
+            }
+
+            var thisDll = Assembly.GetExecutingAssembly().Location;
+            var sourceDir = thisDll.Parent().Parent().Parent().Parent();
+            var sourceFiles = sourceDir.Glob()
+                .Exclude("bin")
+                .Exclude("obj")
+                .Exclude(".vs");
+
+            if (options.Clean || thisDll.IsOutOfDate(sourceFiles))
+            {
+                return ExitCodeRebuildRequired;
             }
 
             Log.Logger = new LoggerConfiguration()
@@ -109,12 +130,12 @@ namespace Amg.Build
             try
             {
                 options.targets.RunTargets(options.Targets).Wait();
-                return 0;
+                return ExitCodeSuccess;
             }
             catch (Exception ex)
             {
                 Logger.Fatal(ex, "Build failed.");
-                return -1;
+                return ExitCodeUnknownError;
             }
         }
 
