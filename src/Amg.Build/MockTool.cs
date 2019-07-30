@@ -5,17 +5,19 @@ namespace Amg.Build
     /// <summary>
     /// ITool implementation that only logs, but does not run the tool. For testing purposes.
     /// </summary>
-    internal class MockTool : ITool
+    public class MockTool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private string filename;
 
+        /// <summary />
         public MockTool(string filename)
         {
             this.filename = filename;
         }
 
+        /// <summary />
         public async Task<IToolResult> Run(params string[] args)
         {
             Logger.Information("Would run: {filename}: {args}", filename, args);
@@ -52,12 +54,16 @@ namespace Amg.Build
         /// </summary>
         public Result MockResult { get; set; } = new Result();
 
+        /// <summary />
         public class Result : IToolResult
         {
+            /// <summary />
             public int ExitCode { get; set; } = 0;
 
+            /// <summary />
             public string Output { get; set; } = string.Empty;
 
+            /// <summary />
             public string Error { get; set; } = string.Empty;
         }
     }
