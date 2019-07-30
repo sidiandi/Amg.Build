@@ -10,7 +10,7 @@ namespace Amg.Build
     /// Start a command line tool.
     /// </summary>
     /// Immutable. To customize, use the With... methods.
-    public class Tool
+    public class Tool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -24,7 +24,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public Tool WithArguments(params string[] args)
+        public ITool WithArguments(params string[] args)
         {
             return WithArguments((IEnumerable<string>)args);
         }
@@ -34,7 +34,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public Tool WithArguments(IEnumerable<string> args)
+        public ITool WithArguments(IEnumerable<string> args)
         {
             var t = (Tool) this.MemberwiseClone();
             t.leadingArguments = leadingArguments.Concat(args).ToArray();
@@ -46,7 +46,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        public Tool WithWorkingDirectory(string workingDirectory)
+        public ITool WithWorkingDirectory(string workingDirectory)
         {
             var t = (Tool)this.MemberwiseClone();
             t.workingDirectory = workingDirectory;
@@ -58,7 +58,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="expectedExitCode"></param>
         /// <returns></returns>
-        public Tool WithExitCode(int expectedExitCode)
+        public ITool WithExitCode(int expectedExitCode)
         {
             var t = (Tool)this.MemberwiseClone();
             t.expectedExitCode = expectedExitCode;
@@ -69,7 +69,7 @@ namespace Amg.Build
         /// Disable throwing an exception when the exit code was not as expected.
         /// </summary>
         /// <returns></returns>
-        public Tool DoNotCheckExitCode()
+        public ITool DoNotCheckExitCode()
         {
             var t = (Tool)this.MemberwiseClone();
             t.expectedExitCode = null;
