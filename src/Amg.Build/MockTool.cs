@@ -1,8 +1,10 @@
 ﻿using System.Threading.Tasks;
-using Amg.Build;
 
-namespace PrepareSyngoInstallation
+namespace Amg.Build
 {
+    /// <summary>
+    /// ITool implementation that only logs, but does not run the tool. For testing purposes.
+    /// </summary>
     internal class MockTool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
