@@ -307,5 +307,26 @@ namespace Amg.Build
         {
             return new Glob(path);
         }
+
+        /// <summary>
+        /// Gets a FileInfo or DirectoryInfo or null if file system object does not exist.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static FileSystemInfo GetFileSystemInfo(this string path)
+        {
+            if (path.IsFile())
+            {
+                return new FileInfo(path);
+            }
+            else if (path.IsDirectory())
+            {
+                return new DirectoryInfo(path);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

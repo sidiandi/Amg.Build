@@ -4,29 +4,35 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
     [TestFixture]
-    public class GlobTests
+    public class GlobTests : TestBase
     {
         [Test]
-        public void Glob()
+        public async Task Glob()
         {
-            var temp = System.IO.Path.GetTempPath();
-            var glob = temp.Glob().Include("**");
-            Console.WriteLine(glob.Join());
-        }
+            var testDir = CreateEmptyTestDirectory();
+            await testDir.Combine("hello").WriteAllTextAsync("hello");
+            await testDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
 
-        [Test]
-        public void Glob2()
-        {
-            var temp = System.IO.Path.GetTempPath();
-            var glob = @"C:\src\Amg.Build\examples\hello\build".Glob()
-                .Include("**")
-                .Exclude("obj").Exclude("bin").Exclude(".vs");
+            var files = testDir.Glob().Include("**").ToList();
+            Console.WriteLine(files.Join());
+            Assert.AreEqual(files.Count, 5);
 
-            Console.WriteLine(glob.Join());
+            files = testDir.Glob().Include("**")
+                .Exclude("b")
+                .ToList();
+            Console.WriteLine(files.Join());
+            Assert.AreEqual(files.Count, 3);
+
+            files = testDir.Glob().Include("**")
+                .EnumerateFiles()
+                .ToList();
+            Console.WriteLine(files.Join());
+            Assert.AreEqual(files.Count, 2);
         }
     }
 }

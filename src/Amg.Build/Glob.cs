@@ -53,53 +53,53 @@ namespace Amg.Build
         /// <summary />
         public IEnumerator<string> GetEnumerator()
         {
-            var excludeFunc = new Func<string, bool>((string path) =>
-            {
-                var name = path.FileName();
-                return exclude.Any(_ => _.Equals(name, System.StringComparison.OrdinalIgnoreCase));
-            });
-
-            var enumerable = include.SelectMany(i =>
-            {
-                return Find(root, i.SplitDirectories(), excludeFunc);
-            });
+            var enumerable = EnumerateFileSystemInfos()
+                .Select(_ => _.FullName);
 
             return enumerable.GetEnumerator();
         }
 
-        static IEnumerable<string> Find(string root, string[] glob, Func<string, bool> exclude)
+        static IEnumerable<FileSystemInfo> Find(DirectoryInfo root, string[] glob, Func<FileSystemInfo, bool> exclude)
         {
-            if (root.IsFile())
-            {
-                return new[] { root };
-            }
-
             if (glob == null || glob.Length == 0)
             {
-                return Enumerable.Empty<string>();
+                return Enumerable.Empty<FileSystemInfo>();
             }
 
             var first = glob[0];
             var rest = glob.Skip(1).ToArray();
-            if (IsWildCard(first))
+            if (IsSkipAnyNumberOfDirectories(first))
             {
-                var childs = Directory.EnumerateFileSystemEntries(root, first)
-                    .Where(_ => !exclude(_)).Select(_ => root.Combine(_));
-
-                if (IsSkipAnyNumberOfDirectories(first))
-                {
-                    return childs.SelectMany(c => Find(c, rest, exclude))
-                        .Concat(childs.SelectMany(c => Find(c, glob, exclude)));
-                }
-                else
-                {
-                    return childs.SelectMany(c => Find(c, rest, exclude));
-                }
+                return Find(root.EnumerateFileSystemInfos(), glob, exclude);
             }
             else
             {
-                return Find(root.Combine(first), rest, exclude);
+                return Find(root.EnumerateFileSystemInfos(first), rest, exclude);
             }
+        }
+
+        static IEnumerable<FileSystemInfo> Find(
+            IEnumerable<FileSystemInfo> fileSystemInfos,
+            string[] glob,
+            Func<FileSystemInfo, bool> exclude)
+        {
+            return fileSystemInfos
+                .Where(_ => !exclude(_))
+                .SelectMany(c =>
+                {
+                    if (c is FileInfo f)
+                    {
+                        return (IEnumerable<FileSystemInfo>)new[] { c };
+                    }
+                    else if (c is DirectoryInfo d)
+                    {
+                        return new[] { c }.Concat(Find(d, glob, exclude));
+                    }
+                    else
+                    {
+                        return Enumerable.Empty<FileSystemInfo>();
+                    }
+                });
         }
 
         static bool IsSkipAnyNumberOfDirectories(string dirname)
@@ -115,6 +115,35 @@ namespace Amg.Build
         IEnumerator IEnumerable.GetEnumerator()
         {
             throw new System.NotImplementedException();
+        }
+
+        /// <summary>
+        /// Enumerate as FileSystemInfo sequence
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos()
+        {
+            var excludeFunc = new Func<FileSystemInfo, bool>((FileSystemInfo i) =>
+            {
+                var name = i.Name;
+                return exclude.Any(_ => _.Equals(name, System.StringComparison.OrdinalIgnoreCase));
+            });
+
+            var r = root.GetFileSystemInfo();
+
+            return include.SelectMany(i =>
+            {
+                return Find(new[] { r }, i.SplitDirectories(), excludeFunc);
+            });
+        }
+
+        /// <summary>
+        /// Enumerate files only, not directories
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<string> EnumerateFiles()
+        {
+            return EnumerateFileSystemInfos().Where(_ => _ is FileInfo).Select(_ => _.FullName);
         }
     }
 }

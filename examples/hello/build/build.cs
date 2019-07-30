@@ -20,7 +20,7 @@ partial class BuildTargets : Targets
 	
 	public Target GreetAll => DefineTarget(async () =>
 	{
-		await Task.WhenAll(Enumerable.Range(0,5).Select(_ => Greet($"Alice {_}")));
+		await Task.WhenAll(Enumerable.Range(0,100).Select(_ => Greet($"Alice {_}")));
 	});
 	
 	Target Default => DefineTarget(async () =>

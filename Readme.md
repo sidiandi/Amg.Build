@@ -43,8 +43,8 @@ Properties of the Targets container can be accessed as build properties on the c
 ## Todo
 
 * Fail on the first failed target
-* Glob
 
 ## Done
 
+* Glob
 * Subtargets
