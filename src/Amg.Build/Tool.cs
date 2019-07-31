@@ -10,7 +10,7 @@ namespace Amg.Build
     /// Start a command line tool.
     /// </summary>
     /// Immutable. To customize, use the With... methods.
-    public class Tool
+    public class Tool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -37,7 +37,7 @@ namespace Amg.Build
         /// <returns></returns>
         public Tool WithArguments(IEnumerable<string> args)
         {
-            var t = (Tool) this.MemberwiseClone();
+            var t = (Tool)this.MemberwiseClone();
             t.leadingArguments = leadingArguments.Concat(args).ToArray();
             return t;
         }
@@ -137,7 +137,7 @@ namespace Amg.Build
                 p.WaitForExit();
                 processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var result = (IToolResult) new ResultImpl
+                var result = (IToolResult)new ResultImpl
                 {
                     ExitCode = p.ExitCode,
                     Error = error.Result,
