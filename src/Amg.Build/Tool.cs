@@ -18,6 +18,7 @@ namespace Amg.Build
         private string[] leadingArguments = new string[] { };
         private string workingDirectory = ".";
         private int? expectedExitCode = 0;
+        private IDictionary<string, string> environment = new Dictionary<string, string>();
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -38,6 +39,18 @@ namespace Amg.Build
         {
             var t = (Tool) this.MemberwiseClone();
             t.leadingArguments = leadingArguments.Concat(args).ToArray();
+            return t;
+        }
+
+        /// <summary>
+        /// Adds environment variables.
+        /// </summary>
+        /// <param name="environmentVariables"></param>
+        /// <returns></returns>
+        public Tool WithEnvironment(IDictionary<string, string> environmentVariables)
+        {
+            var t = (Tool)this.MemberwiseClone();
+            t.environment = environment.Merge(environmentVariables);
             return t;
         }
 
@@ -101,14 +114,18 @@ namespace Amg.Build
         {
             return Task.Factory.StartNew(() =>
             {
-                var p = Process.Start(new ProcessStartInfo
+                var startInfo = new ProcessStartInfo
                 {
                     FileName = fileName,
                     Arguments = CreateArgumentsString(leadingArguments.Concat(args)),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
-                    WorkingDirectory = workingDirectory
-                });
+                    WorkingDirectory = workingDirectory,
+                };
+
+                startInfo.EnvironmentVariables.Add(this.environment);
+
+                var p = Process.Start(startInfo);
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 

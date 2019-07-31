@@ -10,6 +10,18 @@ namespace Amg.Build
     public static class EnumerableExtensions
     {
         /// <summary>
+        /// Concat one (1) new element
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <param name="newElement"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> e, T newElement)
+        {
+            return e.Concat(Enumerable.Repeat(newElement, 1));
+        }
+
+        /// <summary>
         /// Convert to strings and concatenate with separator
         /// </summary>
         /// <param name="e"></param>

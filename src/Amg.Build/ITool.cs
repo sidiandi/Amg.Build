@@ -10,7 +10,7 @@ namespace Amg.Build
         /// <summary>
         /// Runs the command line tool
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="args">Command line argument. One string per argument. Will be quoted automatically (i.e. when a argument contains whitespace)</param>
         /// <returns></returns>
         Task<IToolResult> Run(params string[] args);
     }

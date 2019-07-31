@@ -71,6 +71,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build");
     });
 
+    [Description("measure code coverage")]
+    public Target CodeCoverage => DefineTarget(async () =>
+    {
+        await Build();
+        await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build",
+            "--collect:Code Coverage"
+            );
+    });
+
     [Description("pack nuget package")]
     public Target<string> Pack => DefineTarget(async () =>
     {
