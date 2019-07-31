@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace Amg.Build
@@ -14,6 +16,10 @@ namespace Amg.Build
         /// Result of the tool run
         /// </summary>
         public IToolResult Result { get; private set; }
+        /// <summary>
+        /// information that was used to start the process.
+        /// </summary>
+        public ProcessStartInfo StartInfo { get; }
 
         /// <summary />
         public ToolException()
@@ -21,10 +27,11 @@ namespace Amg.Build
         }
 
         /// <summary />
-        public ToolException(string message, IToolResult result)
+        public ToolException(string message, IToolResult result, ProcessStartInfo startInfo)
             : base(message)
         {
             this.Result = result;
+            StartInfo = startInfo;
         }
 
         /// <summary />
@@ -34,6 +41,13 @@ namespace Amg.Build
 
         /// <summary />
         public override string Message => $@"{base.Message}
-{Result.Dump()}";
+{new
+        {
+            StartInfo.WorkingDirectory,
+            Environment= StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
+                .Select(_ => $"set {_.Key}={_.Value}").Join(),
+            Result.ExitCode,
+            Error = Result.Error.ReduceLines(200, 20)
+        }.Dump()}";
     }
 }

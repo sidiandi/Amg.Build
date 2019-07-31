@@ -42,7 +42,8 @@ namespace Amg.Build
         [Test]
         public async Task RunError()
         {
-            var tool = new Tool("cmd.exe");
+            var tool = new Tool("cmd.exe")
+                .WithEnvironment(new Dictionary<string, string> { { "Name", "Alice" } });
             try
             {
                 await tool.Run("/c", "echo_Wrong_Command", "Hello");

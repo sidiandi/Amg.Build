@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Amg.Build
@@ -40,6 +41,27 @@ namespace Amg.Build
         public static string Join(this IEnumerable<object> e)
         {
             return e.Join(System.Environment.NewLine);
+        }
+
+        /// <summary>
+        /// Split a string into lines
+        /// </summary>
+        /// <param name="multiLineString"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> SplitLines(this string multiLineString)
+        {
+            using (var r = new StringReader(multiLineString))
+            {
+                while (true)
+                {
+                    var line = r.ReadLine();
+                    if (line == null)
+                    {
+                        break;
+                    }
+                    yield return line;
+                }
+            }
         }
 
         /// <summary>
