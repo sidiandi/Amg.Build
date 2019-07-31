@@ -4,3 +4,4 @@ bin
 nuget.config 
 /out 
 /nuget.exe
+TestResults

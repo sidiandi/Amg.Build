@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -99,6 +100,38 @@ namespace Amg.Build
                     return value;
                 }
                 return value;
+            }
+        }
+
+        /// <summary>
+        /// Merge two dictionaries.
+        /// </summary>
+        ///  Keys of b which are already present in a will overwrite the entry in a
+        /// <typeparam name="Key"></typeparam>
+        /// <typeparam name="Value"></typeparam>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static IDictionary<Key, Value> Merge<Key, Value>(this IDictionary<Key, Value> a, IDictionary<Key, Value> b)
+        {
+            var r = new Dictionary<Key, Value>();
+            foreach (var i in a.Concat(b))
+            {
+                r[i.Key] = i.Value;
+            }
+            return r;
+        }
+
+        /// <summary>
+        /// Add entries of newEntries to dictionaryToGrow
+        /// </summary>
+        /// <param name="dictionaryToGrow"></param>
+        /// <param name="newEntries"></param>
+        public static void Add(this StringDictionary dictionaryToGrow, IDictionary<string, string> newEntries)
+        {
+            foreach (var i in newEntries)
+            {
+                dictionaryToGrow[i.Key] = i.Value;
             }
         }
 

@@ -166,15 +166,22 @@ namespace Amg.Build
         }
 
         /// <summary>
-        /// Reads all text in a file.
+        /// Reads all text in a file. Returns null on error.
         /// </summary>
         /// <param name="path"></param>
         /// <returns>text</returns>
         public static async Task<string> ReadAllTextAsync(this string path)
         {
-            using (var r = new StreamReader(path))
+            try
             {
-                return await r.ReadToEndAsync();
+                using (var r = new StreamReader(path))
+                {
+                    return await r.ReadToEndAsync();
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
 

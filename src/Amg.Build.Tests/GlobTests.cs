@@ -18,7 +18,16 @@ namespace Amg.Build
             await testDir.Combine("hello").WriteAllTextAsync("hello");
             await testDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
 
-            var files = testDir.Glob().Include("**").ToList();
+            IList<string> files;
+
+            files = testDir.Glob().Include("**")
+                .Exclude("he*o")
+                .EnumerateFiles()
+                .ToList();
+            Console.WriteLine(files.Join());
+            Assert.AreEqual(files.Count, 1);
+
+            files = testDir.Glob().Include("**").ToList();
             Console.WriteLine(files.Join());
             Assert.AreEqual(files.Count, 5);
 
@@ -33,6 +42,16 @@ namespace Amg.Build
                 .ToList();
             Console.WriteLine(files.Join());
             Assert.AreEqual(files.Count, 2);
+        }
+
+        [Test]
+        public void RegexFromWildcard()
+        {
+            var re = Amg.Build.Glob.RegexFromWildcard("he*");
+            Assert.AreEqual(re.ToString(), "^he.*$");
+            Assert.That(re.IsMatch("hello"));
+            Assert.That(re.IsMatch("sayhello"), Is.Not.True);
+
         }
     }
 }

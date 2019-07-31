@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Amg.Build
 {
@@ -12,7 +13,7 @@ namespace Amg.Build
     public class Glob : IEnumerable<string>
     {
         string[] include = new string[] { };
-        string[] exclude = new string[] { };
+        Func<FileSystemInfo, bool>[] exclude = new Func<FileSystemInfo, bool>[] { };
         private readonly string root;
 
         Glob Copy()
@@ -29,25 +30,73 @@ namespace Amg.Build
         /// <summary>
         /// Include path in file search
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="pathWithWildcards"></param>
         /// <returns></returns>
-        public Glob Include(string path)
+        public Glob Include(string pathWithWildcards)
         {
             var g = Copy();
-            g.include = g.include.Concat(new[] { path }).ToArray();
+            g.include = g.include.Concat(new[] { pathWithWildcards }).ToArray();
             return g;
         }
 
         /// <summary>
         /// Exclude a file name pattern from directory traversal
         /// </summary>
-        /// <param name="pattern"></param>
+        /// <param name="wildcardPattern"></param>
         /// <returns></returns>
-        public Glob Exclude(string pattern)
+        public Glob Exclude(string wildcardPattern)
         {
             var g = Copy();
-            g.exclude = g.exclude.Concat(new[] { pattern }).ToArray();
+            g.exclude = g.exclude.Concat(ExcludeFuncFromWildcard(wildcardPattern)).ToArray();
             return g;
+        }
+
+        /// <summary>
+        /// Exclude a file system object from directory traversal if it fulfills the condition
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <returns></returns>
+        public Glob Exclude(Func<FileSystemInfo, bool> condition)
+        {
+            var g = Copy();
+            g.exclude = g.exclude.Concat(condition).ToArray();
+            return g;
+        }
+
+        /// <summary>
+        /// Turns a wildcard (*,?) pattern as used by DirectoryInfo.EnumerateFileSystemInfos into a Regex
+        /// </summary>
+        /// Supports wildcard characters * and ?. Case-insensitive.
+        /// <param name="wildcardPattern"></param>
+        /// <returns></returns>
+        public static Regex RegexFromWildcard(string wildcardPattern)
+        {
+            var patternString = string.Concat(
+                wildcardPattern.Select(c =>
+                {
+                    switch (c)
+                    {
+                        case '?':
+                            return ".";
+                        case '*':
+                            return ".*";
+                        default:
+                            return Regex.Escape(new string(c, 1));
+                    }
+                }));
+
+            patternString = "^" + patternString + "$";
+
+            return new Regex(patternString, RegexOptions.IgnoreCase);
+        }
+
+        internal static Func<FileSystemInfo, bool> ExcludeFuncFromWildcard(string wildcardPattern)
+        {
+            var re = RegexFromWildcard(wildcardPattern);
+            return new Func<FileSystemInfo, bool>(fsi =>
+            {
+                return re.IsMatch(fsi.Name);
+            });
         }
 
         /// <summary />
@@ -124,10 +173,7 @@ namespace Amg.Build
         public IEnumerable<FileSystemInfo> EnumerateFileSystemInfos()
         {
             var excludeFunc = new Func<FileSystemInfo, bool>((FileSystemInfo i) =>
-            {
-                var name = i.Name;
-                return exclude.Any(_ => _.Equals(name, System.StringComparison.OrdinalIgnoreCase));
-            });
+                exclude.Any(_ => _(i)));
 
             var r = root.GetFileSystemInfo();
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Amg.Build
@@ -9,6 +10,18 @@ namespace Amg.Build
     /// </summary>
     public static class EnumerableExtensions
     {
+        /// <summary>
+        /// Concat one (1) new element
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <param name="newElement"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> e, T newElement)
+        {
+            return e.Concat(Enumerable.Repeat(newElement, 1));
+        }
+
         /// <summary>
         /// Convert to strings and concatenate with separator
         /// </summary>
@@ -28,6 +41,27 @@ namespace Amg.Build
         public static string Join(this IEnumerable<object> e)
         {
             return e.Join(System.Environment.NewLine);
+        }
+
+        /// <summary>
+        /// Split a string into lines
+        /// </summary>
+        /// <param name="multiLineString"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> SplitLines(this string multiLineString)
+        {
+            using (var r = new StringReader(multiLineString))
+            {
+                while (true)
+                {
+                    var line = r.ReadLine();
+                    if (line == null)
+                    {
+                        break;
+                    }
+                    yield return line;
+                }
+            }
         }
 
         /// <summary>

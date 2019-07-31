@@ -18,6 +18,7 @@ namespace Amg.Build
         private string[] leadingArguments = new string[] { };
         private string workingDirectory = ".";
         private int? expectedExitCode = 0;
+        private IDictionary<string, string> environment = new Dictionary<string, string>();
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -36,8 +37,20 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithArguments(IEnumerable<string> args)
         {
-            var t = (Tool) this.MemberwiseClone();
+            var t = (Tool)this.MemberwiseClone();
             t.leadingArguments = leadingArguments.Concat(args).ToArray();
+            return t;
+        }
+
+        /// <summary>
+        /// Adds environment variables.
+        /// </summary>
+        /// <param name="environmentVariables"></param>
+        /// <returns></returns>
+        public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
+        {
+            var t = (Tool)this.MemberwiseClone();
+            t.environment = environment.Merge(environmentVariables);
             return t;
         }
 
@@ -101,14 +114,18 @@ namespace Amg.Build
         {
             return Task.Factory.StartNew(() =>
             {
-                var p = Process.Start(new ProcessStartInfo
+                var startInfo = new ProcessStartInfo
                 {
                     FileName = fileName,
                     Arguments = CreateArgumentsString(leadingArguments.Concat(args)),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
-                    WorkingDirectory = workingDirectory
-                });
+                    WorkingDirectory = workingDirectory,
+                };
+
+                startInfo.EnvironmentVariables.Add(this.environment);
+
+                var p = Process.Start(startInfo);
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
@@ -120,7 +137,7 @@ namespace Amg.Build
                 p.WaitForExit();
                 processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var result = (IToolResult) new ResultImpl
+                var result = (IToolResult)new ResultImpl
                 {
                     ExitCode = p.ExitCode,
                     Error = error.Result,
@@ -131,7 +148,9 @@ namespace Amg.Build
                 {
                     if (p.ExitCode != expectedExitCode.Value)
                     {
-                        throw new ToolException($"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", result);
+                        throw new ToolException(
+                            $"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", 
+                            result, startInfo);
                     }
                 }
 

@@ -172,5 +172,70 @@ namespace Amg.Build
         {
             return new Writable(w);
         }
+
+        /// <summary>
+        /// Skip lines in the middle if text exceed maxLines lines.
+        /// </summary>
+        /// <param name="longMultilineText"></param>
+        /// <param name="maxLines"></param>
+        /// <returns></returns>
+        public static IWritable ReduceLines(this string longMultilineText, int maxLines)
+        {
+            return ReduceLines(longMultilineText, maxLines, maxLines / 2);
+        }
+
+        /// <summary>
+        /// Skip lines if text exceed maxLines lines.
+        /// </summary>
+        /// <param name="longMultilineText"></param>
+        /// <param name="maxLines"></param>
+        /// <param name="skipAt">specifies after how many lines lines should be skipped.</param>
+        /// <returns></returns>
+        public static IWritable ReduceLines(this string longMultilineText, int maxLines, int skipAt) => GetWritable(w =>
+        {
+            var e = longMultilineText.SplitLines().GetEnumerator();
+
+            var part1 = new List<string>();
+            var part2 = new List<string>();
+
+            var part1MaxLines = skipAt;
+            var part2MaxLines = maxLines - skipAt;
+
+            for (; e.MoveNext();)
+            {
+                part1.Add(e.Current);
+                if (part1.Count >= part1MaxLines)
+                {
+                    break;
+                }
+            }
+
+            int skipped = 0;
+
+            for (; e.MoveNext();)
+            {
+                part2.Add(e.Current);
+                if (part2.Count >= part2MaxLines)
+                {
+                    part2.RemoveAt(0);
+                    ++skipped;
+                }
+            }
+
+            foreach (var line in part1)
+            {
+                w.WriteLine(line);
+            }
+
+            if (skipped > 0)
+            {
+                w.WriteLine($"... {skipped} lines skipped ...");
+            }
+
+            foreach (var line in part2)
+            {
+                w.WriteLine(line);
+            }
+        });
     }
 }

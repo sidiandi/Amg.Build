@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -45,6 +46,18 @@ namespace Amg.Build
 
         /// <summary />
         public ITool DoNotCheckExitCode()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        /// <summary />
+        public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
+        {
+            return this;
+        }
+
+        /// <summary />
+        public ITool WithArguments(IEnumerable<string> args)
         {
             throw new System.NotImplementedException();
         }

@@ -46,5 +46,8 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
+* ReduceLines, SplitLines
+* Improve ITool error loggging
+* ITool supports environment variables
 * Glob
 * Subtargets

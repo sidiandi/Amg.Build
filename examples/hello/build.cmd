@@ -4,7 +4,7 @@ set buildDll=%~dp0build\bin\Debug\netcoreapp2.2\build.dll
 set exitCodeOutOfDate=2
 
 if exist %buildDll% (
-    dotnet %buildDll%
+    dotnet %buildDll% %*
     if %ERRORLEVEL% == %exitCodeOutOfDate% (
        call :rebuild
     )
