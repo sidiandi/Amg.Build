@@ -107,9 +107,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var nuget = new Tool("nuget.exe");
         await nuget.Run(
             "push",
-            nupkgFile,
-            "-Source", nugetPushSource,
-            "-SymbolSource", nugetPushSymbolSource
+            nupkgFile
             );
     });
 
