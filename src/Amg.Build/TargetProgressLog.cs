@@ -6,6 +6,47 @@ using System.Text;
 
 namespace Amg.Build
 {
+    class TargetLogger : TargetProgress
+    {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private readonly TargetProgress next;
+
+        public TargetLogger(TargetProgress next)
+        {
+            this.next = next;
+        }
+
+        public void Begin(JobId id)
+        {
+            Banner("start {id}", id);
+            next.Begin(id);
+        }
+
+        public void End(JobId id, object output)
+        {
+            Banner("end {id}: {output}", id, output);
+            next.End(id, output);
+        }
+
+        public void Fail(JobId id, Exception exception)
+        {
+            Banner(@"fail {id}
+
+{output}", id, TargetProgressLog.GetRootCause(exception));
+            next.Fail(id, exception);
+        }
+
+        static void Banner(string message, params object[] args)
+        {
+            var ruler = new string('#', 128);
+            Logger.Information($@"
+{ruler}
+{message}
+{ruler}", args);
+        }
+    }
+
     class TargetProgressLog : TargetProgress
     {
         IDictionary<JobId, TargetData> state = new Dictionary<JobId, TargetData>();
@@ -104,7 +145,7 @@ namespace Amg.Build
                         : b;
         }
 
-        static Exception GetRootCause(Exception e)
+        public static Exception GetRootCause(Exception e)
         {
             if (e is TargetFailed)
             {

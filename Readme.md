@@ -42,10 +42,13 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Todo
 
+* Improve Target syntax
+* Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* Target logging
 * ReduceLines, SplitLines
 * Improve ITool error loggging
 * ITool supports environment variables

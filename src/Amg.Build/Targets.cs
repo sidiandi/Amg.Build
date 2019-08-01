@@ -67,7 +67,7 @@ namespace Amg.Build
         /// <summary />
         public Targets()
         {
-            Progress = targetLog;
+            Progress = new TargetLogger(targetLog);
         }
 
         class Options<TargetsDerivedClass>
