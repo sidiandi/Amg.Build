@@ -48,6 +48,7 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
+* Less clumsy target class syntax with [Once]
 * Target logging
 * ReduceLines, SplitLines
 * Improve ITool error loggging

@@ -1,6 +1,7 @@
 ﻿using Amg.Build;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Reflection;
 
 namespace Amg.CommandLine
@@ -79,7 +80,7 @@ namespace Amg.CommandLine
                 Set(true.ToString());
             }
 
-            private static object Parse(Type toType, string stringValue)
+            public static object Parse(Type toType, string stringValue)
             {
                 try
                 {
@@ -140,5 +141,24 @@ namespace Amg.CommandLine
             }
         }
 
+        /// <summary>
+        /// Invokes method of instance using arguments as parameters
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="method"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        public static object Invoke(object instance, MethodInfo method, string[] arguments)
+        {
+            var parameters = ParseParameters(method, arguments);
+            return method.Invoke(instance, parameters);
+        }
+
+        private static object[] ParseParameters(MethodInfo method, string[] arguments)
+        {
+            return method.GetParameters()
+                .ZipOrDefault(arguments, (p, v) => GetOptOption.Parse(p.ParameterType, v))
+                .ToArray();
+        }
     }
 }
