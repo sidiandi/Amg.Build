@@ -77,6 +77,10 @@ namespace Amg.Build
                 var startupDuration = DateTime.UtcNow - startupFile.LastWriteTimeUtc();
                 Logger.Information("Startup duration: {startupDuration}", startupDuration);
             }
+            else
+            {
+                Logger.Warning("Startup file {startupFile} not found.", startupFile);
+            }
 
             try
             {
