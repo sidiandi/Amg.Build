@@ -76,7 +76,7 @@ namespace Amg.Build
 
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
-            var startupFile = BuildDll().Combine(".startup");
+            var startupFile = BuildScriptDll + ".startup";
             if (startupFile.IsFile())
             {
                 var startupDuration = DateTime.UtcNow - startupFile.LastWriteTimeUtc();
@@ -104,14 +104,13 @@ namespace Amg.Build
             return filePath;
         }
 
-        static string BuildDll()
-        {
-            return Assembly.GetEntryAssembly().Location;
-        }
+        static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
+
+        static string BuildScriptSourceDir => BuildScriptDll.Parent().Parent().Parent().Parent();
 
         private static bool IsOutOfDate()
         {
-            var buildDll = BuildDll();
+            var buildDll = BuildScriptDll;
             if (Regex.IsMatch(buildDll.FileName(), "test", RegexOptions.IgnoreCase))
             {
                 Logger.Warning("test mode detected. Out of date check skipped.");
@@ -119,8 +118,7 @@ namespace Amg.Build
             }
 
             Logger.Information("{buildDll}", buildDll);
-            var sourceDir = GetThisSourceFile().Parent();
-            var sourceFiles = sourceDir.Glob("**")
+            var sourceFiles = BuildScriptSourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");

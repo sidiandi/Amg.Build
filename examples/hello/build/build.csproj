@@ -5,6 +5,6 @@
 	<Configuration>Debug</Configuration>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Amg.Build" Version="0.3.0-ci0027" />
+    <PackageReference Include="Amg.Build" Version="0.3.0-*" />
   </ItemGroup>
 </Project>
