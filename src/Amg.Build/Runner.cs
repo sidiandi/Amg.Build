@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -107,6 +108,12 @@ namespace Amg.Build
         private static bool IsOutOfDate()
         {
             var buildDll = BuildDll();
+            if (Regex.IsMatch(buildDll.FileName(), "test", RegexOptions.IgnoreCase))
+            {
+                Logger.Warning("test mode detected. Out of date check skipped.");
+                return false;
+            }
+
             Logger.Information("{buildDll}", buildDll);
             var sourceDir = GetThisSourceFile().Parent();
             var sourceFiles = sourceDir.Glob("**")
