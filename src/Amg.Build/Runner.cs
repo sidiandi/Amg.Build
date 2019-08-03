@@ -33,6 +33,12 @@ namespace Amg.Build
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
         public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : class
         {
+            if (IsOutOfDate())
+            {
+                Console.Error.WriteLine("Build script requires rebuild.");
+                return ExitCodeRebuildRequired;
+            }
+
             var builder = new DefaultProxyBuilder();
             var generator = new ProxyGenerator(builder);
             var onceInterceptor = new OnceInterceptor();
@@ -45,6 +51,12 @@ namespace Amg.Build
             var options = new Options<TargetsDerivedClass>(onceProxy);
             GetOptParser.Parse(commandLineArguments, options);
 
+            if ((options.Clean && !options.IgnoreClean))
+            {
+                Console.Error.WriteLine("Build script requires rebuild.");
+                return ExitCodeRebuildRequired;
+            }
+
             if (options.Help)
             {
                 HelpText.Print(Console.Out, options);
@@ -52,12 +64,6 @@ namespace Amg.Build
             }
 
             var amgBuildAssembly = typeof(Target).Assembly;
-
-            if ((options.Clean && !options.IgnoreClean) || IsOutOfDate())
-            {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
-            }
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(SerilogLogEventLevel(options.Verbosity))

@@ -5,7 +5,7 @@ using Amg.Build;
 using System.Diagnostics;
 using System.Linq;
 
-partial class BuildTargets
+public class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
@@ -16,7 +16,6 @@ partial class BuildTargets
 	{
 		await Task.Delay(TimeSpan.FromSeconds(1));
 		Console.WriteLine($"Hello, {name}");
-		return Nothing.Instance;
 	}
 	
 	[Once]
@@ -28,7 +27,6 @@ partial class BuildTargets
 	[Once]
 	public virtual async Task Default()
 	{
-		Console.WriteLine(GetRootDirectory());
 		await GreetAll();
 	}
 }
