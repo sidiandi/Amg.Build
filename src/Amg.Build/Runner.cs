@@ -4,6 +4,7 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -76,20 +77,13 @@ namespace Amg.Build
 
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
-            var startupFile = BuildScriptDll + ".startup";
-            if (startupFile.IsFile())
-            {
-                var startupDuration = DateTime.UtcNow - startupFile.LastWriteTimeUtc();
-                Logger.Information("Startup duration: {startupDuration}", startupDuration);
-            }
-            else
-            {
-                Logger.Warning("Startup file {startupFile} not found.", startupFile);
-            }
+            var invocations = GetStartupInvocations();
 
             try
             {
                 RunTarget(options.TargetAndArguments, options.targets);
+                invocations = invocations.Concat(onceInterceptor.Invocations);
+                Console.WriteLine(Summary.Print(invocations));
                 return ExitCodeSuccess;
             }
             catch (Exception ex)
@@ -97,6 +91,25 @@ namespace Amg.Build
                 Logger.Fatal(ex, "Build failed.");
                 return ExitCodeUnknownError;
             }
+        }
+
+        private static IEnumerable<OnceInterceptor.Invocation> GetStartupInvocations()
+        {
+            Enumerable.Empty<OnceInterceptor.Invocation>();
+            var startupFile = BuildScriptDll + ".startup";
+            var begin = startupFile.IsFile()
+                ? startupFile.LastWriteTimeUtc()
+                : Process.GetCurrentProcess().StartTime.ToUniversalTime();
+
+            var end = DateTime.UtcNow;
+            var startupDuration = end - begin;
+            Logger.Information("Startup duration: {startupDuration}", startupDuration);
+            var startupInvocation = new OnceInterceptor.Invocation("startup", Task.CompletedTask)
+            {
+                Begin = begin,
+                End = end
+            };
+            return new[] { startupInvocation };
         }
 
         private static string GetThisSourceFile([CallerFilePath] string filePath = null)

@@ -8,7 +8,7 @@ namespace Amg.Build
 {
     internal class OnceInterceptor : IInterceptor
     {
-        class Invocation
+        public class Invocation
         {
             public Invocation(string id, object returnValue)
             {
@@ -44,7 +44,7 @@ namespace Amg.Build
 
             public override string ToString() => $"Target {Id}";
 
-            public Exception Exception { get; private set; }
+            public Exception Exception { get; set; }
             public object ReturnValue { get; private set; }
 
             public enum States
@@ -88,6 +88,8 @@ namespace Amg.Build
         }
 
         static readonly IDictionary<string, Invocation> _cache;
+
+        public IEnumerable<Invocation> Invocations => _cache.Values;
 
         static OnceInterceptor()
         {
