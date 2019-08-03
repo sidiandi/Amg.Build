@@ -239,7 +239,8 @@ namespace Amg.Build
             outputFiles = outputFiles.ToList();
             var outputModified = outputFiles.LastWriteTimeUtc();
             var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
-            return outputModified < inputModified;
+            var isOutOfDate = outputModified < inputModified;
+            return isOutOfDate;
         }
 
         /// <summary>
@@ -249,7 +250,12 @@ namespace Amg.Build
         /// <returns></returns>
         public static DateTime LastWriteTimeUtc(this IEnumerable<string> paths)
         {
-            var m = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
+            var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
+                .ToList();
+
+            Logger.Information("{files}", files.OrderByDescending(_ => _.LastWrite).Join());
+
+            var m = files
                 .MaxElement(_ => _.LastWrite)
                 .SingleOrDefault();
 
