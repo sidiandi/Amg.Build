@@ -83,7 +83,6 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     [Description("pack nuget package")]
     public Target<string> Pack => DefineTarget(async () =>
     {
-        await Git.EnsureNoPendingChanges();
         var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
         await (await Dotnet.Tool()).Run("pack",
