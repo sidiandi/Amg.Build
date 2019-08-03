@@ -73,11 +73,14 @@ namespace Amg.Build
         public static void Print<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : class
         {
             @out.WriteLine(@"Usage: build <targets> [options]
-
-Targets:");
-            PrintTargetsList(@out, options.targets);
-            @out.WriteLine(@"
-Options:");
+");
+            var targets = PublicTargets(options.targets.GetType());
+            if (targets.Any())
+            {
+                @out.WriteLine(@"Targets:");
+                PrintTargetsList(@out, options.targets);
+            }
+            @out.WriteLine(@"Options:");
             PrintOptionsList(@out, options);
         }
 

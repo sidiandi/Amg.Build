@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -252,13 +250,17 @@ namespace Amg.Build
         public static DateTime LastWriteTimeUtc(this IEnumerable<string> paths)
         {
             var m = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
-                .MaxElement(_ => _.LastWrite);
+                .MaxElement(_ => _.LastWrite)
+                .SingleOrDefault();
+
+            if (m == null)
+            {
+                return DateTime.MinValue;
+            }
 
             Logger.Information("{0}", m);
 
-            return m == null
-                ? DateTime.MinValue
-                : m.LastWrite;
+            return m.LastWrite;
         }
 
         /// <summary>
@@ -309,10 +311,16 @@ namespace Amg.Build
         /// Start a glob
         /// </summary>
         /// <param name="path"></param>
+        /// <param name="pattern">Glob pattern to include. If omitted, an empty glob is returned.</param>
         /// <returns></returns>
-        public static Glob Glob(this string path)
+        public static Glob Glob(this string path, string pattern = null)
         {
-            return new Glob(path);
+            var glob = new Glob(path);
+            if (pattern != null)
+            {
+                glob = glob.Include(pattern);
+            }
+            return glob;
         }
 
         /// <summary>

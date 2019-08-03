@@ -49,6 +49,10 @@ namespace Amg.Build
         public bool Clean { get; set; }
 
         /// <summary />
+        [Description("Ignore --clean (internal use only)")]
+        public bool IgnoreClean { get; set; }
+
+        /// <summary />
         [Short('v'), Description("Set the verbosity level.")]
         public Verbosity Verbosity { get; set; } = Verbosity.Normal;
     }

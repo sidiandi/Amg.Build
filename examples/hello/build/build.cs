@@ -9,7 +9,7 @@ partial class BuildTargets : Targets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
-	static int Main(string[] args) => Targets.Run<BuildTargets>(args);
+	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
 
 	Target<string, Nothing> Greet => DefineTarget(async (string name) =>
 	{

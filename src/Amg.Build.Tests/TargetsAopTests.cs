@@ -13,7 +13,7 @@ namespace Amg.Build
         public async Task Once()
         {
             var once = Runner.Once<MyTargetsAop>();
-            await once.Default();
+            await once.All();
             Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
         }
 

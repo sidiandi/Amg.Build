@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -52,14 +53,7 @@ namespace Amg.Build
 
             var amgBuildAssembly = typeof(Target).Assembly;
 
-            var thisDll = Assembly.GetExecutingAssembly().Location;
-            var sourceDir = thisDll.Parent().Parent().Parent().Parent();
-            var sourceFiles = sourceDir.Glob()
-                .Exclude("bin")
-                .Exclude("obj")
-                .Exclude(".vs");
-
-            if (options.Clean || thisDll.IsOutOfDate(sourceFiles))
+            if ((options.Clean && !options.IgnoreClean) || IsOutOfDate())
             {
                 Console.Error.WriteLine("Build script requires rebuild.");
                 return ExitCodeRebuildRequired;
@@ -83,15 +77,61 @@ namespace Amg.Build
             }
         }
 
+        private static string GetThisSourceFile([CallerFilePath] string filePath = null)
+        {
+            return filePath;
+        }
+
+        private static bool IsOutOfDate()
+        {
+            var thisDll = Assembly.GetExecutingAssembly().Location;
+            Logger.Information("{thisDll}", thisDll);
+            var sourceDir = GetThisSourceFile().Parent();
+            var sourceFiles = sourceDir.Glob("**")
+                .Exclude("bin")
+                .Exclude("obj")
+                .Exclude(".vs");
+            return thisDll.IsOutOfDate(sourceFiles);
+        }
+
         private static void RunTarget(string[] targetAndArguments, object targets)
         {
             var targetName = targetAndArguments.FirstOrDefault();
             var target = (targetName == null)
-                ? HelpText.Targets(targets.GetType()).FindByName(_ => _.Name, "Default")
+                ? GetDefaultTarget(targets)
                 : HelpText.PublicTargets(targets.GetType()).FindByName(_ => _.Name, targetName);
             var arguments = targetAndArguments.Skip(1).ToArray();
 
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
+        }
+
+        private static MethodInfo GetDefaultTarget(object targets)
+        {
+            var t = HelpText.Targets(targets.GetType());
+            var defaultTarget = new[]
+            {
+                t.FirstOrDefault(_ => _.GetCustomAttribute<DefaultAttribute>() != null),
+                t.FindByNameOrDefault(_ => _.Name, "All"),
+                t.FindByNameOrDefault(_ => _.Name, "Default"),
+            }.FirstOrDefault(_ => _ != null);
+
+            if (defaultTarget == null)
+            {
+                throw new Exception(@"No default target found.
+
+Add a method with signature
+
+[Once] [Default]
+public virtual async Task Default()
+{
+    ...
+}
+
+in your {targets.GetType()} class.
+
+");
+            }
+            return defaultTarget;
         }
 
         static object Wait(object returnValue)

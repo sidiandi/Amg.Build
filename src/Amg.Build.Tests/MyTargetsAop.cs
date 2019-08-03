@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -51,8 +52,8 @@ namespace Amg.Build
             result += "Pack";
         }
 
-        [Once] [Description("Compile, link, and pack")]
-        public virtual async Task Default()
+        [Once] [Description("Compile, link, and pack")] [Default]
+        public virtual async Task All()
         {
             await Task.WhenAll(
                 Compile(),
