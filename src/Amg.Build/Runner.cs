@@ -94,14 +94,14 @@ namespace Amg.Build
 
         private static bool IsOutOfDate()
         {
-            var thisDll = Assembly.GetExecutingAssembly().Location;
-            Logger.Information("{thisDll}", thisDll);
+            var buildDll = Assembly.GetEntryAssembly().Location;
+            Logger.Information("{buildDll}", buildDll);
             var sourceDir = GetThisSourceFile().Parent();
             var sourceFiles = sourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");
-            return thisDll.IsOutOfDate(sourceFiles);
+            return buildDll.IsOutOfDate(sourceFiles);
         }
 
         private static void RunTarget(string[] targetAndArguments, object targets)
