@@ -257,6 +257,34 @@ Output files:
         }
 
         /// <summary>
+        /// Returns true if outputFiles cannot have been built from inputFiles.
+        /// </summary>
+        /// <param name="outputFiles"></param>
+        /// <param name="inputFiles"></param>
+        /// <returns>True if outputFiles cannot have been built from inputFiles, false otherwise</returns>
+        public static bool IsOutOfDate(this IEnumerable<FileSystemInfo> outputFiles, IEnumerable<FileSystemInfo> inputFiles)
+        {
+            outputFiles = outputFiles.ToList();
+            var outputModified = outputFiles.LastWriteTimeUtc();
+            var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
+            var isOutOfDate = outputModified < inputModified;
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                Logger.Debug(@"IsOutOfDate: {isOutOfDate}
+
+Input files:
+{@inputFiles}
+
+Output files:
+{@outputFiles}",
+                isOutOfDate,
+                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }));
+            }
+            return isOutOfDate;
+        }
+
+        /// <summary>
         /// Last time something was written to paths
         /// </summary>
         /// <param name="paths"></param>
@@ -289,6 +317,40 @@ Output files:
                 ? new FileInfo(path).LastWriteTimeUtc
                 : DateTime.MinValue;
 
+        }
+
+        /// <summary>
+        /// Last time something was written to paths
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static DateTime LastWriteTimeUtc(this IEnumerable<FileSystemInfo> paths)
+        {
+            var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
+                .ToList();
+
+            var m = files
+                .MaxElement(_ => _.LastWrite)
+                .SingleOrDefault();
+
+            if (m == null)
+            {
+                return DateTime.MinValue;
+            }
+
+            return m.LastWrite;
+        }
+
+        /// <summary>
+        /// Last time something was written to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static DateTime LastWriteTimeUtc(this FileSystemInfo path)
+        {
+            return path is FileInfo f
+                ? f.LastWriteTimeUtc
+                : DateTime.MinValue;
         }
 
         /// <summary>

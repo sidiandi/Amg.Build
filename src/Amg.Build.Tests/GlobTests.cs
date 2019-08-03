@@ -15,32 +15,33 @@ namespace Amg.Build
         public async Task Glob()
         {
             var testDir = CreateEmptyTestDirectory();
-            await testDir.Combine("hello").WriteAllTextAsync("hello");
+            await testDir.Combine("hello.txt").WriteAllTextAsync("hello");
             await testDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
 
             IList<string> files;
 
-            files = testDir.Glob().Include("**")
-                .Exclude("he*o")
-                .EnumerateFiles()
-                .ToList();
-            Console.WriteLine(files.Join());
-            Assert.AreEqual(files.Count, 1);
-
             files = testDir.Glob().Include("**").ToList();
             Console.WriteLine(files.Join());
-            Assert.AreEqual(files.Count, 5);
+            Console.WriteLine();
+            Assert.AreEqual(4, files.Count);
+
+            files = testDir.Glob("*.txt").ToList();
+            Console.WriteLine(files.Join());
+            Console.WriteLine();
+            Assert.AreEqual(1, files.Count);
 
             files = testDir.Glob().Include("**")
                 .Exclude("b")
                 .ToList();
             Console.WriteLine(files.Join());
-            Assert.AreEqual(files.Count, 3);
+            Console.WriteLine();
+            Assert.AreEqual(2, files.Count);
 
             files = testDir.Glob().Include("**")
                 .EnumerateFiles()
                 .ToList();
             Console.WriteLine(files.Join());
+            Console.WriteLine();
             Assert.AreEqual(files.Count, 2);
         }
 

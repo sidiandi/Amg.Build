@@ -4,6 +4,14 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../LICENSE" Pack="true" Visible="false" PackagePath=""/>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.4.0" />
     <PackageReference Include="GitVersionCore" Version="4.0.0" />

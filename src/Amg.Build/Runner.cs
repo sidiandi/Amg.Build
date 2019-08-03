@@ -21,10 +21,27 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        private string sourceDir;
+        private string buildDll;
+        private Type targetsType;
+        private string[] commandLineArguments;
+
         const int ExitCodeHelpDisplayed = 1;
         const int ExitCodeUnknownError = -1;
         const int ExitCodeSuccess = 0;
         const int ExitCodeRebuildRequired = 2;
+
+        Runner(
+            string buildSourceFile, 
+            string buildDll, 
+            Type targetsType, 
+            string[] commandLineArguments)
+        {
+            this.sourceDir = buildSourceFile.Parent();
+            this.buildDll = buildDll;
+            this.targetsType = targetsType;
+            this.commandLineArguments = commandLineArguments;
+        }
 
         /// <summary>
         /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
@@ -32,9 +49,22 @@ namespace Amg.Build
         /// Call this method directly from your Main()
         /// <typeparam name="TargetsDerivedClass"></typeparam>
         /// <param name="commandLineArguments"></param>
+        /// <param name="callerFilePath"></param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : class
+        public static int Run<TargetsDerivedClass>(string[] commandLineArguments, [CallerFilePath] string callerFilePath = null) where TargetsDerivedClass : class
         {
+            var runner = new Runner(
+                callerFilePath,
+                Assembly.GetEntryAssembly().Location,
+                typeof(TargetsDerivedClass),
+                commandLineArguments
+                );
+
+            return runner.Run();
+        }
+
+        int Run()
+        { 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                 .CreateLogger();
@@ -48,14 +78,26 @@ namespace Amg.Build
             var builder = new DefaultProxyBuilder();
             var generator = new ProxyGenerator(builder);
             var onceInterceptor = new OnceInterceptor();
-            var onceProxy = generator.CreateClassProxy<TargetsDerivedClass>(new ProxyGenerationOptions
+            var onceProxy = generator.CreateClassProxy(targetsType, new ProxyGenerationOptions
             {
                 Hook = new OnceHook()
             },
             onceInterceptor, new LogInvocationInterceptor());
 
-            var options = new Options<TargetsDerivedClass>(onceProxy);
+            var options = new Options(onceProxy);
             GetOptParser.Parse(commandLineArguments, options);
+
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(SerilogLogEventLevel(options.Verbosity))
+                .CreateLogger();
+
+            if (options.Edit)
+            {
+                var cmd = new Tool("cmd").WithArguments("/c", "start");
+                var buildCsProj = sourceDir.Glob("*.csproj").First();
+                cmd.Run(buildCsProj).Wait();
+                return ExitCodeHelpDisplayed;
+            }
 
             if ((options.Clean && !options.IgnoreClean))
             {
@@ -71,17 +113,13 @@ namespace Amg.Build
 
             var amgBuildAssembly = typeof(Target).Assembly;
 
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(SerilogLogEventLevel(options.Verbosity))
-                .CreateLogger();
-
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
             var invocations = GetStartupInvocations();
 
             try
             {
-                RunTarget(options.TargetAndArguments, options.targets);
+                RunTarget(options.TargetAndArguments, options.Targets);
                 invocations = invocations.Concat(onceInterceptor.Invocations);
                 Console.WriteLine(Summary.Print(invocations));
                 return ExitCodeSuccess;
@@ -119,11 +157,12 @@ namespace Amg.Build
 
         static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
-        static string BuildScriptSourceDir => BuildScriptDll.Parent().Parent().Parent().Parent();
-
-        private static bool IsOutOfDate()
+        /// <summary>
+        /// Detects if the buildDll itself needs to be re-built.
+        /// </summary>
+        /// <returns></returns>
+        bool IsOutOfDate()
         {
-            var buildDll = BuildScriptDll;
             if (Regex.IsMatch(buildDll.FileName(), "test", RegexOptions.IgnoreCase))
             {
                 Logger.Warning("test mode detected. Out of date check skipped.");
@@ -131,10 +170,12 @@ namespace Amg.Build
             }
 
             Logger.Information("{buildDll}", buildDll);
-            var sourceFiles = BuildScriptSourceDir.Glob("**")
+            var sourceFiles = sourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");
+            var outputFiles = buildDll.Glob();
+
             return buildDll.IsOutOfDate(sourceFiles);
         }
 

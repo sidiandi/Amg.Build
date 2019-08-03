@@ -10,7 +10,7 @@ namespace Amg.Build
 {
     internal class HelpText
     {
-        private static void PrintOptionsList<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : class
+        private static void PrintOptionsList(TextWriter @out, Options options)
         {
             GetOptParser.GetOptions(options)
                 .Where(_ => !_.IsOperands)
@@ -70,19 +70,18 @@ namespace Amg.Build
                 .Write(@out);
         }
 
-        public static void Print<TargetsDerivedClass>(TextWriter @out, Options<TargetsDerivedClass> options) where TargetsDerivedClass : class
+        public static void Print(TextWriter @out, Options options)
         {
-            @out.WriteLine(@"Usage: build <targets> [options]
+            @out.WriteLine(@"Usage: build [options] <target> [target parameters]...
 ");
-            var targets = PublicTargets(options.targets.GetType());
+            var targets = PublicTargets(options.Targets.GetType());
             if (targets.Any())
             {
                 @out.WriteLine(@"Targets:");
-                PrintTargetsList(@out, options.targets);
+                PrintTargetsList(@out, options.Targets);
             }
             @out.WriteLine(@"Options:");
             PrintOptionsList(@out, options);
         }
-
     }
 }
