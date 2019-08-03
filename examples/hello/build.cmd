@@ -1,6 +1,6 @@
-rem @echo off
-
+@echo off
 set buildDll=%~dp0build\bin\Debug\netcoreapp2.2\build.dll
+echo startup time > %buildDll%.startup
 set exitCodeOutOfDate=2
 
 if exist %buildDll% (

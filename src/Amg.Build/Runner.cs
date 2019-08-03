@@ -33,10 +33,6 @@ namespace Amg.Build
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
         public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : class
         {
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
-                .CreateLogger();
-
             if (IsOutOfDate())
             {
                 Console.Error.WriteLine("Build script requires rebuild.");
@@ -75,6 +71,13 @@ namespace Amg.Build
 
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
+            var startupFile = BuildDll().Combine(".startup");
+            if (startupFile.IsFile())
+            {
+                var startupDuration = DateTime.UtcNow - startupFile.LastWriteTimeUtc();
+                Logger.Information("Startup duration: {startupDuration}", startupDuration);
+            }
+
             try
             {
                 RunTarget(options.TargetAndArguments, options.targets);
@@ -92,9 +95,14 @@ namespace Amg.Build
             return filePath;
         }
 
+        static string BuildDll()
+        {
+            return Assembly.GetEntryAssembly().Location;
+        }
+
         private static bool IsOutOfDate()
         {
-            var buildDll = Assembly.GetEntryAssembly().Location;
+            var buildDll = BuildDll();
             Logger.Information("{buildDll}", buildDll);
             var sourceDir = GetThisSourceFile().Parent();
             var sourceFiles = sourceDir.Glob("**")
