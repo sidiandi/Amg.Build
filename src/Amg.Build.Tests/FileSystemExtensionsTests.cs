@@ -1,6 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -34,19 +36,18 @@ namespace Amg.Build
             Console.WriteLine(".".Glob().LastWriteTimeUtc());
         }
 
-        /* 
+        static string GetThisSourceFile([CallerFilePath] string path = null) => path;
+
         [Test]
         public void OutOfDate()
         {
-            var binDir = System.Environment.CurrentDirectory.Parent();
-            var sources = binDir.Parent().Parent().Parent()
-                .Glob()
+            var thisDll = Assembly.GetExecutingAssembly().Location;
+            var sources = GetThisSourceFile().Parent()
+                .Glob("**")
                 .Exclude("obj")
                 .Exclude("bin");
 
-            Assert.That(!binDir.Glob()
-                .IsOutOfDate(sources));
+            Assert.That(thisDll.IsOutOfDate(sources), Is.Not.True);
         }
-        */
     }
 }

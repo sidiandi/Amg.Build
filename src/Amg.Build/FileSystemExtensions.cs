@@ -240,6 +240,19 @@ namespace Amg.Build
             var outputModified = outputFiles.LastWriteTimeUtc();
             var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
             var isOutOfDate = outputModified < inputModified;
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                Logger.Debug(@"IsOutOfDate: {isOutOfDate}
+
+Input files:
+{@inputFiles}
+
+Output files:
+{@outputFiles}",
+                isOutOfDate,
+                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }));
+            }
             return isOutOfDate;
         }
 
@@ -253,8 +266,6 @@ namespace Amg.Build
             var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
                 .ToList();
 
-            Logger.Information("{files}", files.OrderByDescending(_ => _.LastWrite).Join());
-
             var m = files
                 .MaxElement(_ => _.LastWrite)
                 .SingleOrDefault();
@@ -263,8 +274,6 @@ namespace Amg.Build
             {
                 return DateTime.MinValue;
             }
-
-            Logger.Information("{0}", m);
 
             return m.LastWrite;
         }
