@@ -34,6 +34,10 @@ namespace Amg.Build
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
         public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : class
         {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
+                .CreateLogger();
+
             if (IsOutOfDate())
             {
                 Console.Error.WriteLine("Build script requires rebuild.");
