@@ -5,28 +5,31 @@ using Amg.Build;
 using System.Diagnostics;
 using System.Linq;
 
-partial class BuildTargets : Targets
+partial class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
 	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
 
-	Target<string, Nothing> Greet => DefineTarget(async (string name) =>
+	[Once]
+	public virtual async Task Greet(string name)
 	{
 		await Task.Delay(TimeSpan.FromSeconds(1));
 		Console.WriteLine($"Hello, {name}");
 		return Nothing.Instance;
-	});
+	}
 	
-	public Target GreetAll => DefineTarget(async () =>
+	[Once]
+	public virtual async Task GreetAll()
 	{
 		await Task.WhenAll(Enumerable.Range(0,100).Select(_ => Greet($"Alice {_}")));
-	});
+	}
 	
-	Target Default => DefineTarget(async () =>
+	[Once]
+	public virtual async Task Default()
 	{
 		Console.WriteLine(GetRootDirectory());
 		await GreetAll();
-	});
+	}
 }
 
