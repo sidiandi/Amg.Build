@@ -2,7 +2,11 @@
 
 namespace Amg.Build
 {
-    internal class OnceAttribute : Attribute
+    /// <summary>
+    /// Mark method to be executed only once during the lifetime of its class instance.
+    /// </summary>
+    /// Can only be applied to virtual methods.
+    public class OnceAttribute : Attribute
     {
     }
 }
