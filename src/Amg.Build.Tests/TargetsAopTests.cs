@@ -75,5 +75,12 @@ Options:
             var exitCode = Runner.Run<MinimalTargets>(new[] { "--help" });
             Assert.AreEqual(1, exitCode);
         }
+
+        [Test]
+        public void NestedOnce()
+        {
+            var exitCode = Runner.Run<MyTargetsAop>(new[] { "Version" });
+            Assert.AreEqual(0, exitCode);
+        }
     }
 }

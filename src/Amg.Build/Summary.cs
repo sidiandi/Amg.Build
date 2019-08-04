@@ -7,7 +7,7 @@ namespace Amg.Build
 {
     internal class Summary
     {
-        internal static IWritable Print(IEnumerable<OnceInterceptor.Invocation> invocations) => TextFormatExtensions.GetWritable(@out =>
+        internal static IWritable Print(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
             var begin = invocations
                 .Select(_ => _.Begin.GetValueOrDefault(DateTime.MaxValue))

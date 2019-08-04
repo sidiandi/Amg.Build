@@ -115,7 +115,8 @@ namespace Amg.Build
 
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
-            var invocations = GetStartupInvocations();
+            var startup = GetStartupInvocation();
+            IEnumerable<InvocationInfo> invocations = new[] { startup };
 
             try
             {
@@ -131,9 +132,8 @@ namespace Amg.Build
             }
         }
 
-        private static IEnumerable<OnceInterceptor.Invocation> GetStartupInvocations()
+        private static InvocationInfo GetStartupInvocation()
         {
-            Enumerable.Empty<OnceInterceptor.Invocation>();
             var startupFile = BuildScriptDll + ".startup";
             var begin = startupFile.IsFile()
                 ? startupFile.LastWriteTimeUtc()
@@ -142,12 +142,8 @@ namespace Amg.Build
             var end = DateTime.UtcNow;
             var startupDuration = end - begin;
             Logger.Information("Startup duration: {startupDuration}", startupDuration);
-            var startupInvocation = new OnceInterceptor.Invocation("startup", Task.CompletedTask)
-            {
-                Begin = begin,
-                End = end
-            };
-            return new[] { startupInvocation };
+            var startupInvocation = new InvocationInfo("startup", begin, end);
+            return startupInvocation;
         }
 
         private static string GetThisSourceFile([CallerFilePath] string filePath = null)
@@ -259,6 +255,5 @@ in your {targets.GetType()} class.
             }, 
             new OnceInterceptor(), new LogInvocationInterceptor());
         }
-
     }
 }

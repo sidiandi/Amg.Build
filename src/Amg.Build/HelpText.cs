@@ -21,7 +21,7 @@ namespace Amg.Build
 
         internal static bool IsTarget(MethodInfo method)
         {
-            return OnceHook.HasOnce(method);
+            return Once.Has(method);
         }
 
         internal static bool IsPublicTarget(MethodInfo method)
