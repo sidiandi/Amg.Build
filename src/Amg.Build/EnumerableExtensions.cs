@@ -106,25 +106,54 @@ namespace Amg.Build
         /// <param name="e"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
-        public static T MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector) where Y : IComparable
+        public static IEnumerable<T> MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector) where Y : IComparable
         {
-            try
+            using (var i = e.GetEnumerator())
             {
-                var m = e.First();
+                T max = default(T);
+                Y maxValue = default(Y);
+                bool found = false;
 
-                var maxValue = selector(m);
-                foreach (var i in e.Skip(1))
+                for (; i.MoveNext();)
                 {
-                    var value = selector(i);
+                    max = i.Current;
+                    maxValue = selector(i.Current);
+                    found = true;
+                    break;
+                }
+                for (; i.MoveNext();)
+                {
+                    var value = selector(i.Current);
                     if (value.CompareTo(maxValue) == 1)
                     {
                         maxValue = value;
-                        m = i;
+                        max = i.Current;
                     }
                 }
-                return m;
+                return found
+                    ? new[] { max }
+                    : Enumerable.Empty<T>();
             }
-            catch (System.InvalidOperationException)
+        }
+
+        /// <summary>
+        /// Find an element by name. The name of an element i is determined by name(i). 
+        /// </summary>
+        /// Abbreviations are allowed: query can also be a substring of the name as long as it uniquely
+        /// identifies an element.
+        /// <typeparam name="T"></typeparam>
+        /// <param name="candidates"></param>
+        /// <param name="name">calculates the name of an element</param>
+        /// <param name="query">the name (part) to be found.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException">When query does not identify a named element.</exception>
+        public static T FindByNameOrDefault<T>(this IEnumerable<T> candidates, Func<T, string> name, string query)
+        {
+            try
+            {
+                return candidates.FindByName(name, query);
+            }
+            catch (Exception)
             {
                 return default(T);
             }
@@ -157,7 +186,7 @@ namespace Amg.Build
 
             if (matches.Length > 1)
             {
-                throw new Exception($@"{query.Quote()} is ambiguous. Could be
+                throw new ArgumentOutOfRangeException($@"{query.Quote()} is ambiguous. Could be
 
 {matches.Select(name).Join()}
 

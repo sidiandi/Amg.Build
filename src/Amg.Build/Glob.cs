@@ -14,7 +14,7 @@ namespace Amg.Build
     {
         string[] include = new string[] { };
         Func<FileSystemInfo, bool>[] exclude = new Func<FileSystemInfo, bool>[] { };
-        private readonly string root;
+        private readonly DirectoryInfo root;
 
         Glob Copy()
         {
@@ -24,7 +24,7 @@ namespace Amg.Build
         /// <summary />
         public Glob(string root)
         {
-            this.root = root;
+            this.root = new DirectoryInfo(root);
         }
 
         /// <summary>
@@ -117,13 +117,36 @@ namespace Amg.Build
 
             var first = glob[0];
             var rest = glob.Skip(1).ToArray();
+            var leaf = rest.Length == 0;
+
             if (IsSkipAnyNumberOfDirectories(first))
             {
-                return Find(root.EnumerateFileSystemInfos(), glob, exclude);
+                return (leaf 
+                    ? Find(root, new[] { "*" }, exclude)
+                    : Find(root, rest, exclude))
+                    .Concat(root.EnumerateDirectories()
+                    .Where(_ => !exclude(_))
+                    .SelectMany(_ => Find(_, glob, exclude)));
             }
             else
             {
-                return Find(root.EnumerateFileSystemInfos(first), rest, exclude);
+                return root.EnumerateFileSystemInfos(first)
+                    .Where(_ => !exclude(_))
+                    .SelectMany(c =>
+                    {
+                        if (leaf)
+                        {
+                            return new[] { c };
+                        }
+                        else if (c is DirectoryInfo d)
+                        {
+                            return Find(d, rest, exclude);
+                        }
+                        else
+                        {
+                            return Enumerable.Empty<FileSystemInfo>();
+                        }
+                    });
             }
         }
 
@@ -175,11 +198,9 @@ namespace Amg.Build
             var excludeFunc = new Func<FileSystemInfo, bool>((FileSystemInfo i) =>
                 exclude.Any(_ => _(i)));
 
-            var r = root.GetFileSystemInfo();
-
             return include.SelectMany(i =>
             {
-                return Find(new[] { r }, i.SplitDirectories(), excludeFunc);
+                return Find(root, i.SplitDirectories(), excludeFunc);
             });
         }
 

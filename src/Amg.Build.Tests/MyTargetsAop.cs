@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -13,10 +14,17 @@ namespace Amg.Build
         public string result { get; private set; } = String.Empty;
 
         [Once]
+        protected virtual Builtin.Git Git => new Builtin.Git();
+
+        [Once]
+        protected virtual Builtin.Dotnet Dotnet => new Builtin.Dotnet();
+
+        [Once]
         [Description("Print the dotnet version")]
-        public virtual async Task DotnetVersion()
+        public virtual async Task Version()
         {
-            var v = await Task.FromResult("1.2.3");
+            await Task.WhenAll(Git.GetVersion(), Dotnet.Version());
+            var v = await Dotnet.Version();
             Console.WriteLine(v);
         }
 
@@ -51,14 +59,14 @@ namespace Amg.Build
             result += "Pack";
         }
 
-        [Once] [Description("Compile, link, and pack")]
-        public virtual async Task Default()
+        [Once] [Description("Compile, link, and pack")] [Default]
+        public virtual async Task All()
         {
             await Task.WhenAll(
                 Compile(),
                 Link(),
                 Pack(),
-                DotnetVersion()
+                Version()
                 );
         }
 

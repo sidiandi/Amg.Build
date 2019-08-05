@@ -120,7 +120,7 @@ namespace Amg.Build
                 .Exclude("obj")
                 .Exclude(".vs");
 
-            if (options.Clean || thisDll.IsOutOfDate(sourceFiles))
+            if (options.Clean || thisDll.Glob().IsOutOfDate(sourceFiles))
             {
                 Console.Error.WriteLine("Build script requires rebuild.");
                 return ExitCodeRebuildRequired;

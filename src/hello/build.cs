@@ -21,7 +21,7 @@ public class BuildTargets
 	[Once]
 	public virtual async Task GreetAll()
 	{
-		await Task.WhenAll(Enumerable.Range(0,10).Select(_ => Greet($"Alice {_}")));
+		await Task.WhenAll(Enumerable.Range(0,5).Select(_ => Greet($"Alice {_}")));
 	}
 	
 	[Once]

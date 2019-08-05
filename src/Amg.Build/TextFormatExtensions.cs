@@ -152,11 +152,17 @@ namespace Amg.Build
         /// <returns></returns>
         public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime begin, DateTime end)
         {
+            if (!(rangeBegin < rangeEnd))
+            {
+                throw new ArgumentOutOfRangeException($"(rangeBegin < rangeEnd) {rangeBegin} {rangeEnd}");
+            }
+
             int Pos(DateTime t)
             {
+                t = t.Limit(rangeBegin, rangeEnd);
                 return (int)((t - rangeBegin).TotalSeconds / (rangeEnd - rangeBegin).TotalSeconds * width);
             }
-            var beginPos = Pos(begin);
+            var beginPos = Pos(begin).Limit(0, width - 1);
             var endPos = Math.Max(Pos(end), beginPos + 1);
             const char empty = ' ';
             const char full = '#';

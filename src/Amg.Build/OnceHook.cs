@@ -12,14 +12,9 @@ namespace Amg.Build
         {
         }
 
-        public static bool HasOnce(MemberInfo memberInfo)
-        {
-            return memberInfo.GetCustomAttribute<OnceAttribute>() != null;
-        }
-
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
         {
-            if (HasOnce(memberInfo))
+            if (Once.Has(memberInfo))
             {
                 throw new Exception($"{memberInfo} must be virtual because it has the [Once] attribute.");
             }
@@ -27,7 +22,9 @@ namespace Amg.Build
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
-            return HasOnce(methodInfo);
+            var intercept = Once.Has(methodInfo);
+            Logger.Debug("{method}: {intercept}", methodInfo, intercept);
+            return intercept;
         }
     }
 }

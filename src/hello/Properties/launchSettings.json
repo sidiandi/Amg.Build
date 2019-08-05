@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "hello": {
+      "commandName": "Project",
+      "commandLineArgs": "-e"
+    }
+  }
+}

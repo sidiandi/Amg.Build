@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -241,7 +239,49 @@ namespace Amg.Build
             outputFiles = outputFiles.ToList();
             var outputModified = outputFiles.LastWriteTimeUtc();
             var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
-            return outputModified < inputModified;
+            var isOutOfDate = outputModified < inputModified;
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                Logger.Debug(@"IsOutOfDate: {isOutOfDate}
+
+Input files:
+{@inputFiles}
+
+Output files:
+{@outputFiles}",
+                isOutOfDate,
+                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }));
+            }
+            return isOutOfDate;
+        }
+
+        /// <summary>
+        /// Returns true if outputFiles cannot have been built from inputFiles.
+        /// </summary>
+        /// <param name="outputFiles"></param>
+        /// <param name="inputFiles"></param>
+        /// <returns>True if outputFiles cannot have been built from inputFiles, false otherwise</returns>
+        public static bool IsOutOfDate(this IEnumerable<FileSystemInfo> outputFiles, IEnumerable<FileSystemInfo> inputFiles)
+        {
+            outputFiles = outputFiles.ToList();
+            var outputModified = outputFiles.LastWriteTimeUtc();
+            var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
+            var isOutOfDate = outputModified < inputModified;
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                Logger.Debug(@"IsOutOfDate: {isOutOfDate}
+
+Input files:
+{@inputFiles}
+
+Output files:
+{@outputFiles}",
+                isOutOfDate,
+                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }));
+            }
+            return isOutOfDate;
         }
 
         /// <summary>
@@ -251,14 +291,19 @@ namespace Amg.Build
         /// <returns></returns>
         public static DateTime LastWriteTimeUtc(this IEnumerable<string> paths)
         {
-            var m = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
-                .MaxElement(_ => _.LastWrite);
+            var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
+                .ToList();
 
-            Logger.Information("{0}", m);
+            var m = files
+                .MaxElement(_ => _.LastWrite)
+                .SingleOrDefault();
 
-            return m == null
-                ? DateTime.MinValue
-                : m.LastWrite;
+            if (m == null)
+            {
+                return DateTime.MinValue;
+            }
+
+            return m.LastWrite;
         }
 
         /// <summary>
@@ -272,6 +317,40 @@ namespace Amg.Build
                 ? new FileInfo(path).LastWriteTimeUtc
                 : DateTime.MinValue;
 
+        }
+
+        /// <summary>
+        /// Last time something was written to paths
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static DateTime LastWriteTimeUtc(this IEnumerable<FileSystemInfo> paths)
+        {
+            var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
+                .ToList();
+
+            var m = files
+                .MaxElement(_ => _.LastWrite)
+                .SingleOrDefault();
+
+            if (m == null)
+            {
+                return DateTime.MinValue;
+            }
+
+            return m.LastWrite;
+        }
+
+        /// <summary>
+        /// Last time something was written to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static DateTime LastWriteTimeUtc(this FileSystemInfo path)
+        {
+            return path is FileInfo f
+                ? f.LastWriteTimeUtc
+                : DateTime.MinValue;
         }
 
         /// <summary>
@@ -309,10 +388,16 @@ namespace Amg.Build
         /// Start a glob
         /// </summary>
         /// <param name="path"></param>
+        /// <param name="pattern">Glob pattern to include. If omitted, an empty glob is returned.</param>
         /// <returns></returns>
-        public static Glob Glob(this string path)
+        public static Glob Glob(this string path, string pattern = null)
         {
-            return new Glob(path);
+            var glob = new Glob(path);
+            if (pattern != null)
+            {
+                glob = glob.Include(pattern);
+            }
+            return glob;
         }
 
         /// <summary>

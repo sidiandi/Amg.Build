@@ -3,6 +3,7 @@
   <Import Project="../out/$(Configuration)/Version.props" />
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
    <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />

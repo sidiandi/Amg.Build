@@ -21,18 +21,17 @@ namespace Amg.Build
     /// <summary>
     /// Command line options
     /// </summary>
-    /// <typeparam name="TargetsDerivedClass"></typeparam>
-    public class Options<TargetsDerivedClass>
+    class Options
     {
         /// <summary>
         /// Class with the targets methods
         /// </summary>
-        public TargetsDerivedClass targets { get; set; }
+        public object Targets { get; private set; }
 
         /// <summary />
-        public Options(TargetsDerivedClass targets)
+        public Options(object targets)
         {
-            this.targets = targets;
+            this.Targets = targets;
         }
 
         /// <summary />
@@ -45,8 +44,16 @@ namespace Amg.Build
         public bool Help { get; set; }
 
         /// <summary />
+        [Short('e'), Description("Edit the build script in Visual Studio.")]
+        public bool Edit { get; set; }
+
+        /// <summary />
         [Description("Force a rebuild of the build script")]
         public bool Clean { get; set; }
+
+        /// <summary />
+        [Description("Ignore --clean (internal use only)")]
+        public bool IgnoreClean { get; set; }
 
         /// <summary />
         [Short('v'), Description("Set the verbosity level.")]

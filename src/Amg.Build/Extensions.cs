@@ -154,5 +154,29 @@ namespace Amg.Build
                 return mapper(x);
             }
         }
+
+        /// <summary>
+        /// Limit x in [a,b]
+        /// </summary>
+        public static DateTime Limit(this DateTime x, DateTime a, DateTime b)
+        {
+            return x < a
+                ? a
+                : x > b
+                    ? b
+                    : x;
+        }
+
+        /// <summary>
+        /// Limit x in [a,b]
+        /// </summary>
+        public static int Limit(this int x, int a, int b)
+        {
+            return x < a
+                ? a
+                : x > b
+                    ? b
+                    : x;
+        }
     }
 }

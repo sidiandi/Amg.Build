@@ -13,7 +13,7 @@ namespace Amg.Build
         public async Task Once()
         {
             var once = Runner.Once<MyTargetsAop>();
-            await once.Default();
+            await once.All();
             Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
         }
 
@@ -74,6 +74,13 @@ Options:
         {
             var exitCode = Runner.Run<MinimalTargets>(new[] { "--help" });
             Assert.AreEqual(1, exitCode);
+        }
+
+        [Test]
+        public void NestedOnce()
+        {
+            var exitCode = Runner.Run<MyTargetsAop>(new[] { "Version" });
+            Assert.AreEqual(0, exitCode);
         }
     }
 }
