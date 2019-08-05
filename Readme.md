@@ -42,12 +42,13 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Todo
 
-* Improve Target syntax
+* nice diagnostic message for IsOutOfDate (... are out of date because of ...)
 * Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* Improve Target syntax
 * Less clumsy target class syntax with [Once]
 * Target logging
 * ReduceLines, SplitLines
