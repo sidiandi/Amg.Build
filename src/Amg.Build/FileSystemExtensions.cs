@@ -268,18 +268,26 @@ Output files:
             var outputModified = outputFiles.LastWriteTimeUtc();
             var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
             var isOutOfDate = outputModified < inputModified;
-            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Information))
             {
-                Logger.Debug(@"IsOutOfDate: {isOutOfDate}
+                if (isOutOfDate)
+                {
+                    Logger.Information(@"Output files 
 
-Input files:
+{@outputFiles}
+
+are out of date because input files
+
 {@inputFiles}
 
-Output files:
-{@outputFiles}",
-                isOutOfDate,
-                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
-                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }));
+are more recent.
+",
+                    isOutOfDate,
+                    outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                    inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() })
+                        .Where(_ => _.Changed > outputModified).Take(20)
+                    );
+                }
             }
             return isOutOfDate;
         }
