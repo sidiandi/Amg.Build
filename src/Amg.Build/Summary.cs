@@ -17,6 +17,15 @@ namespace Amg.Build
                 .Select(_ => _.End.GetValueOrDefault(DateTime.MinValue))
                 .Max();
 
+            new
+            {
+                begin,
+                end,
+                duration = end - begin
+            }.ToPropertiesTable().Write(@out);
+
+            @out.WriteLine();
+
             invocations.OrderBy(_ => _.End)
                 .Select(_ => new
                 {
@@ -28,5 +37,41 @@ namespace Amg.Build
                 .ToTable()
                 .Write(@out);
         });
+
+        public static Exception GetRootCause(Exception e)
+        {
+            if (e is InvocationFailed)
+            {
+                return e;
+            }
+            else
+            {
+                return e.InnerException == null
+                    ? e
+                    : GetRootCause(e.InnerException);
+            }
+        }
+
+        internal static IWritable Error(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        {
+            foreach (var failedTarget in invocations.OrderBy(_ => _.End)
+                .Where(_ => _.State == InvocationInfo.States.Failed))
+            {
+                var r = GetRootCause(failedTarget.Exception);
+                @out.WriteLine($"{failedTarget} failed because: {r.Message}");
+                if (!(r is InvocationFailed))
+                {
+                    @out.WriteLine($@"
+{r}
+");
+                }
+
+            }
+        });
+
+        private static string RootCause(InvocationInfo i)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

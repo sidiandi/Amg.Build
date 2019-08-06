@@ -4,6 +4,34 @@ Lean, C# based build automation framework. Alternative to [Cake](https://cakebui
 
 ## Getting Started
 
+See example $/examples/hello
+
+````
+public class BuildTargets
+{
+	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
+
+	[Once]
+	public virtual async Task Greet(string name)
+	{
+		await Task.Delay(TimeSpan.FromSeconds(1));
+		Console.WriteLine($"Hello, {name}");
+	}
+	
+	[Once]
+	public virtual async Task GreetAll()
+	{
+		await Task.WhenAll(Enumerable.Range(0,10).Select(_ => Greet($"Alice {_}")));
+	}
+	
+	[Once]
+	public virtual async Task Default()
+	{
+		await GreetAll();
+	}
+}
+````
+
 ## Features
 
 * Pure C#. Write your build tasks as you write any other C# class. 
@@ -42,12 +70,14 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Todo
 
-* Improve Target syntax
 * Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* error summary
+* nice diagnostic message for IsOutOfDate (... are out of date because of ...)
+* Improve Target syntax
 * Less clumsy target class syntax with [Once]
 * Target logging
 * ReduceLines, SplitLines

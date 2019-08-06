@@ -4,6 +4,7 @@
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<NoWarn>CS0618</NoWarn>
   </PropertyGroup>
    <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />

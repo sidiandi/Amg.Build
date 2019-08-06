@@ -149,7 +149,7 @@ namespace Amg.Build
                     if (p.ExitCode != expectedExitCode.Value)
                     {
                         throw new ToolException(
-                            $"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}: {p.StartInfo.FileName} {p.StartInfo.Arguments}", 
+                            $"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}", 
                             result, startInfo);
                     }
                 }

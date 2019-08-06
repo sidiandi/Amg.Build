@@ -4,8 +4,9 @@ using System.IO;
 using Amg.Build;
 using System.Diagnostics;
 using System.ComponentModel;
+using System.Linq;
 
-partial class BuildTargets : Targets
+public partial class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -24,18 +25,22 @@ partial class BuildTargets : Targets
     string SlnFile => SrcDir.Combine($"{name}.sln");
     string LibDir => SrcDir.Combine(name);
 
-    Dotnet Dotnet => DefineTargets(() => new Dotnet());
-    Git Git => DefineTargets(() => new Git());
+    [Once]
+    protected virtual Amg.Build.Builtin.Dotnet Dotnet => new Amg.Build.Builtin.Dotnet();
 
-    [Description("Build")]
-    public Target Build => DefineTarget(async () =>
+    [Once]
+    protected virtual Amg.Build.Builtin.Git Git => new Amg.Build.Builtin.Git(Root);
+
+    [Once] [Description("Build")]
+    public virtual async Task Build()
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
         await (await Dotnet.Tool()).Run("build", SlnFile);
-    });
+    }
 
-    Target<string> WriteAssemblyInformationFile => DefineTarget(async () =>
+    [Once]
+    protected virtual async Task<string> WriteAssemblyInformationFile()
     {
         var v = await Git.GetVersion();
         return await CommonAssemblyInfoFile.WriteAllTextIfChangedAsync(
@@ -47,9 +52,10 @@ $@"// Generated. Changes will be lost.
 [assembly: System.Reflection.AssemblyFileVersion({v.AssemblySemFileVer.Quote()})]
 [assembly: System.Reflection.AssemblyInformationalVersion({v.InformationalVersion.Quote()})]
 ");
-    });
+    }
 
-    Target<string> WriteVersionPropsFile => DefineTarget(async () =>
+    [Once]
+    protected virtual async Task<string> WriteVersionPropsFile()
     {
         var v = await Git.GetVersion();
         return await VersionPropsFile.WriteAllTextIfChangedAsync(
@@ -62,26 +68,26 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 </Project>
 
 ");
-    });
+    }
 
-    [Description("run unit tests")]
-	public Target Test => DefineTarget(async () =>
+    [Once] [Description("run unit tests")]
+	public virtual async Task Test()
     {
         await Build();
         await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build");
-    });
+    }
 
-    [Description("measure code coverage")]
-    public Target CodeCoverage => DefineTarget(async () =>
+    [Once] [Description("measure code coverage")]
+    public virtual async Task CodeCoverage()
     {
         await Build();
         await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build",
             "--collect:Code Coverage"
             );
-    });
+    }
 
-    [Description("pack nuget package")]
-    public Target<string> Pack => DefineTarget(async () =>
+    [Once] [Description("pack nuget package")]
+    public virtual async Task<string> Pack()
     {
         var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
@@ -95,10 +101,17 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             );
 
         return PackagesDir.Combine($"{name}.{version}.nupkg");
-    });
+    }
 
+    [Once] [Description("push nuget package")]
+    protected virtual async Task Push()
+    {
+        await Push(nugetPushSource);
+    }
+
+    [Once]
     [Description("push nuget package")]
-    Target Push => DefineTarget(async () =>
+    protected virtual async Task Push(string nugetPushSource)
     {
         await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack());
@@ -106,11 +119,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var nuget = new Tool("nuget.exe");
         await nuget.Run(
             "push",
-            nupkgFile
+            nupkgFile,
+            "-Source", nugetPushSource
             );
-    });
+    }
 
-    Target OpenInVisualStudio => DefineTarget(async () =>
+    [Once] [Description("Open in Visual Studio")]
+    public virtual async Task OpenInVisualStudio()
     {
         await Build();
         Process.Start(new ProcessStartInfo
@@ -118,11 +133,41 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             FileName = Path.GetFullPath(SlnFile),
             UseShellExecute = true
         });
-    });
+    }
 	
-	Target Default => DefineTarget(async () =>
+    [Once][Description("Test")][Default]
+    public virtual async Task Default()
 	{
 		await Test();
-	});
+	}
+
+    static string IncreasePatchVersion(string version)
+    {
+        var i = version.Split('.').Select(_ => Int32.Parse(_)).ToArray();
+        ++i[i.Length - 1];
+        return i.Select(_ => _.ToString()).Join(".");
+    }
+
+    [Once][Description("Build a release version and push to nuget.org")]
+    public virtual async Task Release()
+    {
+        await Git.EnsureNoPendingChanges();
+        var v = await new Amg.Build.Builtin.Git(this.Root).GetVersion();
+        Logger.Information("Tagging with {version}", v.MajorMinorPatch);
+        var git = Git.GitTool;
+        try
+        {
+            await git.Run("tag", v.MajorMinorPatch);
+        }
+        catch (ToolException te)
+        {
+            if (te.Result.Error.Contains("already exists"))
+            {
+                await git.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
+            }
+        }
+        await git.Run("push", "--tags");
+        await Push("https://api.nuget.org/v3/index.json");
+    }
 }
 

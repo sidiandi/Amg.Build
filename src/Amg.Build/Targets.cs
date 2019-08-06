@@ -100,6 +100,7 @@ namespace Amg.Build
         /// <typeparam name="TargetsDerivedClass"></typeparam>
         /// <param name="commandLineArguments"></param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
+        [Obsolete("Use the new build class syntax with Runner.Run")]
         public static int Run<TargetsDerivedClass>(string[] commandLineArguments) where TargetsDerivedClass : Targets, new()
         {
             var options = new Options<TargetsDerivedClass>(new TargetsDerivedClass());

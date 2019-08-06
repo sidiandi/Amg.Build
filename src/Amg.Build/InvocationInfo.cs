@@ -18,6 +18,77 @@ namespace Amg.Build
             End = end;
         }
 
+        interface IReturnValueSource
+        {
+            object ReturnValue { get; }
+        }
+
+        class TaskResultHandler<Result> : IReturnValueSource
+        {
+            private readonly InvocationInfo invocationInfo;
+            private readonly Task<Result> task;
+
+            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result> task)
+            {
+                this.invocationInfo = invocationInfo;
+                this.task = task;
+            }
+
+            async Task<Result> GetReturnValue()
+            {
+                try
+                {
+                    var r = await task;
+                    r = (Result)invocationInfo.InterceptReturnValue(r);
+                    return r;
+                }
+                catch (Exception ex)
+                {
+                    invocationInfo.Exception = ex;
+                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
+                    throw new InvocationFailed(ex, invocationInfo);
+                }
+                finally
+                {
+                    invocationInfo.Complete();
+                }
+            }
+
+            public object ReturnValue => GetReturnValue();
+        }
+
+        class TaskHandler : IReturnValueSource
+        {
+            private InvocationInfo invocationInfo;
+            private Task task;
+
+            public TaskHandler(InvocationInfo invocationInfo, Task task)
+            {
+                this.invocationInfo = invocationInfo;
+                this.task = task;
+            }
+
+            async Task GetReturnValue()
+            {
+                try
+                {
+                    await task;
+                }
+                catch (Exception ex)
+                {
+                    invocationInfo.Exception = ex;
+                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
+                    throw new InvocationFailed(ex, invocationInfo);
+                }
+                finally
+                {
+                    invocationInfo.Complete();
+                }
+            }
+
+            public object ReturnValue => GetReturnValue();
+        }
+
         public InvocationInfo(OnceInterceptor interceptor, string id, IInvocation invocation)
         {
             this.interceptor = interceptor;
@@ -27,20 +98,25 @@ namespace Amg.Build
             Logger.Information("Begin {id}", Id);
             Begin = DateTime.UtcNow;
             invocation.Proceed();
-            invocation.ReturnValue = InterceptReturnValue(invocation.ReturnValue);
             if (ReturnValue is Task task)
             {
-                task.ContinueWith(_ =>
+                var returnType = task.GetType();
+                if (returnType.IsGenericType)
                 {
-                    Complete();
-                    if (_.IsFaulted)
-                    {
-                        Exception = _.Exception;
-                    }
-                });
+                    var resultHandlerType = typeof(TaskResultHandler<>)
+                      .MakeGenericType(returnType.GetGenericArguments()[0]);
+                    var resultHandler = (IReturnValueSource)Activator.CreateInstance(resultHandlerType, this, task);
+                    invocation.ReturnValue = resultHandler.ReturnValue;
+                }
+                else
+                {
+                    var handler = new TaskHandler(this, task);
+                    invocation.ReturnValue = handler.ReturnValue;
+                }
             }
             else
             {
+                invocation.ReturnValue = InterceptReturnValue(invocation.ReturnValue);
                 Complete();
             }
         }
