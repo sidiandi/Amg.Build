@@ -161,7 +161,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         }
         catch (ToolException te)
         {
-            if (te.Result.Output.Contains("already exists"))
+            if (te.Result.Error.Contains("already exists"))
             {
                 await git.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
             }
