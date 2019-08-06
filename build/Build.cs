@@ -4,6 +4,7 @@ using System.IO;
 using Amg.Build;
 using System.Diagnostics;
 using System.ComponentModel;
+using System.Linq;
 
 public partial class BuildTargets
 {
@@ -28,7 +29,7 @@ public partial class BuildTargets
     protected virtual Amg.Build.Builtin.Dotnet Dotnet => new Amg.Build.Builtin.Dotnet();
 
     [Once]
-    protected virtual Amg.Build.Builtin.Git Git => new Amg.Build.Builtin.Git();
+    protected virtual Amg.Build.Builtin.Git Git => new Amg.Build.Builtin.Git(Root);
 
     [Once] [Description("Build")]
     public virtual async Task Build()
@@ -140,17 +141,32 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 		await Test();
 	}
 
+    static string IncreasePatchVersion(string version)
+    {
+        var i = version.Split('.').Select(_ => Int32.Parse(_)).ToArray();
+        ++i[i.Length - 1];
+        return i.Select(_ => _.ToString()).Join(".");
+    }
+
     [Once][Description("Build a release version and push to nuget.org")]
     public virtual async Task Release()
     {
         await Git.EnsureNoPendingChanges();
-        var v = await new Amg.Build.Builtin.Git().GetVersion();
+        var v = await new Amg.Build.Builtin.Git(this.Root).GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
-        var tagResult = await Git.GitTool.DoNotCheckExitCode().Run("tag", v.MajorMinorPatch);
-        if (!(tagResult.ExitCode == 0 || tagResult.Error.Contains("already exists")))
+        var git = Git.GitTool;
+        try
         {
-            throw new Exception("Cannot tag release version.");
+            await git.Run("tag", v.MajorMinorPatch);
         }
+        catch (ToolException te)
+        {
+            if (te.Result.Output.Contains("already exists"))
+            {
+                await git.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
+            }
+        }
+        await git.Run("push", "--tags");
         await Push("https://api.nuget.org/v3/index.json");
     }
 }
