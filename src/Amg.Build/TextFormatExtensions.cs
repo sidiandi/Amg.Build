@@ -53,7 +53,17 @@ namespace Amg.Build
                 {
                     try
                     {
-                        w.WriteLine($"{p.Name}: {p.GetValue(x, new object[] { })}");
+                        var stringRepresentation = p.GetValue(x, new object[] { }).SafeToString();
+                        if (stringRepresentation.SplitLines().Skip(1).Any())
+                        {
+                            w.WriteLine($@"{p.Name}:
+{stringRepresentation}
+");
+                        }
+                        else
+                        {
+                            w.WriteLine($"{p.Name}: {stringRepresentation}");
+                        }
                     }
                     catch { }
                 }

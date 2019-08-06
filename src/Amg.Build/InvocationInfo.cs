@@ -36,10 +36,22 @@ namespace Amg.Build
 
             async Task<Result> GetReturnValue()
             {
-                var r = await task;
-                invocationInfo.Complete();
-                r = (Result) invocationInfo.InterceptReturnValue(r);
-                return r;
+                try
+                {
+                    var r = await task;
+                    r = (Result)invocationInfo.InterceptReturnValue(r);
+                    return r;
+                }
+                catch (Exception ex)
+                {
+                    invocationInfo.Exception = ex;
+                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
+                    throw new InvocationFailed(ex, invocationInfo);
+                }
+                finally
+                {
+                    invocationInfo.Complete();
+                }
             }
 
             public object ReturnValue => GetReturnValue();
@@ -58,8 +70,20 @@ namespace Amg.Build
 
             async Task GetReturnValue()
             {
-                await task;
-                invocationInfo.Complete();
+                try
+                {
+                    await task;
+                }
+                catch (Exception ex)
+                {
+                    invocationInfo.Exception = ex;
+                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
+                    throw new InvocationFailed(ex, invocationInfo);
+                }
+                finally
+                {
+                    invocationInfo.Complete();
+                }
             }
 
             public object ReturnValue => GetReturnValue();

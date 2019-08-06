@@ -43,11 +43,24 @@ namespace Amg.Build
         public override string Message => $@"{base.Message}
 {new
         {
-            StartInfo.WorkingDirectory,
-            Environment= StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
-                .Select(_ => $"set {_.Key}={_.Value}").Join(),
+            this.StartInfo.FileName,
+            this.StartInfo.Arguments,
             Result.ExitCode,
             Error = Result.Error.ReduceLines(200, 20)
+        }.Dump()}";
+
+        /// <summary />
+        public string DiagnosticMessage => $@"{base.Message}
+{new
+        {
+            this.StartInfo.FileName,
+            this.StartInfo.Arguments,
+            Result.ExitCode,
+            Error = Result.Error.ReduceLines(200, 20),
+            Output = Result.Output.ReduceLines(200, 20),
+            StartInfo.WorkingDirectory,
+            Environment = StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
+                .Select(_ => $"set {_.Key}={_.Value}").Join(),
         }.Dump()}";
     }
 }

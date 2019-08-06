@@ -125,10 +125,15 @@ namespace Amg.Build
                 Console.WriteLine(Summary.Print(invocations));
                 return ExitCodeSuccess;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Logger.Fatal(ex, "Build failed.");
+                invocations = invocations.Concat(onceInterceptor.Invocations);
+                Console.WriteLine(Summary.Print(invocations));
+                Console.Error.WriteLine(Summary.Error(invocations));
                 return ExitCodeUnknownError;
+            }
+            finally
+            {
             }
         }
 

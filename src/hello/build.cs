@@ -4,6 +4,7 @@ using System.IO;
 using Amg.Build;
 using System.Diagnostics;
 using System.Linq;
+using System.ComponentModel;
 
 public class BuildTargets
 {
@@ -29,5 +30,17 @@ public class BuildTargets
 	{
 		await GreetAll();
 	}
+
+    [Once] [Description("Simulate a failing tool")]
+    public virtual async Task FailTool()
+    {
+        await new Tool("cmd.exe").Run("/c", "fasdfasdfasd");
+    }
+
+    [Once][Description("Use failing tool")]
+    public virtual async Task UseFailingTool()
+    {
+        await FailTool();
+    }
 }
 
