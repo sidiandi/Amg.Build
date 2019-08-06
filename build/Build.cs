@@ -143,9 +143,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     [Once][Description("Build a release version and push to nuget.org")]
     public virtual async Task Release()
     {
+        await Git.EnsureNoPendingChanges();
         var v = await new Amg.Build.Builtin.Git().GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
-        await Git.GitTool.Run("tag", v.MajorMinorPatch);
+        var tagResult = await Git.GitTool.DoNotCheckExitCode().Run("tag", v.MajorMinorPatch);
+        if (!(tagResult.ExitCode == 0 || tagResult.Error.Contains("already exists")))
+        {
+            throw new Exception("Cannot tag release version.");
+        }
         await Push("https://api.nuget.org/v3/index.json");
     }
 }
