@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Amg.Build.Builtin
+namespace Amg.Build
 {
     /// <summary>
     /// Subtargets for the dotnet core framework

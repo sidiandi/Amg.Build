@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Amg.Build.Builtin
+namespace Amg.Build
 {
     /// <summary>
     /// Targets for git repositories

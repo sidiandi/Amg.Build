@@ -14,10 +14,10 @@ namespace Amg.Build
         public virtual string result { get; set; } = String.Empty;
 
         [Once]
-        protected virtual Builtin.Git Git => Runner.Once<Amg.Build.Builtin.Git>(_ => _.RootDirectory = Runner.RootDirectory());
+        protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Runner.RootDirectory());
 
         [Once]
-        protected virtual Builtin.Dotnet Dotnet => Runner.Once<Amg.Build.Builtin.Dotnet>();
+        protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();
 
         [Once]
         MyBuild Nested => Runner.Once<MyBuild>();
