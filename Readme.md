@@ -67,12 +67,13 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Todo
 
-* Make Build classes callable from code, not only via Runner.Run => Runner.Once
+* CopyTree
 * Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* Make Build classes callable from code, not only via Runner.Run => Runner.Once
 * error summary
 * nice diagnostic message for IsOutOfDate (... are out of date because of ...)
 * Improve Target syntax

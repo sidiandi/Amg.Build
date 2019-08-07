@@ -144,6 +144,7 @@ namespace Amg.Build
         {
             if (Amg.Build.Once.HasOnceMethods(x))
             {
+                /*
                 var builder = new DefaultProxyBuilder();
                 var generator = new ProxyGenerator(builder);
                 var onceProxy = generator.CreateClassProxyWithTarget(x.GetType(), x,
@@ -154,6 +155,8 @@ namespace Amg.Build
                     new OnceInterceptor(interceptor, invocation.Method.Name),
                     new LogInvocationInterceptor());
                 return onceProxy;
+                */
+                return x;
             }
             else
             {

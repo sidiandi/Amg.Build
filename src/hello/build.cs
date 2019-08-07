@@ -10,7 +10,7 @@ public class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
-	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
+	static int Main(string[] args) => Runner.Run(args);
 
 	[Once]
 	public virtual async Task Greet(string name)

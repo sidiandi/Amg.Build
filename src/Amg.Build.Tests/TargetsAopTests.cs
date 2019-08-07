@@ -7,12 +7,12 @@ using System;
 namespace Amg.Build
 {
     [TestFixture]
-    public class TargetsAopTests : TestBase
+    public class RunnerTests : TestBase
     {
         [Test]
         public async Task Once()
         {
-            var once = Runner.Once<MyTargetsAop>();
+            var once = RunContext.Once<MyTargetsAop>();
             await once.All();
             Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
         }
@@ -81,6 +81,14 @@ Options:
         {
             var exitCode = Runner.Run<MyTargetsAop>(new[] { "Version" });
             Assert.AreEqual(0, exitCode);
+        }
+
+        [Test]
+        public async Task RunProgrammatically()
+        {
+            var once = Runner.Once<MyTargetsAop>(_ => _.result = "Test");
+            await once.All();
+            Assert.That(once.result, Is.EqualTo("TestCompileLinkPack"));
         }
     }
 }

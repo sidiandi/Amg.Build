@@ -11,13 +11,16 @@ namespace Amg.Build
         [Description("Release or Debug")]
         public string Configuration { get; set; }
 
-        public string result { get; private set; } = String.Empty;
+        public virtual string result { get; set; } = String.Empty;
 
         [Once]
-        protected virtual Builtin.Git Git => new Builtin.Git();
+        protected virtual Builtin.Git Git => Runner.Once<Amg.Build.Builtin.Git>(_ => _.RootDirectory = Runner.RootDirectory());
 
         [Once]
-        protected virtual Builtin.Dotnet Dotnet => new Builtin.Dotnet();
+        protected virtual Builtin.Dotnet Dotnet => Runner.Once<Amg.Build.Builtin.Dotnet>();
+
+        [Once]
+        MyTargetsAop Nested => Runner.Once<MyTargetsAop>();
 
         [Once]
         [Description("Print the dotnet version")]
