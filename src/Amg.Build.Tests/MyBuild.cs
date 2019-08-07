@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
-    public class MyTargetsAop
+    public class MyBuild
     {
         [Description("Release or Debug")]
         public string Configuration { get; set; }
@@ -20,7 +20,7 @@ namespace Amg.Build
         protected virtual Builtin.Dotnet Dotnet => Runner.Once<Amg.Build.Builtin.Dotnet>();
 
         [Once]
-        MyTargetsAop Nested => Runner.Once<MyTargetsAop>();
+        MyBuild Nested => Runner.Once<MyBuild>();
 
         [Once]
         [Description("Print the dotnet version")]

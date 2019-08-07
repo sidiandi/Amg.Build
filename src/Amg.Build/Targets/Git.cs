@@ -9,7 +9,7 @@ namespace Amg.Build.Builtin
     /// <summary>
     /// Targets for git repositories
     /// </summary>
-    public class Git : Targets
+    public class Git
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 

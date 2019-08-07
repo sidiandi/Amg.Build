@@ -16,7 +16,7 @@ namespace Amg.Build
     /// <summary>
     /// Runs classes with [Once] 
     /// </summary>
-    class RunContext
+    internal class RunContext
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -90,7 +90,7 @@ namespace Amg.Build
                 return ExitCodeHelpDisplayed;
             }
 
-            var amgBuildAssembly = typeof(Target).Assembly;
+            var amgBuildAssembly = Assembly.GetExecutingAssembly();
 
             Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 

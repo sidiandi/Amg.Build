@@ -74,7 +74,7 @@ namespace Amg.Build
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        internal static T Once<T>()
+        public static T Once<T>()
         {
             return Once<T>(_ => { });
         }
@@ -84,7 +84,7 @@ namespace Amg.Build
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        internal static T Once<T>(Action<T> initializer)
+        public static T Once<T>(Action<T> initializer)
         {
             var builder = new DefaultProxyBuilder();
             var generator = new ProxyGenerator(builder);

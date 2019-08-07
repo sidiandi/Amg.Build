@@ -12,7 +12,7 @@ namespace Amg.Build
         [Test]
         public async Task Once()
         {
-            var once = RunContext.Once<MyTargetsAop>();
+            var once = Runner.Once<MyBuild>();
             await once.All();
             Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
         }
@@ -20,21 +20,21 @@ namespace Amg.Build
         [Test]
         public void Run()
         {
-            var exitCode = Runner.Run<MyTargetsAop>(new string[] { });
+            var exitCode = Runner.Run<MyBuild>(new string[] { });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
         public void SayHello()
         {
-            var exitCode = Runner.Run<MyTargetsAop>(new string[] { "SayHello", "World" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "SayHello", "World" });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyTargetsAop>(new string[] { "AlwaysFails", "-vq" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "AlwaysFails", "-vq" });
             Assert.That(exitCode, Is.Not.EqualTo(0));
         }
 
@@ -47,7 +47,7 @@ namespace Amg.Build
         {
             var o = TestUtil.CaptureOutput(() =>
             {
-                var exitCode = Runner.Run<MyTargetsAop>(new[] { "--help" });
+                var exitCode = Runner.Run<MyBuild>(new[] { "--help" });
                 Assert.That(exitCode, Is.EqualTo(1));
             });
             /*
@@ -79,14 +79,14 @@ Options:
         [Test]
         public void NestedOnce()
         {
-            var exitCode = Runner.Run<MyTargetsAop>(new[] { "Version" });
+            var exitCode = Runner.Run<MyBuild>(new[] { "Version" });
             Assert.AreEqual(0, exitCode);
         }
 
         [Test]
         public async Task RunProgrammatically()
         {
-            var once = Runner.Once<MyTargetsAop>(_ => _.result = "Test");
+            var once = Runner.Once<MyBuild>(_ => _.result = "Test");
             await once.All();
             Assert.That(once.result, Is.EqualTo("TestCompileLinkPack"));
         }

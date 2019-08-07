@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Amg.Build.Tests
+namespace Amg.Build
 {
     [TestFixture]
     public class Architecture

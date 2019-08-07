@@ -73,6 +73,7 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
+* Remove old "DefineTarget" syntax
 * Make Build classes callable from code, not only via Runner.Run => Runner.Once
 * error summary
 * nice diagnostic message for IsOutOfDate (... are out of date because of ...)
