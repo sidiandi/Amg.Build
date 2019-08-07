@@ -26,10 +26,10 @@ public partial class BuildTargets
     string LibDir => SrcDir.Combine(name);
 
     [Once]
-    protected virtual Amg.Build.Builtin.Dotnet Dotnet => new Amg.Build.Builtin.Dotnet();
+    protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();
 
     [Once]
-    protected virtual Amg.Build.Builtin.Git Git => new Amg.Build.Builtin.Git(Root);
+    protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Root);
 
     [Once] [Description("Build")]
     public virtual async Task Build()
@@ -152,7 +152,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     public virtual async Task Release()
     {
         await Git.EnsureNoPendingChanges();
-        var v = await new Amg.Build.Builtin.Git(this.Root).GetVersion();
+        var v = await new Git(this.Root).GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
         var git = Git.GitTool;
         try

@@ -1,4 +1,4 @@
-public partial class BuildTargets : Amg.Build.Targets
+public partial class BuildTargets
 {
     string name => "Amg.Build";
     string company => "Amg";
