@@ -15,6 +15,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void Md5Checksum()
+        {
+            var c = "hello".Md5Checksum();
+            Assert.AreEqual(c, "5d41402abc4b2a76b9719d911017c592");
+        }
+
+        [Test]
         public void Dump()
         {
             var o = new { A = 1, B = "2", C = 3.0 };

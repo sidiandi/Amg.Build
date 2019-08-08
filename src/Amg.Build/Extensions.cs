@@ -178,5 +178,60 @@ namespace Amg.Build
                     ? b
                     : x;
         }
+
+        /// <summary>
+        /// Cut of the tail of a string if it is longer than maxLength
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="maxLength"></param>
+        /// <returns></returns>
+        public static string Truncate(this string x, int maxLength)
+        {
+            return (x.Length > maxLength)
+                ? x.Substring(0, maxLength)
+                : x;
+        }
+
+        /// <summary>
+        /// Limit string to maxLength. Replace tail end with md5 checksum to keep the string unique.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="maxLength"></param>
+        /// <returns></returns>
+        public static string TruncateMd5(this string x, int maxLength)
+        {
+            if (x.Length > maxLength)
+            {
+                var md5 = x.Md5Checksum();
+                return x.Truncate(maxLength - md5.Length) + md5;
+            }
+            else
+            {
+                return x;
+            }
+        }
+
+        /// <summary>
+        /// Hex encoded MD5 checksum
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static string Md5Checksum(this string x)
+        {
+            var md5 = new System.Security.Cryptography.MD5CryptoServiceProvider();
+            var bytes = System.Text.UTF8Encoding.UTF8.GetBytes(x);
+            var hash = md5.ComputeHash(bytes);
+            return hash.Hex();
+        }
+
+        /// <summary>
+        /// Hex-encode data
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string Hex(this IEnumerable<byte> data)
+        {
+            return data.Select(_ => _.ToString("x2")).Join(String.Empty);
+        }
     }
 }

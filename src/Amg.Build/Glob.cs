@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+
+[assembly: InternalsVisibleTo("Amg.Build.Tests")]
 
 namespace Amg.Build
 {
@@ -14,7 +17,7 @@ namespace Amg.Build
     {
         string[] include = new string[] { };
         Func<FileSystemInfo, bool>[] exclude = new Func<FileSystemInfo, bool>[] { };
-        private readonly DirectoryInfo root;
+        private readonly string root;
 
         Glob Copy()
         {
@@ -24,7 +27,7 @@ namespace Amg.Build
         /// <summary />
         public Glob(string root)
         {
-            this.root = new DirectoryInfo(root);
+            this.root = root;
         }
 
         /// <summary>
@@ -63,13 +66,12 @@ namespace Amg.Build
             return g;
         }
 
-        /// <summary>
-        /// Turns a wildcard (*,?) pattern as used by DirectoryInfo.EnumerateFileSystemInfos into a Regex
-        /// </summary>
-        /// Supports wildcard characters * and ?. Case-insensitive.
-        /// <param name="wildcardPattern"></param>
-        /// <returns></returns>
-        public static Regex RegexFromWildcard(string wildcardPattern)
+        internal static Regex RegexFromWildcard(string wildcardPattern)
+        {
+            return new Regex("^" + WildcardToRegexPattern(wildcardPattern) + "$", RegexOptions.IgnoreCase);
+        }
+
+        static string WildcardToRegexPattern(string wildcardPattern)
         {
             var patternString = string.Concat(
                 wildcardPattern.Select(c =>
@@ -80,23 +82,54 @@ namespace Amg.Build
                             return ".";
                         case '*':
                             return ".*";
+                        case '/':
+                            return Regex.Escape(new string(Path.DirectorySeparatorChar, 1));
                         default:
                             return Regex.Escape(new string(c, 1));
                     }
                 }));
-
-            patternString = "^" + patternString + "$";
-
-            return new Regex(patternString, RegexOptions.IgnoreCase);
+            return patternString;
         }
 
-        internal static Func<FileSystemInfo, bool> ExcludeFuncFromWildcard(string wildcardPattern)
+        /// <summary>
+        /// Turns a wildcard (*,?) pattern as used by DirectoryInfo.EnumerateFileSystemInfos into a Regex
+        /// </summary>
+        /// Supports wildcard characters * and ?. Case-insensitive.
+        /// <param name="wildcardPattern"></param>
+        /// <returns></returns>
+        internal static Regex SubstringRegexFromWildcard(string wildcardPattern)
         {
-            var re = RegexFromWildcard(wildcardPattern);
+            return new Regex(WildcardToRegexPattern(wildcardPattern), RegexOptions.IgnoreCase);
+        }
+
+        internal Func<FileSystemInfo, bool> ExcludeFuncFromWildcard(string wildcardPattern)
+        {
+            var f = wildcardPattern.SplitDirectories()
+                .Select(RegexFromWildcard)
+                .Select(_ => new Func<string, bool>(s => _.IsMatch(s)))
+                .ToArray();
+           
             return new Func<FileSystemInfo, bool>(fsi =>
             {
-                return re.IsMatch(fsi.Name);
+                var d = fsi.FullName.Substring(root.Length).SplitDirectories();
+                return Match(d, f);
             });
+        }
+
+        internal static bool Match<T>(IEnumerable<T> parts, IEnumerable<Func<T, bool>> predicates)
+        {
+            var v = parts.ToArray();
+            var p = predicates.ToArray();
+            for (int i=0; i<=v.Length-p.Length;++i)
+            {
+                for (int pi=0; pi<p.Length;++pi)
+                {
+                    if (!p[pi](v[i+pi])) goto noMatch;
+                }
+                return true;
+            noMatch:;
+            }
+            return false;
         }
 
         /// <summary />
@@ -108,9 +141,14 @@ namespace Amg.Build
             return enumerable.GetEnumerator();
         }
 
-        static IEnumerable<FileSystemInfo> Find(DirectoryInfo root, string[] glob, Func<FileSystemInfo, bool> exclude)
+        static IEnumerable<FileSystemInfo> Find(FileSystemInfo fileSystemInfo, string[] glob, Func<FileSystemInfo, bool> exclude)
         {
             if (glob == null || glob.Length == 0)
+            {
+                return new[] { fileSystemInfo };
+            }
+
+            if (!(fileSystemInfo is DirectoryInfo root))
             {
                 return Enumerable.Empty<FileSystemInfo>();
             }
@@ -186,7 +224,7 @@ namespace Amg.Build
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new System.NotImplementedException();
+            return GetEnumerator();
         }
 
         /// <summary>
@@ -198,10 +236,9 @@ namespace Amg.Build
             var excludeFunc = new Func<FileSystemInfo, bool>((FileSystemInfo i) =>
                 exclude.Any(_ => _(i)));
 
-            return include.SelectMany(i =>
-            {
-                return Find(root, i.SplitDirectories(), excludeFunc);
-            });
+            return root.GetFileSystemInfo().SelectMany(r =>
+                include.SelectMany(i =>
+                    Find(r, i.SplitDirectories(), excludeFunc)));
         }
 
         /// <summary>

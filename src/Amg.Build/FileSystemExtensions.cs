@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -48,7 +49,15 @@ namespace Amg.Build
         /// <returns>directory with pathElements appended.</returns>
         public static string Combine(this string directory, params string[] pathElements)
         {
-            return Path.Combine(new[] { directory }.Concat(pathElements).ToArray());
+            var elements = pathElements.SelectMany(_ => _.SplitDirectories());
+            if (elements.Any(_ => !_.IsValidFileName()))
+            {
+                throw new ArgumentOutOfRangeException(nameof(pathElements), pathElements,
+                    $@"Invalid file name:
+
+{elements.Select(_ => new { valid = _.IsValidFileName(), fileName = _ }).ToTable(header: true)}");
+            }
+            return Path.Combine(new[] { directory }.Concat(elements).ToArray());
         }
 
         /// <summary>
@@ -388,6 +397,11 @@ are more recent.
         /// <returns></returns>
         public static string[] SplitDirectories(this string path)
         {
+            if (String.IsNullOrEmpty(path))
+            {
+                return new string[] { };
+            }
+
             path = path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
             return path.Split(Path.DirectorySeparatorChar);
         }
@@ -400,33 +414,74 @@ are more recent.
         /// <returns></returns>
         public static Glob Glob(this string path, string pattern = null)
         {
-            var glob = new Glob(path);
-            if (pattern != null)
-            {
-                glob = glob.Include(pattern);
-            }
-            return glob;
+            return new Glob(path).Include(pattern);
         }
 
         /// <summary>
-        /// Gets a FileInfo or DirectoryInfo or null if file system object does not exist.
+        /// Gets a FileInfo or DirectoryInfo or empty if file system object does not exist.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static FileSystemInfo GetFileSystemInfo(this string path)
+        public static IEnumerable<FileSystemInfo> GetFileSystemInfo(this string path)
         {
             if (path.IsFile())
             {
-                return new FileInfo(path);
+                return new FileSystemInfo[] { new FileInfo(path) };
             }
             else if (path.IsDirectory())
             {
-                return new DirectoryInfo(path);
+                return new FileSystemInfo[] { new DirectoryInfo(path) };
             }
             else
             {
-                return null;
+                return Enumerable.Empty<FileSystemInfo>();
             }
+        }
+
+        static readonly char[] invalidCharacters = Path.GetInvalidFileNameChars();
+        const int maxFileNameLength = 255;
+        static readonly Regex invalidFileNameCharactersPattern = new Regex("(" +
+            invalidCharacters.Select(_ => Regex.Escape(new string(_, 1))).Join("|")
+            + ")");
+
+        /// <summary>
+        /// true, if x is a valid file name 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static bool IsValidFileName(this string x)
+        {
+            return !(x.IndexOfAny(invalidCharacters) >= 0) && x.Length <= maxFileNameLength;
+        }
+
+        /// <summary>
+        /// Calculates a valid file name from x.
+        /// </summary>
+        /// * tries to use x unmodified
+        /// * replace all invalid characters with _
+        /// * shorten and replace tail with md5 checksum if too long.
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static string MakeValidFileName(this string x)
+        {
+            if (x.IndexOfAny(invalidCharacters) >= 0)
+            {
+                x = invalidFileNameCharactersPattern.Replace(x, "_");
+            }
+
+            if (x.Length > maxFileNameLength)
+            {
+                var e = x.Extension();
+                if (e.Length > maxFileNameLength)
+                {
+                    x = x.TruncateMd5(maxFileNameLength);
+                }
+                else
+                {
+                    x = x.FileNameWithoutExtension().TruncateMd5(maxFileNameLength - e.Length) + e;
+                }
+            }
+            return x;
         }
     }
 }
