@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -10,6 +11,8 @@ namespace Amg.Build
     /// </summary>
     public static class EnumerableExtensions
     {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         /// <summary>
         /// Concat one (1) new element
         /// </summary>
@@ -203,6 +206,155 @@ namespace Amg.Build
 {candidates.Select(name).Join()}
 
 ");
+        }
+
+        static IProgress<T> ToProgress<T>(Action<T> a)
+        {
+            return new ProgressAction<T>(a);
+        }
+
+        /// <summary>
+        /// Shows progress information is enumerating takes longer
+        /// </summary>
+        /// <param name="e"></param>
+        /// <param name="metric"></param>
+        /// <param name="updateInterval"></param>
+        /// <param name="metricUnit"></param>
+        /// <param name="description"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Progress<T>(this IEnumerable<T> e, 
+            Func<T, double> metric = null, 
+            TimeSpan updateInterval = default(TimeSpan),
+            string metricUnit = null,
+            string description = null
+            )
+        {
+            if (description == null)
+            {
+                description = String.Empty;
+            }
+            else
+            {
+                description = description + " ";
+            }
+            if (metric == null)
+            {
+                metric = (item) => 1.0;
+            }
+            if (updateInterval == default(TimeSpan))
+            {
+                updateInterval = TimeSpan.FromSeconds(2);
+            }
+            if (metricUnit == null)
+            {
+                metricUnit = String.Empty;
+            }
+            Func<double, string> format = (double x) => x.MetricShort();
+
+            var speedUnit = $"{metricUnit}/s";
+
+            var progress = ToProgress((ProgressUpdate<T> p) =>
+            {
+                Logger.Information("{description}{total}{unit} complete, {speed}{speedUnit}: {item}",
+                    description,
+                    format(p.Total),
+                    metricUnit,
+                    format(p.Speed),
+                    speedUnit, p.Current);
+            });
+
+            return e.Progress(progress,
+                metric: metric,
+                updateInterval: updateInterval
+                );
+        }
+
+        /// <summary>
+        /// Progress when iterating an IEnumerable T
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public class ProgressUpdate<T>
+        {
+            /// <summary />
+            public ProgressUpdate(T current, TimeSpan elapsed, double total, double speed)
+            {
+                this.Current = current;
+                Elapsed = elapsed;
+                Total = total;
+                Speed = speed;
+            }
+
+            /// <summary>
+            /// Current item of the enumeration
+            /// </summary>
+            public T Current { get; }
+
+            /// <summary>
+            /// Total metric
+            /// </summary>
+            public double Total { get; }
+
+            /// <summary>
+            /// metric Speed (windowed)
+            /// </summary>
+            public double Speed { get; }
+
+            /// <summary>
+            /// Total elapsed time since start of the enumeration
+            /// </summary>
+            public TimeSpan Elapsed { get; }
+        }
+
+        /// <summary>
+        /// Shows progress information is enumerating takes longer
+        /// </summary>
+        /// <param name="e"></param>
+        /// <param name="progress"></param>
+        /// <param name="metric"></param>
+        /// <param name="updateInterval"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Progress<T>(this IEnumerable<T> e,
+            IProgress<ProgressUpdate<T>> progress,
+            Func<T, double> metric = null,
+            TimeSpan updateInterval = default(TimeSpan)
+            )
+        {
+            if (metric == null)
+            {
+                metric = (item) => 1.0;
+            }
+            if (updateInterval == default(TimeSpan))
+            {
+                updateInterval = TimeSpan.FromSeconds(2);
+            }
+            Func<double, string> format = (double x) => x.MetricShort();
+
+            double total = 0.0;
+            TimeSpan nextUpdate = TimeSpan.FromTicks(updateInterval.Ticks * 5);
+            var stopwatch = Stopwatch.StartNew();
+            var speedWindow = TimeSpan.FromTicks(updateInterval.Ticks * 5);
+            double delta = 0.0;
+            double speed = 0.0;
+            TimeSpan lastUpdate = TimeSpan.Zero;
+
+            return e.Select(_ =>
+            {
+                delta += metric(_);
+                var elapsed = stopwatch.Elapsed;
+                if (elapsed > nextUpdate)
+                {
+                    var deltaT = elapsed - lastUpdate;
+                    total += delta;
+                    speed = (speed * speedWindow.TotalSeconds + delta / deltaT.TotalSeconds) / (speedWindow.TotalSeconds + deltaT.TotalSeconds);
+                    progress.Report(new ProgressUpdate<T>(_, elapsed, total, speed));
+
+                    nextUpdate = stopwatch.Elapsed + updateInterval;
+                    delta = 0.0;
+                    lastUpdate = elapsed;
+                }
+
+                return _;
+            });
         }
     }
 }

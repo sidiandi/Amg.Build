@@ -20,5 +20,21 @@ namespace Amg.Build
 
             Assert.That(shortened.ToString().SplitLines().Count(), Is.EqualTo(10));
         }
+
+        [Test]
+        public void Metric()
+        {
+            Console.WriteLine(
+            Enumerable.Range(-16, 38).Select(_ => Math.Pow(10.0, _))
+                .Select(_ => new
+                {
+                    Value = _,
+                    Format = _.Metric()
+                })
+                .ToTable(header:true));
+
+            Assert.AreEqual("100 kilo", 100e3.Metric());
+            Assert.AreEqual("100 pico", 100e-12.Metric());
+        }
     }
 }

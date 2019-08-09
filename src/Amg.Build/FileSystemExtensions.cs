@@ -483,5 +483,72 @@ are more recent.
             }
             return x;
         }
+
+        /// <summary>
+        /// Copies a directory tree. 
+        /// </summary>
+        /// Post condition: all files found in the source tree are also found in dest
+        /// <param name="source"></param>
+        /// <param name="dest"></param>
+        /// <returns></returns>
+        public static async Task<string> CopyTree(this string source, string dest)
+        {
+            var sourceGlob = source.Glob("**");
+            foreach (var s in sourceGlob.EnumerateFileInfos().Progress(metric: _ => _.Length))
+            {
+                await CopyFile(s, s.FullName.ChangeRoot(source, dest));
+            }
+            return dest;
+        }
+
+        static bool CanSkip(FileInfo source, FileInfo dest)
+        {
+            return source.Length == dest.Length
+                && Math.Abs((source.LastWriteTimeUtc - dest.LastWriteTimeUtc).TotalSeconds) < 1.0;
+        }
+
+        static async Task<string> CopyFile(FileInfo source, string dest)
+        {
+            // do we need to copy at all?
+            foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
+            {
+                if (CanSkip(source, destInfo))
+                {
+                    return dest;
+                }
+            }
+
+            // parent directory of dest could not exist. Retry once.
+            try
+            {
+                File.Copy(source.FullName, dest);
+            }
+            catch (Exception)
+            {
+                dest.EnsureParentDirectoryExists();
+                File.Copy(source.FullName, dest);
+            }
+
+            return await Task.FromResult(dest);
+        }
+
+        /// <summary>
+        /// Changes the root directory of path from source to dest.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="source"></param>
+        /// <param name="dest"></param>
+        /// <returns></returns>
+        public static string ChangeRoot(this string path, string source, string dest)
+        {
+            if (path.StartsWith(source))
+            {
+                return dest + path.Substring(source.Length);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(path), path, $"must start with {source}");
+            }
+        }
     }
 }

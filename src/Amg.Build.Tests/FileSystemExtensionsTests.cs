@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -102,6 +103,44 @@ namespace Amg.Build
             Logger.Information("{shortened}", shortened);
             Assert.That(IsValidFilename(shortened));
             Assert.That(shortened.Extension(), Is.EqualTo(tooLong.Extension()));
+        }
+
+        [Test]
+        public void ChangeRoot()
+        {
+            Assert.AreEqual(@"C:\newRoot\a\b\c\d", @"C:\oldRoot\a\b\c\d".ChangeRoot(@"C:\oldRoot", @"C:\newRoot"));
+        }
+
+        static string TestFileName(int i)
+        {
+            return i.ToString("X").Select(_ => new string(_, 1)).Join("\\") + ".txt";
+        }
+
+        static async Task SetupTree(string root)
+        {
+            var files = Enumerable.Range(0, 100).Select(_ => root.Combine(TestFileName(_))).ToList();
+            foreach (var i in files)
+            {
+                await i.WriteAllTextAsync(new string('a', 100 * 1024));
+            }
+        }
+
+        [Test]
+        public async Task CopyTree()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            Logger.Information(testDir);
+            var source = testDir.Combine("source");
+            await SetupTree(source);
+
+            var dest = testDir.Combine("dest");
+
+            var time = Enumerable.Range(0, 10)
+                .Select(_ => MeasureTime(() => source.CopyTree(dest)))
+                .ToList();
+            Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds*0.1));
+
+            Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
         }
     }
 }

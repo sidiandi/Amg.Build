@@ -240,14 +240,5 @@ namespace Amg.Build
                 include.SelectMany(i =>
                     Find(r, i.SplitDirectories(), excludeFunc)));
         }
-
-        /// <summary>
-        /// Enumerate files only, not directories
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<string> EnumerateFiles()
-        {
-            return EnumerateFileSystemInfos().Where(_ => _ is FileInfo).Select(_ => _.FullName);
-        }
     }
 }

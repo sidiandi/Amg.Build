@@ -253,5 +253,70 @@ namespace Amg.Build
                 w.WriteLine(line);
             }
         });
+
+        /// <summary>
+        /// Formats a number using metric prefixes
+        /// </summary>
+        /// https://en.wikipedia.org/wiki/Unit_prefix#Metric_prefixes
+        /// <param name="x"></param>
+        /// <param name="digits"></param>
+        /// <returns></returns>
+        public static string Metric(this double x, int digits = 3)
+        {
+            var prefixes = new[]
+            {
+                "tera", // 10^12
+                "giga",
+                "mega",
+                "kilo",
+                String.Empty,
+                "milli",
+                "micro",
+                "nano",
+                "pico",
+            };
+            return MetricImpl(x, prefixes, digits);
+        }
+
+        /// <summary>
+        /// Formats a number using metric prefixes (short names like µ, m, k, M, G)
+        /// </summary>
+        /// https://en.wikipedia.org/wiki/Unit_prefix#Metric_prefixes
+        /// <param name="x"></param>
+        /// <param name="digits"></param>
+        /// <returns></returns>
+        public static string MetricShort(this double x, int digits = 3)
+        {
+            var prefixes = new[]
+            {
+                "T", // 10^12
+                "G",
+                "M",
+                "k",
+                String.Empty,
+                "m",
+                "µ",
+                "n",
+                "p",
+            };
+            return MetricImpl(x, prefixes, digits);
+        }
+
+        static string MetricImpl(this double x, string[] prefixes, int digits = 3)
+        {
+            var e = Math.Log10(Math.Abs(x));
+            var i = (int)(4 - (Math.Log10(Math.Abs(x))-2) / 3);
+            if (i >= prefixes.Length && i < prefixes.Length + 2)
+            {
+                i = prefixes.Length - 1;
+            }
+            if (i<0 || i>= prefixes.Length)
+            {
+                return x.ToString("E" + digits.ToString());
+            }
+            var prefix = Math.Pow(10.0, 12 - i * 3);
+            var value = Math.Sign(x) * x / prefix;
+            return value.ToString("G" + digits.ToString()) + " " + prefixes[i];
+        }
     }
 }
