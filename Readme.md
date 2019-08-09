@@ -72,7 +72,7 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
-* Progress information for IEnumerable
+* Progress information for IEnumerable 
 * CopyTree
 * Remove old "DefineTarget" syntax
 * Make Build classes callable from code, not only via Runner.Run => Runner.Once
