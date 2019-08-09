@@ -125,8 +125,8 @@ namespace Amg.Build
             }
         }
 
-        [Test]
-        public async Task CopyTree()
+        [Test, TestCase(true), TestCase(false)]
+        public async Task CopyTree(bool useHardlinks)
         {
             var testDir = CreateEmptyTestDirectory();
             Logger.Information(testDir);
@@ -135,12 +135,32 @@ namespace Amg.Build
 
             var dest = testDir.Combine("dest");
 
-            var time = Enumerable.Range(0, 10)
-                .Select(_ => MeasureTime(() => source.CopyTree(dest)))
+            var time = Enumerable.Range(0, 3)
+                .Select(_ => MeasureTime(() => source.CopyTree(dest, useHardlinks: useHardlinks)))
                 .ToList();
-            Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds*0.1));
+            Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds*0.5));
 
             Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
+        }
+
+        [Test]
+        public async Task Hardlinks()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var source = await 
+                testDir.Combine("original.txt")
+                .WriteAllTextAsync("hello");
+
+            var dest = source.CreateHardlink(testDir.Combine("copy.txt"));
+
+            Assert.That(dest.IsFile());
+
+            var info = dest.HardlinkInfo();
+            Assert.That(info.HardLinks.Count(), Is.EqualTo(2));
+
+            source.EnsureFileNotExists();
+            info = dest.HardlinkInfo();
+            Assert.That(info.HardLinks.SequenceEqual(new[] { dest }));
         }
     }
 }

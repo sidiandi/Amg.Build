@@ -490,13 +490,34 @@ are more recent.
         /// Post condition: all files found in the source tree are also found in dest
         /// <param name="source"></param>
         /// <param name="dest"></param>
+        /// <param name="useHardlinks">If possible, use hard links</param>
         /// <returns></returns>
-        public static async Task<string> CopyTree(this string source, string dest)
+        public static async Task<string> CopyTree(
+            this string source,
+            string dest,
+            bool useHardlinks = false)
         {
             var sourceGlob = source.Glob("**");
-            foreach (var s in sourceGlob.EnumerateFileInfos().Progress(metric: _ => _.Length))
+
+            var copyFile = useHardlinks
+                ? new Func<FileInfo, string, Task>((s, d) => CopyHardlink(s, d))
+                : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d));
+
+            try
             {
-                await CopyFile(s, s.FullName.ChangeRoot(source, dest));
+                foreach (var s in sourceGlob.EnumerateFileInfos().Progress(metric: _ => _.Length))
+                {
+                    await copyFile(s, s.FullName.ChangeRoot(source, dest));
+                }
+            }
+            catch (Exception)
+            {
+                if (useHardlinks)
+                {
+                    // retry without hard links
+                    return await CopyTree(source, dest, useHardlinks: false);
+                }
+                throw;
             }
             return dest;
         }
@@ -523,10 +544,35 @@ are more recent.
             {
                 File.Copy(source.FullName, dest);
             }
-            catch (Exception)
+            catch (DirectoryNotFoundException)
             {
                 dest.EnsureParentDirectoryExists();
                 File.Copy(source.FullName, dest);
+            }
+
+            return await Task.FromResult(dest);
+        }
+
+        static async Task<string> CopyHardlink(FileInfo source, string dest)
+        {
+            // do we need to copy at all?
+            foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
+            {
+                if (CanSkip(source, destInfo))
+                {
+                    return dest;
+                }
+            }
+
+            // parent directory of dest could not exist. Retry once.
+            try
+            {
+                source.FullName.CreateHardlink(dest);
+            }
+            catch (System.IO.DirectoryNotFoundException)
+            {
+                dest.EnsureParentDirectoryExists();
+                source.FullName.CreateHardlink(dest);
             }
 
             return await Task.FromResult(dest);
@@ -549,6 +595,30 @@ are more recent.
             {
                 throw new ArgumentOutOfRangeException(nameof(path), path, $"must start with {source}");
             }
+        }
+
+        static IFileSystem FileSystem { get; } = new Windows.FileSystem();
+
+        /// <summary>
+        /// Create a file system hard link
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="linkPath"></param>
+        /// <returns></returns>
+        public static string CreateHardlink(this string path, string linkPath)
+        {
+            FileSystem.CreateHardLink(linkPath, path);
+            return linkPath;
+        }
+
+        /// <summary>
+        /// Get information about a hard link
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static IHardLinkInfo HardlinkInfo(this string  path)
+        {
+            return FileSystem.GetHardLinkInfo(path);
         }
     }
 }
