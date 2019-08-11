@@ -1,0 +1,108 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Amg.Build;
+
+public static class FileSystemExtensions
+{
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+    public static async Task<string> EnsureNotExists(this string path)
+    {
+        if (path.IsFile())
+        {
+            path.EnsureFileNotExists();
+            await Task.CompletedTask;
+        }
+        else if (path.IsDirectory())
+        {
+            Logger.Information("Delete {directory}", path);
+            foreach (var i in path.Glob("*"))
+            {
+                await i.EnsureNotExists();
+            }
+            Directory.Delete(path);
+        }
+        else
+        {
+
+        }
+        return path;
+    }
+
+    class GitIgnore
+    {
+        [Once]
+        protected virtual async Task<Func<string, bool>> ReadGitIgnoreRules(string dir)
+        {
+            if (dir == null)
+            {
+                return new Func<string, bool>(_ => false);
+            }
+
+            var gitIgnoreFile = dir.Combine(".gitignore");
+            if (gitIgnoreFile.IsFile())
+            {
+                var rules = (await gitIgnoreFile.ReadAllTextAsync()).SplitLines()
+                    .Where(_ => !IsGitIgnoreComment(_))
+                    .Select(ToGitIgnoreRule)
+                    .ToArray();
+
+                var rule = new Func<string, bool>(p =>
+                {
+                    var relativePath = System.IO.Path.GetRelativePath(dir, p);
+                    return rules.Any(_ => _(relativePath));
+                });
+
+                if (IsGitRoot(dir))
+                {
+                    return rule;
+                }
+                else
+                {
+                    var parentRule = await ReadGitIgnoreRules(dir.Parent());
+                    return new Func<string, bool>(p => rule(p) || parentRule(p));
+                }
+            }
+            else
+            {
+                return IsGitRoot(dir)
+                    ? new Func<string, bool>(_ => false)
+                    : await ReadGitIgnoreRules(dir.Parent());
+            }
+        }
+
+        static Func<string, bool> ToGitIgnoreRule(string line)
+        {
+            return _ => false; // todo
+        }
+
+        static bool IsGitRoot(string dir)
+        {
+            return dir.Combine(".git").IsDirectory();
+        }
+
+        static bool IsGitIgnoreComment(string line)
+        {
+            return
+                String.IsNullOrEmpty(line) ||
+                line.StartsWith("#");
+
+        }
+
+        public async Task<bool> IsIgnored(string path)
+        {
+            var rule = await ReadGitIgnoreRules(path.Parent());
+            return rule(path);
+        }
+    }
+
+    static Glob GitIgnore(this Glob glob)
+    {
+        var gitIgnore = Runner.Once<GitIgnore>();
+        return glob.Exclude(_ => gitIgnore.IsIgnored(_).Result);
+    }
+}
