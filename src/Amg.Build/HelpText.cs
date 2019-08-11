@@ -54,7 +54,7 @@ namespace Amg.Build
 
         private static string Syntax(MethodInfo method)
         {
-            return new[] { method.Name, }
+            return new[] { GetOptParser.GetLongOptionNameForMember(method.Name), }
             .Concat(method.GetParameters().Select(_ => $"<{_.Name}>"))
             .Join(" ");
         }
@@ -79,6 +79,7 @@ namespace Amg.Build
             {
                 @out.WriteLine(@"Targets:");
                 PrintTargetsList(@out, options.Targets);
+                @out.WriteLine();
             }
             @out.WriteLine(@"Options:");
             PrintOptionsList(@out, options);

@@ -49,5 +49,15 @@ Hello 1
 H     1234234
 ", table.ToString());
         }
+
+        [Test]
+        public void IsAbbreviation()
+        {
+            Assert.IsTrue("BMW".IsAbbreviation("Bayerische Motorenwerke"));
+            Assert.IsTrue("ga".IsAbbreviation("greet-all"));
+            Assert.IsTrue("g-a".IsAbbreviation("greet-all"));
+            Assert.IsTrue("p".IsAbbreviation("print"));
+            Assert.IsFalse("r".IsAbbreviation("print"));
+        }
     }
 }

@@ -104,11 +104,16 @@ namespace Amg.Build
                 Console.WriteLine(Summary.Print(invocations));
                 return ExitCodeSuccess;
             }
-            catch (Exception)
+            catch (InvocationFailed)
             {
                 invocations = invocations.Concat(onceInterceptor.Invocations);
                 Console.WriteLine(Summary.Print(invocations));
                 Console.Error.WriteLine(Summary.Error(invocations));
+                return ExitCodeUnknownError;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
                 return ExitCodeUnknownError;
             }
             finally
@@ -164,8 +169,11 @@ namespace Amg.Build
             var targetName = targetAndArguments.FirstOrDefault();
             var target = (targetName == null)
                 ? GetDefaultTarget(targets)
-                : HelpText.PublicTargets(targets.GetType()).FindByName(_ => _.Name, targetName);
+                : HelpText.PublicTargets(targets.GetType()).FindByName(
+                    _ => GetOptParser.GetLongOptionNameForMember(_.Name),
+                    targetName);
             var arguments = targetAndArguments.Skip(1).ToArray();
+            Logger.Debug("{targetName} selects target {target}", targetName, target.Name);
 
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
         }

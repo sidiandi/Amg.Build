@@ -233,5 +233,41 @@ namespace Amg.Build
         {
             return data.Select(_ => _.ToString("x2")).Join(String.Empty);
         }
+
+        /// <summary>
+        /// True, if abbreviation is a valid abbreviation of word.
+        /// </summary>
+        /// Abbreviation means that all characters of abbreviation appear in word in 
+        /// exactly the order they appear in abbreviation.
+        /// <param name="abbreviation"></param>
+        /// <param name="word"></param>
+        /// <returns></returns>
+        public static bool IsAbbreviation(this string abbreviation, string word)
+        {
+            if (word.Length == 0)
+            {
+                return false;
+            }
+
+            if (char.ToLower(word[0]) == char.ToLower(abbreviation[0]))
+            {
+                if (abbreviation.Length == 1)
+                {
+                    return true;
+                }
+                else
+                {
+                    var restAbbreviation = abbreviation.Substring(1);
+                    var restWords = Enumerable.Range(1, word.Length - 1).Select(_ => word.Substring(_));
+                    return restWords.Max(_ => restAbbreviation.IsAbbreviation(_));
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
     }
 }

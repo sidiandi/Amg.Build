@@ -67,6 +67,8 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
+* GetOpt compliant target names for command line
+* Profiling timeline: shorten long invocation names
 * Adapter to use Cake extensions
 * Fail on the first failed target
 

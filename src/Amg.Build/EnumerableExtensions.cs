@@ -183,8 +183,7 @@ namespace Amg.Build
                 return r;
             }
 
-            var matches = candidates.Where(option =>
-                    name(option).StartsWith(query, StringComparison.InvariantCultureIgnoreCase))
+            var matches = candidates.Where(option => query.IsAbbreviation(name(option)))
                 .ToArray();
 
             if (matches.Length > 1)
