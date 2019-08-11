@@ -29,7 +29,7 @@ namespace Amg.Build
             invocations.OrderBy(_ => _.End)
                 .Select(_ => new
                 {
-                    Name = _.Id,
+                    Name = _.Id.Truncate(32),
                     State = _.State,
                     Duration = _.Duration.HumanReadable(),
                     Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin.Value, _.End.Value)

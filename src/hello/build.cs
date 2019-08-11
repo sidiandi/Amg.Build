@@ -5,6 +5,7 @@ using Amg.Build;
 using System.Diagnostics;
 using System.Linq;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 public class BuildTargets
 {
@@ -22,10 +23,11 @@ public class BuildTargets
 	[Once][Description("Greet all.")]
 	public virtual async Task GreetAll()
 	{
-		await Task.WhenAll(Enumerable.Range(0,5).Select(_ => Greet($"Alice {_}")));
+        await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => Greet($"Alice {_}")).ToArray());
+        await Greet(Enumerable.Range(0, 100).Select(_ => "Very long name ").Join());
 	}
-	
-	[Once]
+
+    [Once]
 	public virtual async Task Default()
 	{
 		await GreetAll();

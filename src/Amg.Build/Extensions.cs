@@ -193,6 +193,15 @@ namespace Amg.Build
         }
 
         /// <summary>
+        /// Replace line breaks by ' '
+        /// </summary>
+        /// <returns></returns>
+        public static string OneLine(this string x)
+        {
+            return x.SplitLines().Join(" ");
+        }
+
+        /// <summary>
         /// Limit string to maxLength. Replace tail end with md5 checksum to keep the string unique.
         /// </summary>
         /// <param name="x"></param>

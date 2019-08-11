@@ -1,8 +1,7 @@
 {
   "profiles": {
     "hello": {
-      "commandName": "Project",
-      "commandLineArgs": "g-a"
+      "commandName": "Project"
     }
   }
 }

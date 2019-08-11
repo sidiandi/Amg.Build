@@ -71,6 +71,11 @@ namespace Amg.Build
             return w;
         }
 
+        static string CellText(object x)
+        {
+            return x.SafeToString().OneLine().Truncate(80);
+        }
+
         /// <summary>
         /// prints the properties of T in a table
         /// </summary>
@@ -86,11 +91,11 @@ namespace Amg.Build
             if (header)
             {
                 return Table(new[] { properties.Select(_ => _.Name) }
-                    .Concat(e.Select(_ => properties.Select(p => p.GetValue(_, index).SafeToString()))));
+                    .Concat(e.Select(_ => properties.Select(p => CellText(p.GetValue(_, index))))));
             }
             else
             {
-                return Table(e.Select(_ => properties.Select(p => p.GetValue(_, index).SafeToString())));
+                return Table(e.Select(_ => properties.Select(p => CellText(p.GetValue(_, index)))));
             }
         }
 
