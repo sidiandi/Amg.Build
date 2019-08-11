@@ -61,7 +61,7 @@ If `Git` contains `[Once]` attributes, these methods will also be only executed 
 
 ### Build Properties
 
-Properties of the Targets container can be accessed as build properties on the command line if
+Properties of the Targets container are available as build properties on the command line if
 * they have a public setter
 * they have a System.Component.Description attribute
 
@@ -72,6 +72,7 @@ Properties of the Targets container can be accessed as build properties on the c
 
 ## Done
 
+* Make rebuild decisions based on the git hash of source files: GitExtensions.IfChanged
 * Progress information for IEnumerable 
 * CopyTree
 * Remove old "DefineTarget" syntax

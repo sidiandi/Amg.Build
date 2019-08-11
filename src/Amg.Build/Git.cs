@@ -14,25 +14,23 @@ namespace Amg.Build
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         /// <summary>
-        /// Constructor. RootDirectory is set to "." 
+        /// Constructor. You need to set RootDirectory before using the methods of the created instance.
         /// </summary>
         public Git()
-            : this(".")
         {
-
         }
 
         /// <summary />
         public Git(string rootDirectory)
         {
             RootDirectory = rootDirectory;
-            GitTool = new Tool("git.exe").WithArguments("-C", RootDirectory);
         }
 
         /// <summary>
         /// Git command line tool
         /// </summary>
-        public ITool GitTool { get; private set; }
+        [Once]
+        public virtual ITool GitTool => new Tool("git.exe").WithArguments("-C", RootDirectory);
 
         /// <summary>
         /// Use GitVersion to extract the application version
@@ -87,6 +85,7 @@ Commit following files:
         /// <param name="buildStep">build step to execute</param>
         /// <param name="stateFile">path to the state file</param>
         /// <returns></returns>
+        [Obsolete("use GitExtensions.IfTreeChanged")]
         public async Task RebuildIfCommitHashChanged(Func<Task> buildStep, string stateFile)
         {
             var resultCommitHash = await stateFile.ReadAllTextAsync();

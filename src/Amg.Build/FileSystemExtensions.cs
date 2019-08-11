@@ -620,5 +620,34 @@ are more recent.
         {
             return FileSystem.GetHardLinkInfo(path);
         }
+
+        /// <summary>
+        /// Make sure that path does not exist, no matter if directory or file
+        /// </summary>
+        /// This method is to be used with caution. It can wipe whole directory trees.
+        /// <param name="path">path to be deleted</param>
+        /// <returns>path</returns>
+        public static async Task<string> EnsureNotExists(this string path)
+        {
+            if (path.IsFile())
+            {
+                path.EnsureFileNotExists();
+                await Task.CompletedTask;
+            }
+            else if (path.IsDirectory())
+            {
+                Logger.Information("Delete {directory}", path);
+                foreach (var i in path.Glob("*"))
+                {
+                    await i.EnsureNotExists();
+                }
+                Directory.Delete(path);
+            }
+            else
+            {
+
+            }
+            return path;
+        }
     }
 }
