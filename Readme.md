@@ -72,6 +72,7 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* Logging shows current target
 * timeline: shorten long invocation names
 * GetOpt compliant target names for command line
 * Make rebuild decisions based on the git hash of source files: GitExtensions.IfChanged

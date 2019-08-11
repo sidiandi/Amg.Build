@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Threading;
 
 public class BuildTargets
 {
@@ -17,7 +18,9 @@ public class BuildTargets
 	public virtual async Task Greet(string name)
 	{
 		await Task.Delay(TimeSpan.FromSeconds(1));
-		Console.WriteLine($"Hello, {name}");
+        Logger.Information($"Hello, {name}");
+
+        Console.WriteLine($"Hello, {name}");
 	}
 	
 	[Once][Description("Greet all.")]
