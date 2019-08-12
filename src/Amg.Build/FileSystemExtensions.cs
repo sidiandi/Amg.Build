@@ -326,6 +326,7 @@ are more recent.
         /// <summary>
         /// Last time something was written to path.
         /// </summary>
+        /// Returns DateTime.MinValue if file is not found.
         /// <param name="path"></param>
         /// <returns></returns>
         public static DateTime LastWriteTimeUtc(this string path)

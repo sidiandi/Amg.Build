@@ -72,6 +72,8 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* -vquiet does not show result summary
+* build assembly is forced to rebuild after 60 minutes
 * Logging shows current target
 * timeline: shorten long invocation names
 * GetOpt compliant target names for command line

@@ -17,8 +17,12 @@ namespace Amg.Build
                 .Select(_ => _.End.GetValueOrDefault(DateTime.MinValue))
                 .Max();
 
+            var success = invocations.All(_ => !_.Failed);
+
+            @out.WriteLine();
             new
             {
+                success,
                 begin,
                 end,
                 duration = end - begin

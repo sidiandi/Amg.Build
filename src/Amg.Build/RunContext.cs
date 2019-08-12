@@ -18,7 +18,7 @@ namespace Amg.Build
     /// </summary>
     internal class RunContext
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static Serilog.ILogger Logger;
 
         private string sourceDir;
         private string buildDll;
@@ -44,15 +44,9 @@ namespace Amg.Build
 
         public int Run()
         {
-            Log.Logger = new LoggerConfiguration()
+            Logger = Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                 .CreateLogger();
-
-            if (IsOutOfDate())
-            {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
-            }
 
             var builder = new DefaultProxyBuilder();
             var generator = new ProxyGenerator(builder);
@@ -66,10 +60,16 @@ namespace Amg.Build
             var options = new Options(onceProxy);
             GetOptParser.Parse(commandLineArguments, options);
 
-            Log.Logger = new LoggerConfiguration()
+            Logger = Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
                     outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
+
+            if (IsOutOfDate())
+            {
+                Console.Error.WriteLine("Build script requires rebuild.");
+                return ExitCodeRebuildRequired;
+            }
 
             if (options.Edit)
             {
@@ -92,8 +92,7 @@ namespace Amg.Build
             }
 
             var amgBuildAssembly = Assembly.GetExecutingAssembly();
-
-            Logger.Information("{assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+            Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
             var startup = GetStartupInvocation();
             IEnumerable<InvocationInfo> invocations = new[] { startup };
@@ -102,13 +101,19 @@ namespace Amg.Build
             {
                 RunTarget(options.TargetAndArguments, options.Targets);
                 invocations = invocations.Concat(onceInterceptor.Invocations);
-                Console.WriteLine(Summary.Print(invocations));
+                if (options.Verbosity > Verbosity.Quiet)
+                {
+                    Console.WriteLine(Summary.Print(invocations));
+                }
                 return ExitCodeSuccess;
             }
             catch (InvocationFailed)
             {
                 invocations = invocations.Concat(onceInterceptor.Invocations);
-                Console.WriteLine(Summary.Print(invocations));
+                if (options.Verbosity > Verbosity.Quiet)
+                {
+                    Console.WriteLine(Summary.Print(invocations));
+                }
                 Console.Error.WriteLine(Summary.Error(invocations));
                 return ExitCodeUnknownError;
             }
@@ -155,14 +160,18 @@ namespace Amg.Build
                 return false;
             }
 
-            Logger.Information("{buildDll}", buildDll);
             var sourceFiles = sourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");
-            var outputFiles = buildDll.Glob();
 
-            return buildDll.IsOutOfDate(sourceFiles);
+            var sourceChanged = sourceFiles.LastWriteTimeUtc();
+            var buildDllChanged = buildDll.LastWriteTimeUtc();
+
+            var maximalAge = TimeSpan.FromMinutes(60);
+
+            return (sourceChanged > buildDllChanged)
+                || (DateTime.UtcNow - buildDllChanged) > maximalAge;
         }
 
         private static void RunTarget(string[] targetAndArguments, object targets)
