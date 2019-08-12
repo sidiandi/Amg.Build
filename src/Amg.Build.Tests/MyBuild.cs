@@ -97,7 +97,7 @@ namespace Amg.Build
             throw new Exception("epic fail");
         }
 
-        [Once]
+        [Once][Description("Always fails.")]
         public virtual async Task AlwaysFails()
         {
             await WhatCouldGoWrong();

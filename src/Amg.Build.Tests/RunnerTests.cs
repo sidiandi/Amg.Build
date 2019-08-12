@@ -27,15 +27,15 @@ namespace Amg.Build
         [Test]
         public void SayHello()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "SayHello", "World" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-hello", "World" });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "AlwaysFails", "-vq" });
-            Assert.That(exitCode, Is.Not.EqualTo(0));
+            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq" });
+            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeInvocationFailed));
         }
 
         public class MinimalTargets

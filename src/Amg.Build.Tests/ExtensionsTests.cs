@@ -53,11 +53,16 @@ H     1234234
         [Test]
         public void IsAbbreviation()
         {
+            Assert.IsFalse("always-fails".IsAbbreviation("all"));
             Assert.IsTrue("BMW".IsAbbreviation("Bayerische Motorenwerke"));
             Assert.IsTrue("ga".IsAbbreviation("greet-all"));
             Assert.IsTrue("g-a".IsAbbreviation("greet-all"));
             Assert.IsTrue("p".IsAbbreviation("print"));
             Assert.IsFalse("r".IsAbbreviation("print"));
+            Assert.IsFalse("".IsAbbreviation("word"));
+            Assert.IsFalse("word".IsAbbreviation(""));
+            Assert.IsTrue("word".IsAbbreviation("word"));
+            Assert.IsTrue("w".IsAbbreviation("word"));
         }
     }
 }

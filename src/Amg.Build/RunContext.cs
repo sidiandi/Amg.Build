@@ -25,10 +25,11 @@ namespace Amg.Build
         private Type targetsType;
         private string[] commandLineArguments;
         private readonly bool rebuildCheck;
-        const int ExitCodeHelpDisplayed = 1;
-        const int ExitCodeUnknownError = -1;
-        const int ExitCodeSuccess = 0;
-        const int ExitCodeRebuildRequired = 2;
+        internal const int ExitCodeHelpDisplayed = 1;
+        internal const int ExitCodeUnknownError = -1;
+        internal const int ExitCodeSuccess = 0;
+        internal const int ExitCodeRebuildRequired = 2;
+        internal const int ExitCodeInvocationFailed = 3;
 
         public RunContext(
             string buildSourceFile,
@@ -112,12 +113,12 @@ namespace Amg.Build
                 Console.WriteLine(Summary.Print(invocations));
                 return ExitCodeSuccess;
             }
-            catch (InvocationFailed)
+            catch (System.AggregateException)
             {
                 invocations = invocations.Concat(onceInterceptor.Invocations);
                 Console.WriteLine(Summary.Print(invocations));
                 Console.Error.WriteLine(Summary.Error(invocations));
-                return ExitCodeUnknownError;
+                return ExitCodeInvocationFailed;
             }
             catch (Exception ex)
             {

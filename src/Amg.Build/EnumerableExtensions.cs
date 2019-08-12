@@ -184,9 +184,9 @@ namespace Amg.Build
             }
 
             var matches = candidates.Where(option => query.IsAbbreviation(name(option)))
-                .ToArray();
+                .ToList();
 
-            if (matches.Length > 1)
+            if (matches.Count > 1)
             {
                 throw new ArgumentOutOfRangeException($@"{query.Quote()} is ambiguous. Could be
 
@@ -195,7 +195,7 @@ namespace Amg.Build
 ");
             }
 
-            if (matches.Length == 1)
+            if (matches.Count == 1)
             {
                 return matches[0];
             }
