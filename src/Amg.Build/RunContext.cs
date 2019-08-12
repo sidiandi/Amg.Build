@@ -24,7 +24,7 @@ namespace Amg.Build
         private string buildDll;
         private Type targetsType;
         private string[] commandLineArguments;
-
+        private readonly bool rebuildCheck;
         const int ExitCodeHelpDisplayed = 1;
         const int ExitCodeUnknownError = -1;
         const int ExitCodeSuccess = 0;
@@ -34,12 +34,15 @@ namespace Amg.Build
             string buildSourceFile,
             string buildDll,
             Type targetsType,
-            string[] commandLineArguments)
+            string[] commandLineArguments,
+            bool rebuildCheck
+            )
         {
             this.sourceDir = buildSourceFile.Parent();
             this.buildDll = buildDll;
             this.targetsType = targetsType;
             this.commandLineArguments = commandLineArguments;
+            this.rebuildCheck = rebuildCheck;
         }
 
         public int Run()
@@ -48,10 +51,13 @@ namespace Amg.Build
                 .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                 .CreateLogger();
 
-            if (IsOutOfDate())
+            if (rebuildCheck)
             {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
+                if (IsOutOfDate())
+                {
+                    Console.Error.WriteLine("Build script requires rebuild.");
+                    return ExitCodeRebuildRequired;
+                }
             }
 
             var builder = new DefaultProxyBuilder();
@@ -80,10 +86,13 @@ namespace Amg.Build
                 return ExitCodeHelpDisplayed;
             }
 
-            if ((options.Clean && !options.IgnoreClean))
+            if (rebuildCheck)
             {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
+                if ((options.Clean && !options.IgnoreClean))
+                {
+                    Console.Error.WriteLine("Build script requires rebuild.");
+                    return ExitCodeRebuildRequired;
+                }
             }
 
             if (options.Help)
