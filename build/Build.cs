@@ -49,7 +49,8 @@ public partial class BuildTargets
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
-        await (await Dotnet.Tool()).Run("build", SlnFile);
+        await (await Dotnet.Tool()).Run("build", SlnFile, 
+            "--configuration", this.Configuration);
     }
 
     [Once]
