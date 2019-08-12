@@ -30,8 +30,7 @@ namespace Amg.Build
                 callerFilePath,
                 Assembly.GetEntryAssembly().Location,
                 typeof(TargetsDerivedClass),
-                commandLineArguments,
-                rebuildCheck
+                commandLineArguments
                 );
 
             return runner.Run();

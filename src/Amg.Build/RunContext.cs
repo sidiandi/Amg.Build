@@ -24,7 +24,6 @@ namespace Amg.Build
         private string buildDll;
         private Type targetsType;
         private string[] commandLineArguments;
-        private readonly bool rebuildCheck;
         const int ExitCodeHelpDisplayed = 1;
         const int ExitCodeUnknownError = -1;
         const int ExitCodeSuccess = 0;
@@ -34,15 +33,18 @@ namespace Amg.Build
             string buildSourceFile,
             string buildDll,
             Type targetsType,
-            string[] commandLineArguments,
-            bool rebuildCheck
+            string[] commandLineArguments
             )
         {
             this.sourceDir = buildSourceFile.Parent();
             this.buildDll = buildDll;
             this.targetsType = targetsType;
             this.commandLineArguments = commandLineArguments;
-            this.rebuildCheck = rebuildCheck;
+        }
+
+        bool NeedRebuildCheck()
+        {
+            return sourceDir.Parent().Combine("build.cmd").Glob().Any();
         }
 
         public int Run()
@@ -51,7 +53,7 @@ namespace Amg.Build
                 .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                 .CreateLogger();
 
-            if (rebuildCheck)
+            if (NeedRebuildCheck())
             {
                 if (IsOutOfDate())
                 {
@@ -86,13 +88,10 @@ namespace Amg.Build
                 return ExitCodeHelpDisplayed;
             }
 
-            if (rebuildCheck)
+            if ((options.Clean && !options.IgnoreClean))
             {
-                if ((options.Clean && !options.IgnoreClean))
-                {
-                    Console.Error.WriteLine("Build script requires rebuild.");
-                    return ExitCodeRebuildRequired;
-                }
+                Console.Error.WriteLine("Build script requires rebuild.");
+                return ExitCodeRebuildRequired;
             }
 
             if (options.Help)
