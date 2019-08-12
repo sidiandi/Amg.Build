@@ -67,9 +67,8 @@ namespace Amg.Build
             GetOptParser.Parse(commandLineArguments, options);
 
             Log.Logger = new LoggerConfiguration()
-                .Enrich.WithTarget()
                 .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                    outputTemplate: "{Timestamp:o}|{Level:u3}|{Target}|{Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
             if (options.Edit)

@@ -23,15 +23,13 @@ namespace Amg.Build
     {
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
-            if (InvocationInfo.Current != null)
-            { 
-                logEvent.AddOrUpdateProperty(GetProperty(propertyFactory));
-            }
+            // todo: create InvocationInfo.Stack
+            throw new NotImplementedException();
         }
 
         private LogEventProperty GetProperty(ILogEventPropertyFactory propertyFactory)
         {
-            return propertyFactory.CreateProperty("Target", InvocationInfo.Current.ToString());
+            return propertyFactory.CreateProperty("Target", null);
         }
     }
 }

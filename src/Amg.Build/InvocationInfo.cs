@@ -12,21 +12,6 @@ namespace Amg.Build
         private readonly IInvocation invocation;
         private readonly OnceInterceptor interceptor;
 
-        static AsyncLocal<InvocationInfo> currentInvocationInfo = new AsyncLocal<InvocationInfo>();
-
-        public static InvocationInfo Current
-        {
-            get
-            {
-                return currentInvocationInfo.Value;
-            }
-
-            private set
-            {
-                currentInvocationInfo.Value = value;
-            }
-        }
-
         public InvocationInfo(string id, DateTime begin, DateTime end)
         {
             this.Id = id;
@@ -111,7 +96,6 @@ namespace Amg.Build
             this.invocation = invocation;
             this.Id = id;
 
-            InvocationInfo.Current = this;
             Logger.Information("Begin {id}", Id);
             Begin = DateTime.UtcNow;
             invocation.Proceed();
@@ -142,7 +126,6 @@ namespace Amg.Build
         {
             End = DateTime.UtcNow;
             Logger.Information("End {id}", Id);
-            InvocationInfo.Current = null;
         }
 
         public virtual DateTime? Begin { get; set; }
