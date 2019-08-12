@@ -59,7 +59,13 @@ namespace Amg.Build
         /// <summary />
         public ITool WithArguments(IEnumerable<string> args)
         {
-            throw new System.NotImplementedException();
+            return this;
+        }
+
+        /// <summary />
+        public ITool RunAs(string user, string password)
+        {
+            return this;
         }
 
         /// <summary>

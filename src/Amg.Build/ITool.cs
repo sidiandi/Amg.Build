@@ -50,5 +50,13 @@ namespace Amg.Build
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
         ITool WithWorkingDirectory(string workingDirectory);
+
+        /// <summary>
+        /// Start the process under a certain user account
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        ITool RunAs(string user, string password);
     }
 }
