@@ -72,6 +72,7 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* rebuild check can be disabled
 * Logging shows current target
 * timeline: shorten long invocation names
 * GetOpt compliant target names for command line
