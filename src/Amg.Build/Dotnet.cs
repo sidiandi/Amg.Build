@@ -8,6 +8,11 @@ namespace Amg.Build
     public class Dotnet
     {
         /// <summary>
+        /// Only construct via <![CDATA[Runner.Once<Dotnet>()]]> 
+        /// </summary>
+        protected Dotnet() { }
+
+        /// <summary>
         /// Dotnet tool
         /// </summary>
         [Once]

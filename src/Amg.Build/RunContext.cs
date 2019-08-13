@@ -24,82 +24,114 @@ namespace Amg.Build
         private string buildDll;
         private Type targetsType;
         private string[] commandLineArguments;
+        private readonly bool rebuildCheck;
 
-        const int ExitCodeHelpDisplayed = 1;
-        const int ExitCodeUnknownError = -1;
-        const int ExitCodeSuccess = 0;
-        const int ExitCodeRebuildRequired = 2;
+        internal const int ExitCodeSuccess = 0;
+        internal const int ExitCodeUnknownError = 1;
+        internal const int ExitCodeRebuildRequired = 2;
+        internal const int ExitCodeHelpDisplayed = 3;
+        internal const int ExitCodeCommandLineError = 4;
+        internal const int ExitCodeTargetFailed = 5;
 
         public RunContext(
             string buildSourceFile,
             string buildDll,
             Type targetsType,
-            string[] commandLineArguments)
+            string[] commandLineArguments,
+            bool rebuildCheck
+            )
         {
             this.sourceDir = buildSourceFile.Parent();
             this.buildDll = buildDll;
             this.targetsType = targetsType;
             this.commandLineArguments = commandLineArguments;
+            this.rebuildCheck = rebuildCheck;
         }
 
         public int Run()
         {
-            Logger = Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
-                .CreateLogger();
-
-            var builder = new DefaultProxyBuilder();
-            var generator = new ProxyGenerator(builder);
-            var onceInterceptor = new OnceInterceptor();
-            var onceProxy = generator.CreateClassProxy(targetsType, new ProxyGenerationOptions
-            {
-                Hook = new OnceHook()
-            },
-            onceInterceptor, new LogInvocationInterceptor());
-
-            var options = new Options(onceProxy);
-            GetOptParser.Parse(commandLineArguments, options);
-
-            Logger = Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                    outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                .CreateLogger();
-
-            if (IsOutOfDate())
-            {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
-            }
-
-            if (options.Edit)
-            {
-                var cmd = new Tool("cmd").WithArguments("/c", "start");
-                var buildCsProj = sourceDir.Glob("*.csproj").First();
-                cmd.Run(buildCsProj).Wait();
-                return ExitCodeHelpDisplayed;
-            }
-
-            if ((options.Clean && !options.IgnoreClean))
-            {
-                Console.Error.WriteLine("Build script requires rebuild.");
-                return ExitCodeRebuildRequired;
-            }
-
-            if (options.Help)
-            {
-                HelpText.Print(Console.Out, options);
-                return ExitCodeHelpDisplayed;
-            }
-
-            var amgBuildAssembly = Assembly.GetExecutingAssembly();
-            Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
-
-            var startup = GetStartupInvocation();
-            IEnumerable<InvocationInfo> invocations = new[] { startup };
-
             try
             {
-                RunTarget(options.TargetAndArguments, options.Targets);
+                Logger = Log.Logger = new LoggerConfiguration()
+                    .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
+                    .CreateLogger();
+
+                if (rebuildCheck)
+                {
+                    if (IsOutOfDate())
+                    {
+                        Console.Error.WriteLine("Build script requires rebuild.");
+                        return ExitCodeRebuildRequired;
+                    }
+                }
+
+                var builder = new DefaultProxyBuilder();
+                var generator = new ProxyGenerator(builder);
+                var onceInterceptor = new OnceInterceptor();
+                var onceProxy = generator.CreateClassProxy(targetsType, new ProxyGenerationOptions
+                {
+                    Hook = new OnceHook()
+                },
+                onceInterceptor, new LogInvocationInterceptor());
+
+                var options = new Options(onceProxy);
+
+                GetOptParser.Parse(commandLineArguments, options);
+
+                Logger = Log.Logger = new LoggerConfiguration()
+                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                    .CreateLogger();
+
+                if (IsOutOfDate())
+                {
+                    Console.Error.WriteLine("Build script requires rebuild.");
+                    return ExitCodeRebuildRequired;
+                }
+
+                if (options.Edit)
+                {
+                    var cmd = new Tool("cmd").WithArguments("/c", "start");
+                    var buildCsProj = sourceDir.Glob("*.csproj").First();
+                    cmd.Run(buildCsProj).Wait();
+                    return ExitCodeHelpDisplayed;
+                }
+
+                if ((options.Clean && !options.IgnoreClean))
+                {
+                    Console.Error.WriteLine("Build script requires rebuild.");
+                    return ExitCodeRebuildRequired;
+                }
+
+                if (options.Help)
+                {
+                    HelpText.Print(Console.Out, options);
+                    return ExitCodeHelpDisplayed;
+                }
+
+                var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, options);
+
+                var amgBuildAssembly = Assembly.GetExecutingAssembly();
+                Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+
+                var startup = GetStartupInvocation();
+                IEnumerable<InvocationInfo> invocations = new[] { startup };
+
+                try
+                {
+                    RunTarget(options.Targets, target, targetArguments);
+                }
+                catch (InvocationFailed)
+                {
+                    invocations = invocations.Concat(onceInterceptor.Invocations);
+                    if (options.Verbosity > Verbosity.Quiet)
+                    {
+                        Console.WriteLine(Summary.Print(invocations));
+                    }
+                    Console.Error.WriteLine(Summary.Error(invocations));
+                    return ExitCodeTargetFailed;
+                }
+
                 invocations = invocations.Concat(onceInterceptor.Invocations);
                 if (options.Verbosity > Verbosity.Quiet)
                 {
@@ -107,23 +139,17 @@ namespace Amg.Build
                 }
                 return ExitCodeSuccess;
             }
-            catch (InvocationFailed)
+            catch (ParseException ex)
             {
-                invocations = invocations.Concat(onceInterceptor.Invocations);
-                if (options.Verbosity > Verbosity.Quiet)
-                {
-                    Console.WriteLine(Summary.Print(invocations));
-                }
-                Console.Error.WriteLine(Summary.Error(invocations));
-                return ExitCodeUnknownError;
+                Console.Error.WriteLine(ex.Message);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("Run with --help to get help.");
+                return ExitCodeCommandLineError;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.Message);
                 return ExitCodeUnknownError;
-            }
-            finally
-            {
             }
         }
 
@@ -174,17 +200,50 @@ namespace Amg.Build
                 || (DateTime.UtcNow - buildDllChanged) > maximalAge;
         }
 
-        private static void RunTarget(string[] targetAndArguments, object targets)
+        /// <summary>
+        /// Extract the target to be called and its arguments from command line arguments
+        /// </summary>
+        /// <param name="arguments">all command line arguments (required for error display)</param>
+        /// <param name="options">parsed options</param>
+        /// <returns></returns>
+        static (MethodInfo target, string[] arguments) ParseCommandLineTarget(string[] arguments, Options options)
         {
-            var targetName = targetAndArguments.FirstOrDefault();
-            var target = (targetName == null)
-                ? GetDefaultTarget(targets)
-                : HelpText.PublicTargets(targets.GetType()).FindByName(
-                    _ => GetOptParser.GetLongOptionNameForMember(_.Name),
-                    targetName);
-            var arguments = targetAndArguments.Skip(1).ToArray();
-            Logger.Debug("{targetName} selects target {target}", targetName, target.Name);
+            var targetAndArguments = options.TargetAndArguments;
+            var targets = options.Targets;
+            if (targetAndArguments.Length == 0)
+            {
+                try
+                {
+                    return (GetDefaultTarget(targets), new string[] { });
+                }
+                catch (Exception e)
+                {
+                    throw new ParseException(arguments, -1, e);
+                }
+            }
 
+            var candidates = HelpText.PublicTargets(targets.GetType());
+
+            var targetName = targetAndArguments[0];
+            var targetArguments = targetAndArguments.Skip(1).ToArray();
+            try
+            {
+                var target = candidates.FindByName(
+                    _ => GetOptParser.GetLongOptionNameForMember(_.Name), 
+                    targetName,
+                    "targets"
+                    );
+                return (target, targetArguments);
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                throw new ParseException(arguments, Array.IndexOf(arguments, targetName), e);
+            }
+        }
+
+        private static void RunTarget(object targets, MethodInfo target, string[] arguments)
+        {
+            Logger.Information("Run {target}({arguments)", target, arguments);
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
         }
 
@@ -200,29 +259,40 @@ namespace Amg.Build
 
             if (defaultTarget == null)
             {
-                throw new Exception(@"No default target found.
+                throw new Exception($@"No default target found.
 
-Add a method with signature
+Specify a target or add a method with signature
 
-[Once] [Default]
-public virtual async Task Default()
-{
-    ...
-}
+    [Once] [Default]
+    public virtual async Task Default()
+    {{
+        ...
+    }}
 
-in your {targets.GetType()} class.
-
-");
+in the {targets.GetType().BaseType} class.");
             }
             return defaultTarget;
         }
 
+        /// <summary>
+        /// Waits if returnValue is Task
+        /// </summary>
+        /// <param name="returnValue"></param>
+        /// <returns></returns>
         static object Wait(object returnValue)
         {
             if (returnValue is Task task)
             {
-                task.Wait();
-                return null;
+                try
+                {
+                    task.Wait();
+                    return null;
+                }
+                catch (System.AggregateException aggregateException)
+                {
+                    aggregateException.Handle(e => throw e);
+                    throw;
+                }
             }
             else
             {

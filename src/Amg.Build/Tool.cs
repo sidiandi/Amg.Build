@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -19,6 +20,8 @@ namespace Amg.Build
         private string workingDirectory = ".";
         private int? expectedExitCode = 0;
         private IDictionary<string, string> environment = new Dictionary<string, string>();
+        private string user;
+        private string password;
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -39,6 +42,15 @@ namespace Amg.Build
         {
             var t = (Tool)this.MemberwiseClone();
             t.leadingArguments = leadingArguments.Concat(args).ToArray();
+            return t;
+        }
+
+        /// <summary />
+        public ITool RunAs(string user, string password)
+        {
+            var t = (Tool)this.MemberwiseClone();
+            t.user = user;
+            t.password = password;
             return t;
         }
 
@@ -105,6 +117,16 @@ namespace Amg.Build
             public string Error { get; set; }
         }
 
+        static SecureString GetSecureString(string password)
+        {
+            var s = new SecureString();
+            foreach (var i in password)
+            {
+                s.AppendChar(i);
+            }
+            return s;
+        }
+
         /// <summary>
         /// Runs the tool
         /// </summary>
@@ -122,6 +144,19 @@ namespace Amg.Build
                     RedirectStandardOutput = true,
                     WorkingDirectory = workingDirectory,
                 };
+
+                if (user != null)
+                {
+                    var userParts = user.Split('\\');
+                    var userName = userParts.Last();
+                    if (userParts.Length >= 2)
+                    {
+                        var domain = userParts[0];
+                        startInfo.Domain = domain;
+                    }
+                    startInfo.UserName = userName;
+                    startInfo.Password = GetSecureString(password);
+                }
 
                 startInfo.EnvironmentVariables.Add(this.environment);
 

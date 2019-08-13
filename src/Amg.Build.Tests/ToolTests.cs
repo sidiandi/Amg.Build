@@ -57,5 +57,22 @@ namespace Amg.Build
                 Console.WriteLine(te.Result.Error);
             }
         }
+
+        [Test][Explicit("requires a local user test")]
+        public async Task RunAs()
+        {
+            var user = "test";
+            var password = @"adm$pwd$4$med$";
+            var tool = new Tool("cmd.exe").WithArguments("/c").RunAs(user, password);
+            await tool.Run("echo hello");
+
+            var wrongPassword = @"adm$pwd$4$med";
+            var wrongPasswordTool = tool.RunAs(user, wrongPassword);
+            var ex = Assert.Throws<System.AggregateException>(() =>
+            {
+                wrongPasswordTool.Run("echo hello").Wait();
+            });
+            Assert.That(ex.InnerException.Message, Is.EqualTo("The user name or password is incorrect"));
+        }
     }
 }

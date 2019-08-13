@@ -19,14 +19,19 @@ namespace Amg.Build
         /// <typeparam name="TargetsDerivedClass"></typeparam>
         /// <param name="commandLineArguments"></param>
         /// <param name="callerFilePath"></param>
+        /// <param name="rebuildCheck">Check if a rebuild of the DLL is required.</param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run<TargetsDerivedClass>(string[] commandLineArguments, [CallerFilePath] string callerFilePath = null) where TargetsDerivedClass : class
+        public static int Run<TargetsDerivedClass>(
+            string[] commandLineArguments, 
+            [CallerFilePath] string callerFilePath = null, 
+            bool rebuildCheck = true) where TargetsDerivedClass : class
         {
             var runner = new RunContext(
                 callerFilePath,
                 Assembly.GetEntryAssembly().Location,
                 typeof(TargetsDerivedClass),
-                commandLineArguments
+                commandLineArguments,
+                rebuildCheck
                 );
 
             return runner.Run();
@@ -52,8 +57,12 @@ namespace Amg.Build
         /// See $/examples/hello/build/build.cs for an example.
         /// <param name="commandLineArguments"></param>
         /// <param name="callerFilePath"></param>
+        /// <param name="rebuildCheck">Check if a rebuild of the DLL is required.</param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run(string[] commandLineArguments, [CallerFilePath] string callerFilePath = null)
+        public static int Run(
+            string[] commandLineArguments, 
+            [CallerFilePath] string callerFilePath = null,
+            bool rebuildCheck = true)
         {
             StackFrame frame = new StackFrame(1);
             var method = frame.GetMethod();
@@ -63,7 +72,8 @@ namespace Amg.Build
                 callerFilePath,
                 Assembly.GetEntryAssembly().Location,
                 type,
-                commandLineArguments
+                commandLineArguments,
+                rebuildCheck
                 );
 
             return runner.Run();

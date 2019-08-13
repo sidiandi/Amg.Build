@@ -171,9 +171,11 @@ namespace Amg.Build
         /// <param name="candidates"></param>
         /// <param name="name">calculates the name of an element</param>
         /// <param name="query">the name (part) to be found.</param>
+        /// <param name="itemsName"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException">When query does not identify a named element.</exception>
-        public static T FindByName<T>(this IEnumerable<T> candidates, Func<T, string> name, string query)
+        public static T FindByName<T>(this IEnumerable<T> candidates, Func<T, string> name, string query,
+            string itemsName = null)
         {
             var r = candidates.SingleOrDefault(option =>
                 name(option).Equals(query, StringComparison.InvariantCultureIgnoreCase));
@@ -184,9 +186,9 @@ namespace Amg.Build
             }
 
             var matches = candidates.Where(option => query.IsAbbreviation(name(option)))
-                .ToArray();
+                .ToList();
 
-            if (matches.Length > 1)
+            if (matches.Count > 1)
             {
                 throw new ArgumentOutOfRangeException($@"{query.Quote()} is ambiguous. Could be
 
@@ -195,15 +197,14 @@ namespace Amg.Build
 ");
             }
 
-            if (matches.Length == 1)
+            if (matches.Count == 1)
             {
                 return matches[0];
             }
 
-            throw new ArgumentOutOfRangeException($@"{query.Quote()} not found in
+            throw new ArgumentOutOfRangeException(nameof(query), query, $@"{query.Quote()} not found in {itemsName}
 
-{candidates.Select(name).Join()}
-
+{candidates.Select(_ => "  " + name(_)).Join()}
 ");
         }
 

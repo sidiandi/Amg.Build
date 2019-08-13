@@ -253,6 +253,11 @@ namespace Amg.Build
         /// <returns></returns>
         public static bool IsAbbreviation(this string abbreviation, string word)
         {
+            if (abbreviation.Length == 0)
+            {
+                return true;
+            }
+
             if (word.Length == 0)
             {
                 return false;
@@ -263,6 +268,10 @@ namespace Amg.Build
                 if (abbreviation.Length == 1)
                 {
                     return true;
+                }
+                else if (word.Length == 1)
+                {
+                    return false;
                 }
                 else
                 {

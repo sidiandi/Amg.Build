@@ -13,10 +13,15 @@ public partial class BuildTargets
     string productName => name;
     string year => DateTime.UtcNow.ToString("yyyy");
     string copyright => $"Copyright (c) {company} {year}";
-    string configuration => "Debug";
+
+    [Description("Release or Debug. Default: Release")]
+    public string Configuration { get; set; } = ConfigurationRelease;
+
+    const string ConfigurationRelease = "Release";
+    const string ConfigurationDebug = "Debug";
 
     string Root { get; set; } = ".".Absolute();
-    string OutDir => Root.Combine("out", configuration);
+    string OutDir => Root.Combine("out", Configuration.ToString());
     string PackagesDir => OutDir.Combine("packages");
     string SrcDir => Root.Combine("src");
     string CommonAssemblyInfoFile => OutDir.Combine("CommonAssemblyInfo.cs");
@@ -31,12 +36,21 @@ public partial class BuildTargets
     [Once]
     protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Root);
 
-    [Once] [Description("Build")]
+    [Once]
+    protected virtual async Task PrepareBuild()
+    {
+        await WriteAssemblyInformationFile();
+        await WriteVersionPropsFile();
+    }
+
+    [Once]
+    [Description("Build")]
     public virtual async Task Build()
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
-        await (await Dotnet.Tool()).Run("build", SlnFile);
+        await (await Dotnet.Tool()).Run("build", SlnFile, 
+            "--configuration", this.Configuration);
     }
 
     [Once]
@@ -93,7 +107,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Build();
         await (await Dotnet.Tool()).Run("pack",
             LibDir,
-            "--configuration", configuration,
+            "--configuration", Configuration,
             "--no-build",
             "--include-source",
             "--include-symbols",
@@ -127,7 +141,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     [Once] [Description("Open in Visual Studio")]
     public virtual async Task OpenInVisualStudio()
     {
-        await Build();
+        foreach (var configuration in new[] { ConfigurationRelease, ConfigurationDebug})
+        {
+            var b = Runner.Once<BuildTargets>();
+            b.Configuration = configuration;
+            await b.PrepareBuild();
+        }
+
         Process.Start(new ProcessStartInfo
         {
             FileName = Path.GetFullPath(SlnFile),

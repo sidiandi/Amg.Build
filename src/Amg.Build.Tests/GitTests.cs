@@ -17,7 +17,7 @@ namespace Amg.Build
         {
             var testDir = CreateEmptyTestDirectory();
             Logger.Information(testDir);
-            var git = new Git(testDir);
+            var git = Git.Create(testDir);
             var g = git.GitTool;
             await g.Run("init");
             await testDir.Combine("hello").WriteAllTextAsync("hello");

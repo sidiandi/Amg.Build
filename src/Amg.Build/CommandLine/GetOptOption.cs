@@ -103,7 +103,7 @@ namespace Amg.CommandLine
                     }
                     else if (toType.IsEnum)
                     {
-                        var enumName = FindByName(Enum.GetNames(toType), _ => _, stringValue);
+                        var enumName = Enum.GetNames(toType).FindByName(_ => _, stringValue, "values");
                         value = Enum.Parse(toType, enumName);
                     }
 

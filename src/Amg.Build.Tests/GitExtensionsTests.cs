@@ -16,7 +16,7 @@ namespace Amg.Build
         public async Task Rebuild(string relativeSourceDir)
         {
             var testDir = this.CreateEmptyTestDirectory();
-            var gitHelper = new Git(testDir);
+            var gitHelper = Git.Create(testDir);
             var git = gitHelper.GitTool;
             await git.Run("init");
             var sourceDir = testDir.Combine(relativeSourceDir);

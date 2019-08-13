@@ -257,46 +257,10 @@ namespace Amg.CommandLine
             return (p.GetMethod != null && p.GetMethod.IsPublic);
         }
 
-
-        internal static T FindByName<T>(IEnumerable<T> candidates, Func<T, string> name, string query)
-        {
-            var r = candidates.SingleOrDefault(option =>
-                name(option).Equals(query, StringComparison.InvariantCultureIgnoreCase));
-
-            if (r != null)
-            {
-                return r;
-            }
-
-            var matches = candidates.Where(option =>
-                    name(option).StartsWith(query, StringComparison.InvariantCultureIgnoreCase))
-                .ToArray();
-
-            if (matches.Length > 1)
-            {
-                throw new Exception($@"{query.Quote()} is ambiguous. Could be
-
-{matches.Select(name).Join()}
-
-");
-            }
-
-            if (matches.Length == 1)
-            {
-                return matches[0];
-            }
-
-            throw new Exception($@"{query.Quote()} not found in
-
-{candidates.Select(name).Join()}
-
-");
-        }
-
         private static GetOptOption FindLongOption(object x, string optionName)
         {
             var options = GetOptions(x).ToList();
-            return FindByName(options, _ => _.Long, optionName);
+            return options.FindByName(_ => _.Long, optionName, "options");
         }
 
         private static GetOptOption FindOperands(object x)

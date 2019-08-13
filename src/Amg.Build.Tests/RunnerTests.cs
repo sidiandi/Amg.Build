@@ -27,15 +27,29 @@ namespace Amg.Build
         [Test]
         public void SayHello()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "SayHello", "World" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-hello", "World" });
             Assert.That(exitCode, Is.EqualTo(0));
         }
 
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "AlwaysFails", "-vq" });
-            Assert.That(exitCode, Is.Not.EqualTo(0));
+            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq" });
+            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeTargetFailed));
+        }
+
+        [Test]
+        public void CommandLineErrorWrongOption()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "--this-option-is-wrong" });
+            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeCommandLineError));
+        }
+
+        [Test]
+        public void CommandLineErrorWrongTarget()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "this-target-is-wrong" });
+            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeCommandLineError));
         }
 
         public class MinimalTargets
@@ -48,7 +62,7 @@ namespace Amg.Build
             var o = TestUtil.CaptureOutput(() =>
             {
                 var exitCode = Runner.Run<MyBuild>(new[] { "--help" });
-                Assert.That(exitCode, Is.EqualTo(1));
+                Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeHelpDisplayed));
             });
             /*
             Assert.AreEqual(@"Usage: build <targets> [options]
@@ -73,7 +87,7 @@ Options:
         public void Minimal()
         {
             var exitCode = Runner.Run<MinimalTargets>(new[] { "--help" });
-            Assert.AreEqual(1, exitCode);
+            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeHelpDisplayed));
         }
 
         [Test]

@@ -16,14 +16,16 @@ namespace Amg.Build
         /// <summary>
         /// Constructor. You need to set RootDirectory before using the methods of the created instance.
         /// </summary>
-        public Git()
-        {
-        }
+        protected Git(){}
 
-        /// <summary />
-        public Git(string rootDirectory)
+        /// <summary>
+        /// Create an instance where all methods marked with [Once] will only be called once.
+        /// </summary>
+        /// <param name="testDir"></param>
+        /// <returns></returns>
+        public static Git Create(string testDir)
         {
-            RootDirectory = rootDirectory;
+            return Runner.Once<Git>(_ => _.RootDirectory = testDir);
         }
 
         /// <summary>
