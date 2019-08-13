@@ -12,7 +12,7 @@ public class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
-	static int Main(string[] args) => Runner.Run(args);
+	static int Main(string[] args) => Runner.Run(args, rebuildCheck: false);
 
 	[Once][Description("Greet someone.")]
 	public virtual async Task Greet(string name)
