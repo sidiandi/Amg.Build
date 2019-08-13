@@ -26,12 +26,15 @@ namespace Amg.Build
         private string[] commandLineArguments;
         private readonly bool rebuildCheck;
 
-        internal const int ExitCodeSuccess = 0;
-        internal const int ExitCodeUnknownError = 1;
-        internal const int ExitCodeRebuildRequired = 2;
-        internal const int ExitCodeHelpDisplayed = 3;
-        internal const int ExitCodeCommandLineError = 4;
-        internal const int ExitCodeTargetFailed = 5;
+        public enum ExitCode
+        {
+            Success = 0,
+            UnknownError = 1,
+            RebuildRequired = 2,
+            HelpDisplayed = 3,
+            CommandLineError = 4,
+            TargetFailed = 5
+        }
 
         public RunContext(
             string buildSourceFile,
@@ -48,7 +51,7 @@ namespace Amg.Build
             this.rebuildCheck = rebuildCheck;
         }
 
-        public int Run()
+        public ExitCode Run()
         {
             try
             {
@@ -61,7 +64,7 @@ namespace Amg.Build
                     if (IsOutOfDate())
                     {
                         Console.Error.WriteLine("Build script requires rebuild.");
-                        return ExitCodeRebuildRequired;
+                        return ExitCode.RebuildRequired;
                     }
                 }
 
@@ -86,7 +89,7 @@ namespace Amg.Build
                 if (IsOutOfDate())
                 {
                     Console.Error.WriteLine("Build script requires rebuild.");
-                    return ExitCodeRebuildRequired;
+                    return ExitCode.RebuildRequired;
                 }
 
                 if (options.Edit)
@@ -94,19 +97,19 @@ namespace Amg.Build
                     var cmd = new Tool("cmd").WithArguments("/c", "start");
                     var buildCsProj = sourceDir.Glob("*.csproj").First();
                     cmd.Run(buildCsProj).Wait();
-                    return ExitCodeHelpDisplayed;
+                    return ExitCode.HelpDisplayed;
                 }
 
                 if ((options.Clean && !options.IgnoreClean))
                 {
                     Console.Error.WriteLine("Build script requires rebuild.");
-                    return ExitCodeRebuildRequired;
+                    return ExitCode.RebuildRequired;
                 }
 
                 if (options.Help)
                 {
                     HelpText.Print(Console.Out, options);
-                    return ExitCodeHelpDisplayed;
+                    return ExitCode.HelpDisplayed;
                 }
 
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, options);
@@ -129,7 +132,7 @@ namespace Amg.Build
                         Console.WriteLine(Summary.Print(invocations));
                     }
                     Console.Error.WriteLine(Summary.Error(invocations));
-                    return ExitCodeTargetFailed;
+                    return ExitCode.TargetFailed;
                 }
 
                 invocations = invocations.Concat(onceInterceptor.Invocations);
@@ -137,19 +140,19 @@ namespace Amg.Build
                 {
                     Console.WriteLine(Summary.Print(invocations));
                 }
-                return ExitCodeSuccess;
+                return ExitCode.Success;
             }
             catch (ParseException ex)
             {
                 Console.Error.WriteLine(ex.Message);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine("Run with --help to get help.");
-                return ExitCodeCommandLineError;
+                return ExitCode.CommandLineError;
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.Message);
-                return ExitCodeUnknownError;
+                return ExitCode.UnknownError;
             }
         }
 

@@ -83,6 +83,22 @@ namespace Amg.Build
             }
             @out.WriteLine(@"Options:");
             PrintOptionsList(@out, options);
+            @out.WriteLine();
+            @out.WriteLine(@"Exit codes:");
+            PrintExitCodeList(@out, typeof(RunContext.ExitCode));
+        }
+
+        private static void PrintExitCodeList(TextWriter @out, Type enumType)
+        {
+            @out.WriteLine(
+                Enum.GetValues(enumType).Cast<object>()
+                .Select(e => new
+                {
+                    indent = " ",
+                    value = (int)e,
+                    description = Enum.GetName(enumType, e)
+                })
+                .ToTable());
         }
     }
 }

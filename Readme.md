@@ -72,6 +72,8 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* Display exit codes in help message
+* Exit code for command line error
 * -vquiet does not show result summary
 * build assembly is forced to rebuild after 60 minutes
 * rebuild check can be disabled

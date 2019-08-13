@@ -34,7 +34,7 @@ namespace Amg.Build
                 rebuildCheck
                 );
 
-            return runner.Run();
+            return (int) runner.Run();
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace Amg.Build
                 rebuildCheck
                 );
 
-            return runner.Run();
+            return (int)runner.Run();
         }
 
         /// <summary>

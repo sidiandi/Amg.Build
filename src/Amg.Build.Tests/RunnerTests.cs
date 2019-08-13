@@ -35,21 +35,21 @@ namespace Amg.Build
         public void Fail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq" });
-            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeTargetFailed));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
         }
 
         [Test]
         public void CommandLineErrorWrongOption()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "--this-option-is-wrong" });
-            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeCommandLineError));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
         }
 
         [Test]
         public void CommandLineErrorWrongTarget()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "this-target-is-wrong" });
-            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeCommandLineError));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
         }
 
         public class MinimalTargets
@@ -62,7 +62,7 @@ namespace Amg.Build
             var o = TestUtil.CaptureOutput(() =>
             {
                 var exitCode = Runner.Run<MyBuild>(new[] { "--help" });
-                Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeHelpDisplayed));
+                Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
             });
             /*
             Assert.AreEqual(@"Usage: build <targets> [options]
@@ -87,7 +87,7 @@ Options:
         public void Minimal()
         {
             var exitCode = Runner.Run<MinimalTargets>(new[] { "--help" });
-            Assert.That(exitCode, Is.EqualTo(RunContext.ExitCodeHelpDisplayed));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
         }
 
         [Test]
