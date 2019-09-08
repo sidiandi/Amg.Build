@@ -5,3 +5,4 @@ nuget.config
 /out 
 /nuget.exe
 TestResults
+launchSettings.json

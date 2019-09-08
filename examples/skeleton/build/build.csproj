@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
 	<Configuration>Debug</Configuration>
+	<AmgBuildVersion Condition="$(AmgBuildVersion)==''" >0.*</AmgBuildVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amg.Build" Version="$(AmgBuildVersion)" />

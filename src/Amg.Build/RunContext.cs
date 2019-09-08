@@ -51,6 +51,12 @@ namespace Amg.Build
             this.rebuildCheck = rebuildCheck;
         }
 
+        static ExitCode RequireRebuild()
+        {
+            Console.Out.WriteLine("Build script requires rebuild.");
+            return ExitCode.RebuildRequired;
+        }
+
         public ExitCode Run()
         {
             try
@@ -63,8 +69,7 @@ namespace Amg.Build
                 {
                     if (IsOutOfDate())
                     {
-                        Console.Error.WriteLine("Build script requires rebuild.");
-                        return ExitCode.RebuildRequired;
+                        return RequireRebuild();
                     }
                 }
 
@@ -86,12 +91,6 @@ namespace Amg.Build
                         outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
                     .CreateLogger();
 
-                if (IsOutOfDate())
-                {
-                    Console.Error.WriteLine("Build script requires rebuild.");
-                    return ExitCode.RebuildRequired;
-                }
-
                 if (options.Edit)
                 {
                     var cmd = new Tool("cmd").WithArguments("/c", "start");
@@ -102,8 +101,7 @@ namespace Amg.Build
 
                 if ((options.Clean && !options.IgnoreClean))
                 {
-                    Console.Error.WriteLine("Build script requires rebuild.");
-                    return ExitCode.RebuildRequired;
+                    return RequireRebuild();
                 }
 
                 if (options.Help)
@@ -246,7 +244,7 @@ namespace Amg.Build
 
         private static void RunTarget(object targets, MethodInfo target, string[] arguments)
         {
-            Logger.Information("Run {target}({arguments)", target, arguments);
+            Logger.Information("Run {target}({arguments})", target, arguments);
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
         }
 

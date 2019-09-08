@@ -59,4 +59,22 @@ namespace Amg.Build
         /// <returns></returns>
         ITool RunAs(string user, string password);
     }
+
+    /// <summary>
+    /// Convenience extensions for ITool
+    /// </summary>
+    public static class IToolExtensions
+    {
+        /// <summary>
+        /// Add a single environment variable.
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <param name="name">Name of the environment variable</param>
+        /// <param name="value">Value of the envrionment variable</param>
+        /// <returns>tool</returns>
+        public static ITool WithEnvironment(this ITool tool, string name, string value)
+        {
+            return tool.WithEnvironment(new Dictionary<string, string> { { name, value } });
+        }
+    }
 }

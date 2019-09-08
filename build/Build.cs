@@ -5,6 +5,7 @@ using Amg.Build;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Linq;
+using System.Collections.Generic;
 
 public partial class BuildTargets
 {
@@ -132,13 +133,17 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await nuget.Run("source");
 
         var script = testDir.Combine("build.cmd");
-        await Root.Combine("examples", "hello").CopyTree(testDir);
+        await Root.Combine("examples", "skeleton").CopyTree(testDir);
         foreach (var d in new[] { "obj", "bin"})
         {
             await testDir.Combine("build", d).EnsureNotExists();
         }
 
-        var build = new Tool(script).DoNotCheckExitCode();
+        var version = await Git.GetVersion();
+
+        var build = new Tool(script).DoNotCheckExitCode()
+            .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
+            ;
 
         {
             var result = await build.Run();
@@ -146,9 +151,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 throw new Exception();
             }
-            if (!result.Output.Contains("Building "))
+            if (!result.Output.Contains(version.InformationalVersion))
             {
                 throw new Exception();
+            }
+            if (!String.IsNullOrEmpty(result.Error))
+            {
+                throw new Exception(result.Error);
             }
         }
 
@@ -160,7 +169,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             }
             if (!String.IsNullOrEmpty(result.Error))
             {
-                throw new Exception();
+                throw new Exception(result.Error);
             }
         }
 
@@ -178,7 +187,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 throw new Exception();
             }
-            if (!result.Output.Contains("Building "))
+            if (!result.Output.Contains("Build script requires rebuild."))
             {
                 throw new Exception();
             }
@@ -214,7 +223,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     protected virtual async Task Push(string nugetPushSource)
     {
         await Git.EnsureNoPendingChanges();
-        await Task.WhenAll(Test(), Pack());
+        await Task.WhenAll(Test(), Pack(), EndToEndTest());
         var nupkgFile = await Pack();
         var nuget = new Tool("nuget.exe");
         await nuget.Run(
