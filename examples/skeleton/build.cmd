@@ -19,6 +19,6 @@ if exist %buildDll% (
 goto :eof
 
 :rebuild
-    dotnet run --force -vd --project %~dp0build -- --ignore-clean %*
+    dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
 	set buildScriptExitCode=!errorlevel!
 	exit /b !buildScriptExitCode!
