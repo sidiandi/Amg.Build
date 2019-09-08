@@ -5,15 +5,12 @@ set exitCodeOutOfDate=2
 echo startup time > %buildDll%.startup
 if exist %buildDll% (
     dotnet %buildDll% %*
-    if errorlevel 2 (
-       call :rebuild
-    )
 ) else (
-    call :rebuild
+    call :build
 )
 goto :eof
 
-:Rebuild
+:build
     echo Building %buildDll%
     dotnet run --force -vd --project %~dp0build -- --ignore-clean %*
     goto :eof

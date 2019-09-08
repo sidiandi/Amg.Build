@@ -1,19 +1,25 @@
 @echo off
+setlocal EnableDelayedExpansion
 set buildDll=%~dp0build\bin\Debug\netcoreapp2.2\build.dll
-set exitCodeOutOfDate=2
+set exitCodeRebuildRequired=2
 
 echo startup time > %buildDll%.startup
+
 if exist %buildDll% (
     dotnet %buildDll% %*
-    if errorlevel 2 (
-       call :rebuild
+    set buildScriptExitCode=!errorlevel!
+    if !buildScriptExitCode! equ %exitCodeRebuildRequired% (
+        call :rebuild %*
     )
+    exit !buildScriptExitCode!
 ) else (
-    call :rebuild
+    call :rebuild %*
 )
 goto :eof
 
-:Rebuild
+:rebuild
     echo Building %buildDll%
     dotnet run --force -vd --project %~dp0build -- --ignore-clean %*
-    goto :eof
+	set buildScriptExitCode=!errorlevel!
+	exit !buildScriptExitCode!
+

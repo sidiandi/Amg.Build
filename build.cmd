@@ -5,11 +5,11 @@ set exitCodeOutOfDate=2
 echo startup time > %buildDll%.startup
 if exist %buildDll% (
     dotnet %buildDll% %*
-    if errorlevel 2 (
-       call :rebuild
+    if errorlevel %exitCodeOutOfDate% (
+       call :rebuild %*
     )
 ) else (
-    call :rebuild
+    call :rebuild %*
 )
 goto :eof
 

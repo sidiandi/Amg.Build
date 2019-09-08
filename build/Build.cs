@@ -117,6 +117,92 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return PackagesDir.Combine($"{name}.{version}.nupkg");
     }
 
+    [Once][Description("Complete test with .cmd bootstrapper file")]
+    public virtual async Task EndToEndTest()
+    {
+        await Pack();
+
+        var testDir = OutDir.Combine("EndToEndTest");
+        await testDir.EnsureNotExists();
+        testDir.EnsureDirectoryExists();
+
+        var nugetConfigFile = testDir.Combine("nuget.config");
+        await CreateNugetConfigFile(nugetConfigFile, PackagesDir);
+        var nuget = new Tool("nuget.exe").WithWorkingDirectory(testDir);
+        await nuget.Run("source");
+
+        var script = testDir.Combine("build.cmd");
+        await Root.Combine("examples", "hello").CopyTree(testDir);
+        foreach (var d in new[] { "obj", "bin"})
+        {
+            await testDir.Combine("build", d).EnsureNotExists();
+        }
+
+        var build = new Tool(script).DoNotCheckExitCode();
+
+        {
+            var result = await build.Run();
+            if (!result.ExitCode.Equals(0))
+            {
+                throw new Exception();
+            }
+            if (!result.Output.Contains("Building "))
+            {
+                throw new Exception();
+            }
+        }
+
+        {
+            var result = await build.Run();
+            if (!result.ExitCode.Equals(0))
+            {
+                throw new Exception();
+            }
+            if (!String.IsNullOrEmpty(result.Error))
+            {
+                throw new Exception();
+            }
+        }
+
+        {
+            var result = await build.Run("--help");
+            if (!result.ExitCode.Equals(3))
+            {
+                throw new Exception();
+            }
+        }
+
+        {
+            var result = await build.Run("--clean");
+            if (!result.ExitCode.Equals(0))
+            {
+                throw new Exception();
+            }
+            if (!result.Output.Contains("Building "))
+            {
+                throw new Exception();
+            }
+        }
+    }
+
+    private static async Task CreateEmptyNugetConfigFile(string nugetConfigFile)
+    {
+        await nugetConfigFile.WriteAllTextAsync(@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+</configuration>");
+    }
+
+    private static async Task CreateNugetConfigFile(string nugetConfigFile, string packageSource)
+    {
+        await nugetConfigFile.WriteAllTextAsync($@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+  <packageSources>
+    <clear /> 
+    <add key=""EndToEndTestDefault"" value={packageSource.Quote()} />
+  </packageSources>
+</configuration>");
+    }
+
     [Once] [Description("push nuget package")]
     protected virtual async Task Push()
     {
@@ -172,21 +258,22 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     public virtual async Task Release()
     {
         await Git.EnsureNoPendingChanges();
-        var v = await new Git(this.Root).GetVersion();
+        var git = Runner.Once<Git>(_ => _.RootDirectory = this.Root);
+        var v = await git.GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
-        var git = Git.GitTool;
+        var gitTool = Git.GitTool;
         try
         {
-            await git.Run("tag", v.MajorMinorPatch);
+            await gitTool.Run("tag", v.MajorMinorPatch);
         }
         catch (ToolException te)
         {
             if (te.Result.Error.Contains("already exists"))
             {
-                await git.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
+                await gitTool.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
             }
         }
-        await git.Run("push", "--tags");
+        await gitTool.Run("push", "--tags");
         await Push("https://api.nuget.org/v3/index.json");
     }
 }

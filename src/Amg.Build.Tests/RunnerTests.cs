@@ -81,6 +81,7 @@ Options:
 
             */
             Assert.AreEqual(String.Empty, o.Error);
+            Assert.That(o.Out, Does.Not.Contain("--ignore-clean"));
         }
 
         [Test]

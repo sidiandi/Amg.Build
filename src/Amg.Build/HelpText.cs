@@ -14,11 +14,17 @@ namespace Amg.Build
         {
             GetOptParser.GetOptions(options)
                 .Where(_ => !_.IsOperands)
+                .Where(IncludeInHelp)
                 .Select(_ => new { indent, _.Syntax, _.Description })
                 .ToTable(header: false)
                 .Write(@out);
         }
 
+        static bool IncludeInHelp(GetOptParser.GetOptOption option)
+        {
+            return !option.Long.Equals("ignore-clean");
+        }
+            
         internal static bool IsTarget(MethodInfo method)
         {
             return Once.Has(method);
