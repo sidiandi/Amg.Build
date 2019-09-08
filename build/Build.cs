@@ -121,6 +121,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     [Once][Description("Complete test with .cmd bootstrapper file")]
     public virtual async Task EndToEndTest()
     {
+        await Git.EnsureNoPendingChanges();
         await Pack();
 
         var testDir = OutDir.Combine("EndToEndTest");
