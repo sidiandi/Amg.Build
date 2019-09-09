@@ -193,6 +193,24 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
                 throw new Exception();
             }
         }
+
+        {
+            var result = await build.Run();
+            var outdated = DateTime.UtcNow.AddDays(-1);
+            foreach (var f in testDir.Combine("build", "bin").Glob("*").EnumerateFileInfos())
+            {
+                f.LastWriteTimeUtc = outdated;
+            }
+
+            if (!result.ExitCode.Equals(0))
+            {
+                throw new Exception();
+            }
+            if (!result.Output.Contains("Build script requires rebuild."))
+            {
+                throw new Exception();
+            }
+        }
     }
 
     private static async Task CreateEmptyNugetConfigFile(string nugetConfigFile)
