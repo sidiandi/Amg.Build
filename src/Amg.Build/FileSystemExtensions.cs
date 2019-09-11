@@ -492,17 +492,19 @@ are more recent.
         /// <param name="source"></param>
         /// <param name="dest"></param>
         /// <param name="useHardlinks">If possible, use hard links</param>
+        /// <param name="overwrite">Overwrite existing files</param>
         /// <returns></returns>
         public static async Task<string> CopyTree(
             this string source,
             string dest,
-            bool useHardlinks = false)
+            bool useHardlinks = false,
+            bool overwrite = true)
         {
             var sourceGlob = source.Glob("**");
 
             var copyFile = useHardlinks
                 ? new Func<FileInfo, string, Task>((s, d) => CopyHardlink(s, d))
-                : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d));
+                : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d, true));
 
             try
             {
@@ -529,7 +531,7 @@ are more recent.
                 && Math.Abs((source.LastWriteTimeUtc - dest.LastWriteTimeUtc).TotalSeconds) < 1.0;
         }
 
-        static async Task<string> CopyFile(FileInfo source, string dest)
+        static async Task<string> CopyFile(FileInfo source, string dest, bool overwrite = false)
         {
             // do we need to copy at all?
             foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
@@ -543,12 +545,12 @@ are more recent.
             // parent directory of dest could not exist. Retry once.
             try
             {
-                File.Copy(source.FullName, dest);
+                File.Copy(source.FullName, dest, overwrite);
             }
             catch (DirectoryNotFoundException)
             {
                 dest.EnsureParentDirectoryExists();
-                File.Copy(source.FullName, dest);
+                File.Copy(source.FullName, dest, overwrite);
             }
 
             return await Task.FromResult(dest);
