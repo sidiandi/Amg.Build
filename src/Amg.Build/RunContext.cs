@@ -65,14 +65,6 @@ namespace Amg.Build
                     .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                     .CreateLogger();
 
-                if (rebuildCheck)
-                {
-                    if (IsOutOfDate())
-                    {
-                        return RequireRebuild();
-                    }
-                }
-
                 var builder = new DefaultProxyBuilder();
                 var generator = new ProxyGenerator(builder);
                 var onceInterceptor = new OnceInterceptor();
@@ -85,6 +77,14 @@ namespace Amg.Build
                 var options = new Options(onceProxy);
 
                 GetOptParser.Parse(commandLineArguments, options);
+
+                if (rebuildCheck)
+                {
+                    if (IsOutOfDate() && !options.IgnoreClean)
+                    {
+                        return RequireRebuild();
+                    }
+                }
 
                 Logger = Log.Logger = new LoggerConfiguration()
                     .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),

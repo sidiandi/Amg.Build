@@ -89,7 +89,11 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 	public virtual async Task Test()
     {
         await Build();
-        await (await Dotnet.Tool()).Run("test", SlnFile, "--no-build");
+        await (await Dotnet.Tool()).Run("test", 
+            SlnFile, 
+            "--no-build",
+            "--configuration", Configuration
+            );
     }
 
     [Once] [Description("measure code coverage")]
