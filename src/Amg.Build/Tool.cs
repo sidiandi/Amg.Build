@@ -143,6 +143,7 @@ namespace Amg.Build
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     WorkingDirectory = workingDirectory,
+                    UseShellExecute = false
                 };
 
                 if (user != null)
