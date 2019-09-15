@@ -500,9 +500,11 @@ are more recent.
         {
             var sourceGlob = source.Glob("**");
 
+            var overwrite = true;
+
             var copyFile = useHardlinks
                 ? new Func<FileInfo, string, Task>((s, d) => CopyHardlink(s, d))
-                : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d));
+                : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d, overwrite));
 
             try
             {
@@ -529,7 +531,12 @@ are more recent.
                 && Math.Abs((source.LastWriteTimeUtc - dest.LastWriteTimeUtc).TotalSeconds) < 1.0;
         }
 
-        static async Task<string> CopyFile(FileInfo source, string dest)
+        static async Task<string> CopyFile(this string source, string dest, bool overwrite = false)
+        {
+            return await new FileInfo(source).CopyFile(dest, overwrite);
+        }
+
+        static async Task<string> CopyFile(this FileInfo source, string dest, bool overwrite)
         {
             // do we need to copy at all?
             foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
@@ -543,12 +550,12 @@ are more recent.
             // parent directory of dest could not exist. Retry once.
             try
             {
-                File.Copy(source.FullName, dest);
+                File.Copy(source.FullName, dest, overwrite);
             }
             catch (DirectoryNotFoundException)
             {
                 dest.EnsureParentDirectoryExists();
-                File.Copy(source.FullName, dest);
+                File.Copy(source.FullName, dest, overwrite);
             }
 
             return await Task.FromResult(dest);

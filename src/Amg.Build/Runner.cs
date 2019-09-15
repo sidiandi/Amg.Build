@@ -103,7 +103,7 @@ namespace Amg.Build
             {
                 Hook = new OnceHook()
             },
-            onceInterceptor, new LogInvocationInterceptor());
+            onceInterceptor);
             var proxy = (T) onceProxy;
             initializer(proxy);
             return proxy;
