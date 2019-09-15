@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -656,6 +657,120 @@ are more recent.
 
             }
             return path;
+        }
+
+        /// <summary>
+        /// Gets the ProgramData directory for type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string GetProgramDataDirectory(this System.Type type)
+        {
+            var assembly = type.Assembly;
+            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new[]
+            {
+                assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Map(_ => _.Company),
+                assembly.GetCustomAttribute<AssemblyProductAttribute>().Map(_ => _.Product),
+                type.Name
+            }.Where(_ => !String.IsNullOrEmpty(_))
+            .ToArray());
+        }
+
+        /// <summary>
+        /// Enumerate the file system entries in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateFileSystemEntries(this string dir)
+        {
+            return System.IO.Directory.EnumerateFileSystemEntries(dir);
+        }
+
+        /// <summary>
+        /// Enumerate the directories in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateDirectories(this string dir)
+        {
+            return System.IO.Directory.EnumerateDirectories(dir);
+        }
+
+        /// <summary>
+        /// Enumerate the files in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateFiles(this string dir)
+        {
+            return System.IO.Directory.EnumerateFiles(dir);
+        }
+
+        /// <summary>
+        /// Move path to the Windows Recycle Bin
+        /// </summary>
+        /// <param name="path"></param>
+        public static void MoveToRecycleBin(this string path)
+        {
+            FileOperationAPIWrapper.MoveToRecycleBin(path);
+        }
+
+        /// <summary>
+        /// Changes the file name of path to name
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string WithName(this string path, string name)
+        {
+            return path.Parent().Combine(name);
+        }
+
+        /// <summary>
+        /// Changes the extension of path to extension
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public static string WithExtension(this string path, string extension)
+        {
+            return path.WithName(path.FileNameWithoutExtension() + extension);
+        }
+
+        /// <summary>
+        /// Adds filenamePostfix to the file name of path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="filenamePostfix"></param>
+        /// <returns></returns>
+        public static string CatName(this string path, string filenamePostfix)
+        {
+            return path + filenamePostfix;
+        }
+
+        /// <summary>
+        /// Moves file or directory from to to
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public static string Move(this string from, string to)
+        {
+            if (from.IsFile())
+            {
+                System.IO.File.Move(from, to);
+                return to;
+            }
+            else if (from.IsDirectory())
+
+            {
+                System.IO.Directory.Move(from, to);
+                return to;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
