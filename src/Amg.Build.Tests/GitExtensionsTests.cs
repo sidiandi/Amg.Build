@@ -38,9 +38,9 @@ namespace Amg.Build
 
             Assert.AreEqual(1, count);
 
-            await sourceFile.WriteAllTextAsync("chp");
+            await sourceFile.WriteAllTextAsync("hello world");
             await git.Run("add", ".");
-            await git.Run("commit", "-a", "-m", "now greeting chp");
+            await git.Run("commit", "-a", "-m", "now greeting world");
 
             for (int i = 0; i < 3; ++i)
             {
