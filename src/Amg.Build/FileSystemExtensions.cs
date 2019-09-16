@@ -393,6 +393,16 @@ are more recent.
         }
 
         /// <summary>
+        /// True, if path points to an existing file system element
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool Exists(this string path)
+        {
+            return path.IsFile() || path.IsDirectory();
+        }
+
+        /// <summary>
         /// Split path into directory parts
         /// </summary>
         /// <param name="path"></param>
@@ -499,8 +509,6 @@ are more recent.
             string dest,
             bool useHardlinks = false)
         {
-            var sourceGlob = source.Glob("**");
-
             var overwrite = true;
 
             var copyFile = useHardlinks
@@ -509,10 +517,7 @@ are more recent.
 
             try
             {
-                foreach (var s in sourceGlob.EnumerateFileInfos().Progress(metric: _ => _.Length))
-                {
-                    await copyFile(s, s.FullName.ChangeRoot(source, dest));
-                }
+                return await DoCopyTree(source, dest, copyFile);
             }
             catch (Exception)
             {
@@ -522,6 +527,21 @@ are more recent.
                     return await CopyTree(source, dest, useHardlinks: false);
                 }
                 throw;
+            }
+        }
+
+        static async Task<string> DoCopyTree(string source, string dest, Func<FileInfo, string, Task> copyFile)
+        {
+            if (source.IsFile())
+            {
+                await copyFile(new FileInfo(source), dest);
+            }
+            else if (source.IsDirectory())
+            {
+                foreach (var i in source.EnumerateFileSystemEntries())
+                {
+                    await DoCopyTree(i, dest.Combine(i.FileName()), copyFile);
+                }
             }
             return dest;
         }
@@ -770,6 +790,48 @@ are more recent.
             else
             {
                 throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Reads 2 files to the end and compares for equality
+        /// </summary>
+        /// <param name="path0"></param>
+        /// <param name="path1"></param>
+        /// <returns></returns>
+        public static async Task<bool> IsContentEqual(this string path0, string path1)
+        {
+            using (var s0 = File.OpenRead(path0))
+            using (var s1 = File.OpenRead(path1))
+            {
+                return await s0.IsContentEqual(s1);
+            }
+        }
+
+        /// <summary>
+        /// Reads 2 streams to the end and compares for equality
+        /// </summary>
+        /// <param name="stream0"></param>
+        /// <param name="stream1"></param>
+        /// <returns></returns>
+        public static async Task<bool> IsContentEqual(this Stream stream0, Stream stream1)
+        {
+            const int bufferSize = 4096;
+            var buffer0 = new byte[bufferSize];
+            var buffer1 = new byte[bufferSize];
+
+            for (; ;)
+            {
+                var read0 = await stream0.ReadAsync(buffer0, 0, buffer0.Length);
+                var read1 = await stream1.ReadAsync(buffer1, 0, buffer1.Length);
+                if (read0 <= 0 && read0 == read1)
+                {
+                    return true;
+                }
+                if (!buffer0.Take(read0).SequenceEqual(buffer1.Take(read1)))
+                {
+                    return false;
+                }
             }
         }
     }

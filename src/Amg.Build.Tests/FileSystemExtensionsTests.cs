@@ -19,7 +19,22 @@ namespace Amg.Build
             var testDir = CreateEmptyTestDirectory();
             var git = new Tool("git.exe");
             await git.Run("init", testDir);
+            Assert.That(testDir.EnumerateFileSystemEntries().Any());
             testDir.EnsureDirectoryIsEmpty();
+            Assert.That(testDir.EnumerateFileSystemEntries().Any(), Is.Not.True);
+        }
+
+        [Test]
+        public async Task MoveToRecyclingBin()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var repoDir = testDir.Combine("repo");
+            var git = new Tool("git.exe");
+            await git.Run("init", repoDir);
+            Assert.That(repoDir.IsDirectory());
+            Assert.That(repoDir.EnumerateFileSystemEntries().Any());
+            testDir.EnsureDirectoryIsEmpty();
+            Assert.That(repoDir.Exists(), Is.Not.True);
         }
 
         [Test]
@@ -125,6 +140,11 @@ namespace Amg.Build
             }
         }
 
+        static async Task SetupFile(string root)
+        {
+            await root.WriteAllTextAsync("hello");
+        }
+
         [Test, TestCase(true), TestCase(false)]
         public async Task CopyTree(bool useHardlinks)
         {
@@ -141,6 +161,25 @@ namespace Amg.Build
             Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds*0.5));
 
             Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
+        }
+
+        [Test, TestCase(true), TestCase(false)]
+        public async Task CopyTreeSingleFile(bool useHardlinks)
+        {
+            var testDir = CreateEmptyTestDirectory();
+            Logger.Information(testDir);
+            var source = testDir.Combine("source");
+
+            var dest = testDir.Combine("dest");
+
+            await SetupFile(source);
+
+            var time = Enumerable.Range(0, 3)
+                .Select(_ => MeasureTime(() => source.CopyTree(dest, useHardlinks: useHardlinks)))
+                .ToList();
+
+            Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
+            Assert.That(await source.IsContentEqual(dest));
         }
 
         [Test]
