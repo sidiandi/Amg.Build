@@ -72,6 +72,7 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* more file system extensions
 * Display exit codes in help message
 * Exit code for command line error
 * -vquiet does not show result summary
