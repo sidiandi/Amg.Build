@@ -9,16 +9,18 @@ See example $/examples/hello
 ````
 public class BuildTargets
 {
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+	
 	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
 
-	[Once]
+	[Once][Description("Greet someone.")]
 	public virtual async Task Greet(string name)
 	{
 		await Task.Delay(TimeSpan.FromSeconds(1));
 		Console.WriteLine($"Hello, {name}");
 	}
 	
-	[Once]
+	[Once][Description("Greet all.")]
 	public virtual async Task GreetAll()
 	{
 		await Task.WhenAll(Enumerable.Range(0,10).Select(_ => Greet($"Alice {_}")));
@@ -30,6 +32,21 @@ public class BuildTargets
 		await GreetAll();
 	}
 }
+````
+
+Execute `$/examples/hello/build.cmd` to call the default task `GreetAll()`. Run with the command line argument `-h` or `--help` to get a list of all available commands for the example project:
+````
+Usage: build [options] <target> [target parameters]...
+
+Targets:
+   Greet <name> Greet someone.
+   GreetAll     Greet all.
+Options:
+   -h | --help                             Show help and exit
+   -e | --edit                             Edit the build script in Visual Studio.
+   --clean                                 Force a rebuild of the build script
+   --ignore-clean                          Ignore --clean (internal use only)
+   -v<verbosity> | --verbosity=<verbosity> Set the verbosity level. verbosity=quiet|minimal|normal|detailed
 ````
 
 ## Features
