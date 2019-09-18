@@ -32,6 +32,21 @@ public class BuildTargets
 }
 ````
 
+Execute `$/examples/hello/build.cmd` to call the default task `GreetAll()`. Run with the command line argument `-h` or `--help` to get a list of all available commands for the example project:
+````
+Usage: build [options] <target> [target parameters]...
+
+Targets:
+   Greet <name> Greet someone.
+   GreetAll     Greet all.
+Options:
+   -h | --help                             Show help and exit
+   -e | --edit                             Edit the build script in Visual Studio.
+   --clean                                 Force a rebuild of the build script
+   --ignore-clean                          Ignore --clean (internal use only)
+   -v<verbosity> | --verbosity=<verbosity> Set the verbosity level. verbosity=quiet|minimal|normal|detailed
+````
+
 ## Features
 
 * Pure C#. Write your build tasks as you write any other C# class. 
