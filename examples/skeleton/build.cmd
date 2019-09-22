@@ -16,10 +16,10 @@ if exist %buildDll% (
     if !buildScriptExitCode! equ %exitCodeAssemblyNotFound% (
         call :rebuild %*
     )
-    exit /b !buildScriptExitCode!
 ) else (
     call :rebuild %*
 )
+exit /b !buildScriptExitCode!
 goto :eof
 
 :rebuild
