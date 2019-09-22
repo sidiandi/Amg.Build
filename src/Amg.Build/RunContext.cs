@@ -61,11 +61,17 @@ namespace Amg.Build
                 sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
                 sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
                 sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
-                var hasSources =
-                    sourceCodeLayout.sourceDir.IsDirectory()
-                    && sourceCodeLayout.sourceFile.IsFile()
-                    && sourceCodeLayout.cmdFile.IsFile()
-                    && sourceCodeLayout.csprojFile.IsFile();
+
+                var paths = new[] {
+                    sourceCodeLayout.sourceDir,
+                    sourceCodeLayout.sourceFile,
+                    sourceCodeLayout.cmdFile,
+                    sourceCodeLayout.csprojFile
+                }.Select(path => new { path, exists = path.Exists() })
+                .ToList();
+
+                Logger.Debug("{@paths}", paths);
+                var hasSources = paths.All(_ => _.exists);
                 if (hasSources)
                 {
                     Logger.Information("sources: {@sourceCodeLayout}", sourceCodeLayout);
