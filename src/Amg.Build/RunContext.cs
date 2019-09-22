@@ -20,11 +20,8 @@ namespace Amg.Build
     {
         private static Serilog.ILogger Logger;
 
-        private string sourceDir;
-        private string buildDll;
         private Type targetsType;
         private string[] commandLineArguments;
-        private readonly bool rebuildCheck;
 
         public enum ExitCode
         {
@@ -37,24 +34,64 @@ namespace Amg.Build
         }
 
         public RunContext(
-            string buildSourceFile,
-            string buildDll,
             Type targetsType,
-            string[] commandLineArguments,
-            bool rebuildCheck
+            string[] commandLineArguments
             )
         {
-            this.sourceDir = buildSourceFile.Parent();
-            this.buildDll = buildDll;
             this.targetsType = targetsType;
             this.commandLineArguments = commandLineArguments;
-            this.rebuildCheck = rebuildCheck;
+        }
+
+        /// <summary>
+        /// Try to determine the source directory from which the assembly of targetType was built.
+        /// </summary>
+        /// build.cmd
+        /// build\build.cs
+        /// build\build.csproj
+        /// build\bin\Debug\netcoreapp2.2\build.dll
+        /// <returns></returns>
+        static SourceCodeLayout GetSourceCodeLayout(Type targetsType)
+        {
+            try
+            {
+                var sourceCodeLayout = new SourceCodeLayout();
+                sourceCodeLayout.dllFile = targetsType.Assembly.Location;
+                sourceCodeLayout.name = sourceCodeLayout.dllFile.FileNameWithoutExtension();
+                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent();
+                sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
+                sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
+                sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
+                var hasSources =
+                    sourceCodeLayout.sourceDir.IsDirectory()
+                    && sourceCodeLayout.sourceFile.IsFile()
+                    && sourceCodeLayout.cmdFile.IsFile()
+                    && sourceCodeLayout.csprojFile.IsFile();
+                if (hasSources)
+                {
+                    Logger.Information("sources: {@sourceCodeLayout}", sourceCodeLayout);
+                }
+                return hasSources ? sourceCodeLayout : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         static ExitCode RequireRebuild()
         {
             Console.Out.WriteLine("Build script requires rebuild.");
             return ExitCode.RebuildRequired;
+        }
+
+        class SourceCodeLayout
+        {
+            public string name;
+            public string sourceFile;
+            public string sourceDir;
+            public string csprojFile;
+            public string cmdFile;
+            public string dllFile;
         }
 
         public ExitCode Run()
@@ -74,34 +111,46 @@ namespace Amg.Build
                 },
                 onceInterceptor);
 
-                var options = new Options(onceProxy);
+                var source = GetSourceCodeLayout(targetsType);
 
-                GetOptParser.Parse(commandLineArguments, options);
+                Options options = null;
 
-                if (rebuildCheck)
+                if (source != null)
                 {
-                    if (IsOutOfDate() && !options.IgnoreClean)
+                    var sourceOptions = new OptionsWithSource(onceProxy);
+                    options = sourceOptions;
+                    GetOptParser.Parse(commandLineArguments, options);
+                    if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
+                    {
+                        return RequireRebuild();
+                    }
+
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                        .CreateLogger();
+
+                    if (sourceOptions.Edit)
+                    {
+                        var cmd = new Tool("cmd").WithArguments("/c", "start");
+                        cmd.Run(source.csprojFile).Wait();
+                        return ExitCode.HelpDisplayed;
+                    }
+
+                    if ((sourceOptions.Clean && !sourceOptions.IgnoreClean))
                     {
                         return RequireRebuild();
                     }
                 }
-
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                    .CreateLogger();
-
-                if (options.Edit)
+                else
                 {
-                    var cmd = new Tool("cmd").WithArguments("/c", "start");
-                    var buildCsProj = sourceDir.Glob("*.csproj").First();
-                    cmd.Run(buildCsProj).Wait();
-                    return ExitCode.HelpDisplayed;
-                }
+                    options = new Options(onceProxy);
+                    GetOptParser.Parse(commandLineArguments, options);
 
-                if ((options.Clean && !options.IgnoreClean))
-                {
-                    return RequireRebuild();
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                        .CreateLogger();
                 }
 
                 if (options.Help)
@@ -127,7 +176,7 @@ namespace Amg.Build
                     invocations = invocations.Concat(onceInterceptor.Invocations);
                     if (options.Verbosity > Verbosity.Quiet)
                     {
-                        Console.WriteLine(Summary.Print(invocations));
+                        Console.WriteLine(Summary.PrintTimeline(invocations));
                     }
                     Console.Error.WriteLine(Summary.Error(invocations));
                     return ExitCode.TargetFailed;
@@ -136,8 +185,9 @@ namespace Amg.Build
                 invocations = invocations.Concat(onceInterceptor.Invocations);
                 if (options.Verbosity > Verbosity.Quiet)
                 {
-                    Console.WriteLine(Summary.Print(invocations));
+                    Console.WriteLine(Summary.PrintTimeline(invocations));
                 }
+                Console.WriteLine(Summary.PrintSummary(invocations));
                 return ExitCode.Success;
             }
             catch (ParseException ex)
@@ -168,32 +218,27 @@ namespace Amg.Build
             return startupInvocation;
         }
 
-        private static string GetThisSourceFile([CallerFilePath] string filePath = null)
-        {
-            return filePath;
-        }
-
         static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
         /// <summary>
         /// Detects if the buildDll itself needs to be re-built.
         /// </summary>
         /// <returns></returns>
-        bool IsOutOfDate()
+        static bool IsOutOfDate(SourceCodeLayout layout)
         {
-            if (Regex.IsMatch(buildDll.FileName(), "test", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(layout.dllFile.FileName(), "test", RegexOptions.IgnoreCase))
             {
                 Logger.Warning("test mode detected. Out of date check skipped.");
                 return false;
             }
 
-            var sourceFiles = sourceDir.Glob("**")
+            var sourceFiles = layout.sourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");
 
             var sourceChanged = sourceFiles.LastWriteTimeUtc();
-            var buildDllChanged = buildDll.LastWriteTimeUtc();
+            var buildDllChanged = layout.dllFile.LastWriteTimeUtc();
 
             var maximalAge = TimeSpan.FromMinutes(60);
 
