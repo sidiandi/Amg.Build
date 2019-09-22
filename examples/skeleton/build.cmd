@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 setlocal EnableDelayedExpansion
 set buildDll=%~dp0%~n0\bin\Debug\netcoreapp2.2\build.dll
 set exitCodeRebuildRequired=2
