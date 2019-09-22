@@ -57,7 +57,7 @@ namespace Amg.Build
                 var sourceCodeLayout = new SourceCodeLayout();
                 sourceCodeLayout.dllFile = targetsType.Assembly.Location;
                 sourceCodeLayout.name = sourceCodeLayout.dllFile.FileNameWithoutExtension();
-                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent();
+                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent().Parent();
                 sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
                 sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
                 sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
