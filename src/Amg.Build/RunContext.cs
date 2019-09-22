@@ -70,7 +70,7 @@ namespace Amg.Build
                 }.Select(path => new { path, exists = path.Exists() })
                 .ToList();
 
-                Logger.Debug("{@paths}", paths);
+                Logger.Information("{@paths}", paths);
                 var hasSources = paths.All(_ => _.exists);
                 if (hasSources)
                 {
