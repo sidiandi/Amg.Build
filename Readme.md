@@ -72,6 +72,8 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* improved logging of process start failures
+* better logging of failures
 * more file system extensions
 * Display exit codes in help message
 * Exit code for command line error
