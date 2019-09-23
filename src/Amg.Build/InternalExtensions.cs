@@ -26,7 +26,7 @@ namespace Amg.Build
                 .Select(_ => $"{_.file}({_.line})");
         }
 
-        static internal string Fullname(MethodInfo method)
+        static internal string Fullname(this MethodInfo method)
         {
             return method.DeclaringType.FullName + "." + method.Name;
         }
