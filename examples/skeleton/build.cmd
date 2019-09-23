@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 setlocal EnableDelayedExpansion
 set buildDll=%~dp0%~n0\bin\Debug\netcoreapp2.2\build.dll
 set exitCodeRebuildRequired=2
@@ -23,6 +23,7 @@ exit /b !buildScriptExitCode!
 goto :eof
 
 :rebuild
-    dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
+	echo Build script requires rebuild.
+	dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
 	set buildScriptExitCode=!errorlevel!
 	exit /b !buildScriptExitCode!

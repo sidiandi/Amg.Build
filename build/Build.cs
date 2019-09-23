@@ -207,10 +207,6 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 throw new Exception();
             }
-            if (!result.Output.Contains("Build script requires rebuild."))
-            {
-                throw new Exception();
-            }
         }
     }
 
