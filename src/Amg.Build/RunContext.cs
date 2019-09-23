@@ -70,11 +70,11 @@ namespace Amg.Build
                 }.Select(path => new { path, exists = path.Exists() })
                 .ToList();
 
-                Logger.Information("{@paths}", paths);
+                Logger.Debug("{@paths}", paths);
                 var hasSources = paths.All(_ => _.exists);
                 if (hasSources)
                 {
-                    Logger.Information("sources: {@sourceCodeLayout}", sourceCodeLayout);
+                    Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
                 }
                 return hasSources ? sourceCodeLayout : null;
             }
