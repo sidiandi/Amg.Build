@@ -143,7 +143,7 @@ namespace Amg.Build
         /// <param name="x"></param>
         /// <param name="mapper"></param>
         /// <returns></returns>
-        public static Y Map<Y, X>(this X x, Func<X, Y> mapper) where X: new()
+        public static Y Map<Y, X>(this X x, Func<X, Y> mapper) where X: class
         {
             if (x == null)
             {
@@ -285,7 +285,5 @@ namespace Amg.Build
                 return false;
             }
         }
-
-
     }
 }

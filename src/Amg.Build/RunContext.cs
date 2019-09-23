@@ -72,7 +72,7 @@ namespace Amg.Build
                 {
                     Hook = new OnceHook()
                 },
-                onceInterceptor, new LogInvocationInterceptor());
+                onceInterceptor);
 
                 var options = new Options(onceProxy);
 
@@ -316,17 +316,6 @@ in the {targets.GetType().BaseType} class.");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        internal static Targets Once<Targets>() where Targets : class
-        {
-            var builder = new DefaultProxyBuilder();
-            var generator = new ProxyGenerator(builder);
-            return generator.CreateClassProxy<Targets>(new ProxyGenerationOptions
-            {
-                Hook = new OnceHook()
-            },
-            new OnceInterceptor(), new LogInvocationInterceptor());
         }
     }
 }

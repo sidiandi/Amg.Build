@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -392,6 +393,16 @@ are more recent.
         }
 
         /// <summary>
+        /// True, if path points to an existing file system element
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool Exists(this string path)
+        {
+            return path.IsFile() || path.IsDirectory();
+        }
+
+        /// <summary>
         /// Split path into directory parts
         /// </summary>
         /// <param name="path"></param>
@@ -500,7 +511,7 @@ are more recent.
             bool useHardlinks = false,
             bool overwrite = true)
         {
-            var sourceGlob = source.Glob("**");
+            var overwrite = true;
 
             var copyFile = useHardlinks
                 ? new Func<FileInfo, string, Task>((s, d) => CopyHardlink(s, d))
@@ -508,10 +519,7 @@ are more recent.
 
             try
             {
-                foreach (var s in sourceGlob.EnumerateFileInfos().Progress(metric: _ => _.Length))
-                {
-                    await copyFile(s, s.FullName.ChangeRoot(source, dest));
-                }
+                return await DoCopyTree(source, dest, copyFile);
             }
             catch (Exception)
             {
@@ -521,6 +529,21 @@ are more recent.
                     return await CopyTree(source, dest, useHardlinks: false);
                 }
                 throw;
+            }
+        }
+
+        static async Task<string> DoCopyTree(string source, string dest, Func<FileInfo, string, Task> copyFile)
+        {
+            if (source.IsFile())
+            {
+                await copyFile(new FileInfo(source), dest);
+            }
+            else if (source.IsDirectory())
+            {
+                foreach (var i in source.EnumerateFileSystemEntries())
+                {
+                    await DoCopyTree(i, dest.Combine(i.FileName()), copyFile);
+                }
             }
             return dest;
         }
@@ -532,6 +555,11 @@ are more recent.
         }
 
         static async Task<string> CopyFile(FileInfo source, string dest, bool overwrite = false)
+        {
+            return await new FileInfo(source).CopyFile(dest, overwrite);
+        }
+
+        static async Task<string> CopyFile(this FileInfo source, string dest, bool overwrite)
         {
             // do we need to copy at all?
             foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
@@ -651,6 +679,162 @@ are more recent.
 
             }
             return path;
+        }
+
+        /// <summary>
+        /// Gets the ProgramData directory for type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string GetProgramDataDirectory(this System.Type type)
+        {
+            var assembly = type.Assembly;
+            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new[]
+            {
+                assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Map(_ => _.Company),
+                assembly.GetCustomAttribute<AssemblyProductAttribute>().Map(_ => _.Product),
+                type.Name
+            }.Where(_ => !String.IsNullOrEmpty(_))
+            .ToArray());
+        }
+
+        /// <summary>
+        /// Enumerate the file system entries in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateFileSystemEntries(this string dir)
+        {
+            return System.IO.Directory.EnumerateFileSystemEntries(dir);
+        }
+
+        /// <summary>
+        /// Enumerate the directories in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateDirectories(this string dir)
+        {
+            return System.IO.Directory.EnumerateDirectories(dir);
+        }
+
+        /// <summary>
+        /// Enumerate the files in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateFiles(this string dir)
+        {
+            return System.IO.Directory.EnumerateFiles(dir);
+        }
+
+        /// <summary>
+        /// Move path to the Windows Recycle Bin
+        /// </summary>
+        /// <param name="path"></param>
+        public static void MoveToRecycleBin(this string path)
+        {
+            FileOperationAPIWrapper.MoveToRecycleBin(path);
+        }
+
+        /// <summary>
+        /// Changes the file name of path to name
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string WithName(this string path, string name)
+        {
+            return path.Parent().Combine(name);
+        }
+
+        /// <summary>
+        /// Changes the extension of path to extension
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public static string WithExtension(this string path, string extension)
+        {
+            return path.WithName(path.FileNameWithoutExtension() + extension);
+        }
+
+        /// <summary>
+        /// Adds filenamePostfix to the file name of path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="filenamePostfix"></param>
+        /// <returns></returns>
+        public static string CatName(this string path, string filenamePostfix)
+        {
+            return path + filenamePostfix;
+        }
+
+        /// <summary>
+        /// Moves file or directory from to to
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        public static string Move(this string from, string to)
+        {
+            if (from.IsFile())
+            {
+                System.IO.File.Move(from, to);
+                return to;
+            }
+            else if (from.IsDirectory())
+
+            {
+                System.IO.Directory.Move(from, to);
+                return to;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>
+        /// Reads 2 files to the end and compares for equality
+        /// </summary>
+        /// <param name="path0"></param>
+        /// <param name="path1"></param>
+        /// <returns></returns>
+        public static async Task<bool> IsContentEqual(this string path0, string path1)
+        {
+            using (var s0 = File.OpenRead(path0))
+            using (var s1 = File.OpenRead(path1))
+            {
+                return await s0.IsContentEqual(s1);
+            }
+        }
+
+        /// <summary>
+        /// Reads 2 streams to the end and compares for equality
+        /// </summary>
+        /// <param name="stream0"></param>
+        /// <param name="stream1"></param>
+        /// <returns></returns>
+        public static async Task<bool> IsContentEqual(this Stream stream0, Stream stream1)
+        {
+            const int bufferSize = 4096;
+            var buffer0 = new byte[bufferSize];
+            var buffer1 = new byte[bufferSize];
+
+            for (; ;)
+            {
+                var read0 = await stream0.ReadAsync(buffer0, 0, buffer0.Length);
+                var read1 = await stream1.ReadAsync(buffer1, 0, buffer1.Length);
+                if (read0 <= 0 && read0 == read1)
+                {
+                    return true;
+                }
+                if (!buffer0.Take(read0).SequenceEqual(buffer1.Take(read1)))
+                {
+                    return false;
+                }
+            }
         }
     }
 }
