@@ -122,6 +122,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return PackagesDir.Combine($"{name}.{version}.nupkg");
     }
 
+    [Once]
+    [Description("Commit pending changes and run end to end test")]
+    public virtual async Task CommitAndRunEndToEndTest()
+    {
+        await Git.GitTool.Run("commit", "-m", "improve end-to-end test", "-a");
+        await EndToEndTest();
+    }
+
     [Once][Description("Complete test with .cmd bootstrapper file")]
     public virtual async Task EndToEndTest()
     {
@@ -150,12 +158,25 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
             ;
 
+        void AssertRebuild(IToolResult result)
+        {
+            if (!result.Output.Contains("Build script requires rebuild."))
+            {
+                throw new Exception("Script was not rebuild.");
+            }
+        }
+
+        void AssertExitCode(IToolResult result, int expectedExitCode)
+        {
+            if (!result.ExitCode.Equals(expectedExitCode))
+            {
+                throw new Exception($"Exit code expected: {expectedExitCode}. Actual: {result.ExitCode}");
+            }
+        }
+
         {
             var result = await build.Run();
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
             if (!result.Output.Contains(version.InformationalVersion))
             {
                 throw new Exception();
@@ -168,10 +189,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         {
             var result = await build.Run();
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
             if (!String.IsNullOrEmpty(result.Error))
             {
                 throw new Exception(result.Error);
@@ -180,18 +198,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         {
             var result = await build.Run("--help");
-            if (!result.ExitCode.Equals(3))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 3);
         }
 
         {
             var result = await build.Run("--clean");
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
         }
 
         {
@@ -200,13 +213,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 f.LastWriteTimeUtc = outdated;
             }
-
             var result = await build.Run();
-
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
         }
     }
 
