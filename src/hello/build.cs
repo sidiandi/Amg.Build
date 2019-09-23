@@ -39,7 +39,7 @@ public class BuildTargets
     [Once][Description("Simulate a failing tool")]
     public virtual async Task FailTool()
     {
-        await new Tool("cmd.exe").Run("/c", "fasdfasdfasd");
+        await Tools.Cmd.Run("/c", "fasdfasdfasd");
     }
 
     [Once][Description("Use failing tool")]

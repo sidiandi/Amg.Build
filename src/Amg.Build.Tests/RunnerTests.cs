@@ -39,6 +39,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void ToolFail()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "tool-fails", "-vq" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
+        }
+
+        [Test]
         public void CommandLineErrorWrongOption()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "--this-option-is-wrong" });

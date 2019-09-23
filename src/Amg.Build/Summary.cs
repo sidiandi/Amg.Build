@@ -68,7 +68,10 @@ namespace Amg.Build
                 .Where(_ => _.State == InvocationInfo.States.Failed))
             {
                 var r = GetRootCause(failedTarget.Exception);
-                @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");
+                if (!(r is InvocationFailed))
+                {
+                    @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");
+                }
             }
             @out.WriteLine("FAILED");
         });

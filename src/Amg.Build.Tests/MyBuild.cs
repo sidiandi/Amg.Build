@@ -97,6 +97,13 @@ namespace Amg.Build
             throw new Exception("epic fail");
         }
 
+        [Once]
+        [Description("Calls a tool that always fails.")]
+        public virtual async Task ToolFails()
+        {
+            await Tools.Cmd.Run("asfkjasdfasdf");
+        }
+
         [Once][Description("Always fails.")]
         public virtual async Task AlwaysFails()
         {

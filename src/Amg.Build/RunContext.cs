@@ -138,7 +138,7 @@ namespace Amg.Build
 
                     if (sourceOptions.Edit)
                     {
-                        var cmd = new Tool("cmd").WithArguments("/c", "start");
+                        var cmd = Tools.Cmd.WithArguments("start");
                         cmd.Run(source.csprojFile).Wait();
                         return ExitCode.HelpDisplayed;
                     }

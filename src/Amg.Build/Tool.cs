@@ -162,7 +162,23 @@ namespace Amg.Build
 
                 startInfo.EnvironmentVariables.Add(this.environment);
 
-                var p = Process.Start(startInfo);
+                Process Start()
+                {
+                    try
+                    {
+                        return Process.Start(startInfo);
+                    }
+                    catch (System.ComponentModel.Win32Exception e)
+                    {
+                        if ((uint)e.HResult == 0x80004005)
+                        {
+                            throw new ToolStartFailed(e.Message, startInfo);
+                        }
+                        throw;
+                    }
+                }
+
+                var p = Start();
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
@@ -186,7 +202,7 @@ namespace Amg.Build
                     if (p.ExitCode != expectedExitCode.Value)
                     {
                         throw new ToolException(
-                            $"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}", 
+                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.", 
                             result, startInfo);
                     }
                 }
