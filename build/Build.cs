@@ -124,9 +124,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
     [Once]
     [Description("Commit pending changes and run end to end test")]
-    public virtual async Task CommitAndRunEndToEndTest()
+    public virtual async Task CommitAndRunEndToEndTest(string message)
     {
-        await Git.GitTool.Run("commit", "-m", "improve end-to-end test", "-a");
+        await Git.GitTool.Run("commit", "-m", message, "-a");
         await EndToEndTest();
     }
 

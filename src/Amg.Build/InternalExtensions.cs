@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Reflection;
 
 namespace Amg.Build
 {
@@ -23,6 +24,11 @@ namespace Amg.Build
             return Regex.Matches(stackTrace, @"in (.*):line (\d+)").Cast<Match>()
                 .Select(m => new { file = m.Groups[1].Value, line = m.Groups[2].Value })
                 .Select(_ => $"{_.file}({_.line})");
+        }
+
+        static internal string Fullname(MethodInfo method)
+        {
+            return method.DeclaringType.FullName + "." + method.Name;
         }
     }
 }

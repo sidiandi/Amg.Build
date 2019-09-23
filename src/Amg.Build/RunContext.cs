@@ -295,7 +295,7 @@ namespace Amg.Build
 
         private static void RunTarget(object targets, MethodInfo target, string[] arguments)
         {
-            Logger.Information("Run {target}({arguments})", target, arguments);
+            Logger.Information("Run {target}({arguments})", target.Fullname(), arguments.Join(", "));
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
         }
 
