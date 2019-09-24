@@ -1,7 +1,11 @@
 @echo off
+rem Bootstrapper script of Amg.Build
+rem Do not modify.
+rem See https://github.com/sidiandi/Amg.Build
 setlocal EnableDelayedExpansion
 set buildDll=%~dp0%~n0\bin\Debug\netcoreapp2.2\build.dll
 set exitCodeRebuildRequired=2
+set exitCodeAssemblyNotFound=-2147450740
 
 mkdir %buildDll%\.. 2>nul
 echo startup time > %buildDll%.startup
@@ -12,13 +16,17 @@ if exist %buildDll% (
     if !buildScriptExitCode! equ %exitCodeRebuildRequired% (
         call :rebuild %*
     )
-    exit /b !buildScriptExitCode!
+    if !buildScriptExitCode! equ %exitCodeAssemblyNotFound% (
+        call :rebuild %*
+    )
 ) else (
     call :rebuild %*
 )
+exit /b !buildScriptExitCode!
 goto :eof
 
 :rebuild
-    dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
+	echo Build script requires rebuild.
+	dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
 	set buildScriptExitCode=!errorlevel!
 	exit /b !buildScriptExitCode!

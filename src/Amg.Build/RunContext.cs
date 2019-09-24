@@ -119,6 +119,7 @@ namespace Amg.Build
                     if (sourceOptions.Fix)
                     {
                         await source.Fix();
+                        return ExitCode.Success;
                     }
                     else
                     {
