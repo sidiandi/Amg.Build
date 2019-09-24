@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -72,14 +73,25 @@ namespace Amg.Build
         /// </summary>
         /// <param name="lineHandler"></param>
         /// <returns></returns>
-        ITool OnError(Action<string> lineHandler);
+        ITool OnError(Action<IRunning, string> lineHandler);
 
         /// <summary>
         /// Call lineHandler for every line out output
         /// </summary>
         /// <param name="lineHandler"></param>
         /// <returns></returns>
-        ITool OnOutput(Action<string> lineHandler);
+        ITool OnOutput(Action<IRunning, string> lineHandler);
+    }
+
+    /// <summary>
+    /// Information about a running tool
+    /// </summary>
+    public interface IRunning
+    {
+        /// <summary>
+        /// Underlying process
+        /// </summary>
+        Process Process { get; }
     }
 
     /// <summary>

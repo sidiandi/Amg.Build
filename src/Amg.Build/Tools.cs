@@ -1,4 +1,6 @@
-﻿namespace Amg.Build
+﻿using System;
+
+namespace Amg.Build
 {
     /// <summary>
     /// Frequently used tools
@@ -8,7 +10,9 @@
         /// <summary>
         /// Default tool settings
         /// </summary>
-        public static ITool Default { get; set; } = new Tool();
+        public static ITool Default { get; set; } = new Tool()
+            .OnOutput((r, line) => Console.Out.WriteLine($"{r}:{line}"))
+            .OnError((r, line) => Console.Error.WriteLine($"{r}:{line}"));
 
         /// <summary>
         /// cmd.exe /c

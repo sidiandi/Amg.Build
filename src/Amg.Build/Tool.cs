@@ -22,8 +22,8 @@ namespace Amg.Build
         private IDictionary<string, string> environment = new Dictionary<string, string>();
         private string user;
         private string password;
-        private Action<string> onError = new Action<string>(_ => { });
-        private Action<string> onOutput = new Action<string>(_ => { });
+        private Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
+        private Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -134,6 +134,20 @@ namespace Amg.Build
             return s;
         }
 
+        class Running : IRunning
+        {
+            private Process process;
+
+            public Running(Process p)
+            {
+                this.process = p;
+            }
+
+            public Process Process => process;
+
+            public override string ToString() => Process.Id.ToString();
+        }
+
         /// <summary>
         /// Runs the tool
         /// </summary>
@@ -189,13 +203,14 @@ namespace Amg.Build
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
-                processLog.Information("process started: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information("process {Id} started: {FileName} {Arguments}", p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var output = p.StandardOutput.Tee(onOutput).ReadToEndAsync();
-                var error = p.StandardError.Tee(onError).ReadToEndAsync();
+                var running = new Running(p);
+                var output = p.StandardOutput.Tee(_ => onOutput(running, _)).ReadToEndAsync();
+                var error = p.StandardError.Tee(_ => onError(running, _)).ReadToEndAsync();
 
                 p.WaitForExit();
-                processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information("process {Id} exited with {ExitCode}: {FileName} {Arguments}", p.Id, p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
                 var result = (IToolResult)new ResultImpl
                 {
@@ -232,14 +247,14 @@ namespace Amg.Build
         }
 
         /// <summary />
-        public ITool OnError(Action<string> lineHandler)
+        public ITool OnError(Action<IRunning, string> lineHandler)
         {
             onError = lineHandler;
             return this;
         }
 
         /// <summary />
-        public ITool OnOutput(Action<string> lineHandler)
+        public ITool OnOutput(Action<IRunning, string> lineHandler)
         {
             onOutput = lineHandler;
             return this;
