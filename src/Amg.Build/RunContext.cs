@@ -90,7 +90,7 @@ namespace Amg.Build
             return ExitCode.RebuildRequired;
         }
 
-        public ExitCode Run()
+        public async Task<ExitCode> Run()
         {
             try
             {
@@ -113,10 +113,17 @@ namespace Amg.Build
 
                 if (source != null)
                 {
-                    source.Check().Wait();
                     var sourceOptions = new OptionsWithSource(onceProxy);
                     options = sourceOptions;
                     GetOptParser.Parse(commandLineArguments, options);
+                    if (sourceOptions.Fix)
+                    {
+                        await source.Fix();
+                    }
+                    else
+                    {
+                        await source.Check();
+                    }
                     if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
                     {
                         return RequireRebuild();

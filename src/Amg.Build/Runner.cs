@@ -29,7 +29,7 @@ namespace Amg.Build
                 commandLineArguments
                 );
 
-            return (int) runner.Run();
+            return (int) runner.Run().Result;
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace Amg.Build
             var method = frame.GetMethod();
             var type = method.DeclaringType;
             var runner = new RunContext(type, commandLineArguments);
-            return (int)runner.Run();
+            return (int)runner.Run().Result;
         }
 
         /// <summary>
