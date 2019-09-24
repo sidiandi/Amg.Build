@@ -70,5 +70,8 @@ namespace Amg.Build
         /// <summary />
         [Short('v'), Description("Set the verbosity level.")]
         public Verbosity Verbosity { get; set; } = Verbosity.Normal;
+
+        [Description("show summary")]
+        public bool Summary { get; set; }
     }
 }

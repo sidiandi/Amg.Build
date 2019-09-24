@@ -183,7 +183,7 @@ namespace Amg.Build
 
                 invocations = invocations.Concat(onceInterceptor.Invocations);
 
-                if (options.Verbosity > Verbosity.Quiet)
+                if (options.Summary)
                 {
                     Console.WriteLine(Summary.PrintTimeline(invocations));
                 }
