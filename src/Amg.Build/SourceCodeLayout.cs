@@ -56,7 +56,7 @@ rem Bootstrapper script of Amg.Build
 rem Do not modify.
 rem See https://github.com/sidiandi/Amg.Build
 setlocal EnableDelayedExpansion
-set buildDll=%~dp0%~n0\bin\Debug\netcoreapp2.2\build.dll
+set buildDll=%~dp0%~n0\bin\Debug\netcoreapp2.1\build.dll
 set exitCodeRebuildRequired=2
 set exitCodeAssemblyNotFound=-2147450740
 
