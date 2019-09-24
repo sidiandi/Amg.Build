@@ -26,7 +26,6 @@ exit /b !buildScriptExitCode!
 goto :eof
 
 :rebuild
-	echo Build script requires rebuild.
 	dotnet run --force -vd --project %~dp0%~n0 -- --ignore-clean %*
 	set buildScriptExitCode=!errorlevel!
 	exit /b !buildScriptExitCode!
