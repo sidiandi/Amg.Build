@@ -142,8 +142,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var nugetConfigFile = testDir.Combine("nuget.config");
         await CreateNugetConfigFile(nugetConfigFile, PackagesDir);
-        var nuget = new Tool("nuget.exe").WithWorkingDirectory(testDir);
-        await nuget.Run("source");
+        await Nuget
+            .WithWorkingDirectory(testDir)
+            .Run("source");
 
         var script = testDir.Combine("build.cmd");
         await Root.Combine("examples", "skeleton").CopyTree(testDir);
@@ -154,7 +155,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var version = await Git.GetVersion();
 
-        var build = new Tool(script).DoNotCheckExitCode()
+        var build = Tools.Default.WithFileName(script).DoNotCheckExitCode()
             .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
             ;
 
@@ -243,6 +244,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Push(nugetPushSource);
     }
 
+    ITool Nuget => Tools.Default.WithFileName("nuget.exe");
+
     [Once]
     [Description("push nuget package")]
     protected virtual async Task Push(string nugetPushSource)
@@ -250,8 +253,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack(), EndToEndTest());
         var nupkgFile = await Pack();
-        var nuget = new Tool("nuget.exe");
-        await nuget.Run(
+        await Nuget.Run(
             "push",
             nupkgFile,
             "-Source", nugetPushSource
