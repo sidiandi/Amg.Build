@@ -90,16 +90,6 @@ namespace Amg.Build
             return ExitCode.RebuildRequired;
         }
 
-        class SourceCodeLayout
-        {
-            public string name;
-            public string sourceFile;
-            public string sourceDir;
-            public string csprojFile;
-            public string cmdFile;
-            public string dllFile;
-        }
-
         public ExitCode Run()
         {
             try
@@ -123,6 +113,7 @@ namespace Amg.Build
 
                 if (source != null)
                 {
+                    source.Check().Wait();
                     var sourceOptions = new OptionsWithSource(onceProxy);
                     options = sourceOptions;
                     GetOptParser.Parse(commandLineArguments, options);
