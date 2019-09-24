@@ -1,11 +1,3 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-	<Configuration>Debug</Configuration>
-	<AmgBuildVersion Condition="$(AmgBuildVersion)==''" >0.*</AmgBuildVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Amg.Build" Version="$(AmgBuildVersion)" />
-  </ItemGroup>
+	<Import Project="Amg.Build.props" />
 </Project>

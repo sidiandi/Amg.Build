@@ -33,6 +33,12 @@ namespace Amg.Build
         {
             await CheckFile(cmdFile, BootstrapperText);
             await CheckFile(propsFile, PropsText);
+            var csproj = await csprojFile.ReadAllTextAsync();
+            var propsLine = @"<Import Project=""Amg.Build.props"" />";
+            if (!csproj.Contains(propsLine))
+            {
+                Logger.Warning("{csprojFile} must containt {propsLine}", csprojFile, propsLine);
+            }
         }
 
         async Task CheckFile(string file, string expected)
@@ -43,7 +49,7 @@ namespace Amg.Build
             }
         }
 
-        public string PropsText => @"<Project Sdk=""Microsoft.NET.Sdk"">
+        public string PropsText => @"<Project>
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
