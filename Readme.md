@@ -73,6 +73,7 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+* option to fix source files
 * check source files
 * output options for ITool
 * improved logging of process start failures

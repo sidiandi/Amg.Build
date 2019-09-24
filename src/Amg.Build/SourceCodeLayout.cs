@@ -78,6 +78,22 @@ namespace Amg.Build
             return Get(targetsType.Assembly.Location);
         }
 
+        public async Task Fix()
+        {
+            await FixFile(cmdFile, BuildCmdText);
+            await FixFile(propsFile, PropsText);
+            await FixFile(csprojFile, BuildCsProjText);
+        }
+
+        string BuildCsProjText => ReadStringFromEmbeddedResource("build.csproj.template");
+
+        async Task FixFile(string file, string expected)
+        {
+            await file
+                .EnsureParentDirectoryExists()
+                .WriteAllTextIfChangedAsync(expected);
+        }
+
         /// <summary>
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>

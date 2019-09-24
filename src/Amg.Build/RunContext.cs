@@ -74,8 +74,15 @@ namespace Amg.Build
                     var sourceOptions = new OptionsWithSource(onceProxy);
                     options = sourceOptions;
                     GetOptParser.Parse(commandLineArguments, options);
-                    await source.Check();
-
+                    if (sourceOptions.Fix)
+                    {
+                        await source.Fix();
+                        return ExitCode.Success;
+                    }
+                    else
+                    {
+                        await source.Check();
+                    }
                     if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
                     {
                         return RequireRebuild();
@@ -153,7 +160,7 @@ namespace Amg.Build
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex);
+                Console.Error.WriteLine(ex.Message);
                 return ExitCode.UnknownError;
             }
         }
@@ -229,7 +236,7 @@ namespace Amg.Build
             try
             {
                 var target = candidates.FindByName(
-                    _ => GetOptParser.GetLongOptionNameForMember(_.Name), 
+                    _ => GetOptParser.GetLongOptionNameForMember(_.Name),
                     targetName,
                     "targets"
                     );
