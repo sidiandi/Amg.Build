@@ -109,7 +109,7 @@ goto :eof
         /// build\build.csproj
         /// build\bin\Debug\netcoreapp2.2\build.dll
         /// <returns></returns>
-        static SourceCodeLayout Get(string dllFile)
+        internal static SourceCodeLayout Get(string dllFile)
         {
             try
             {
