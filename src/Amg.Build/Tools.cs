@@ -6,8 +6,13 @@
     public class Tools
     {
         /// <summary>
+        /// Default tool settings
+        /// </summary>
+        public static ITool Default { get; set; } = new Tool();
+
+        /// <summary>
         /// cmd.exe /c
         /// </summary>
-        public static ITool Cmd => new Tool("cmd.exe").WithArguments("/c");
+        public static ITool Cmd => Default.WithFileName("cmd.exe").WithArguments("/c");
     }
 }

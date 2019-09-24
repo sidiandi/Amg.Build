@@ -67,6 +67,8 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
+* output options for ITool
+* Improve error logging
 * Adapter to use Cake extensions
 * Fail on the first failed target
 

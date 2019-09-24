@@ -46,7 +46,7 @@ namespace Amg.Build
             this.StartInfo.FileName,
             this.StartInfo.Arguments,
             Result.ExitCode,
-            Error = Result.Error.ReduceLines(200, 20)
+            Error = Result.Error.ReduceLines(16, 4)
         }.Dump()}";
 
         /// <summary />

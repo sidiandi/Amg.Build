@@ -69,7 +69,7 @@ namespace Amg.Build
             }
         }
 
-        [Test][Explicit("requires a local user test")]
+        [Test][Ignore("requires a local user test")]
         public async Task RunAs()
         {
             var user = "test";

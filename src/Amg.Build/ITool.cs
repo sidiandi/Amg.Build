@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -14,6 +15,13 @@ namespace Amg.Build
         /// <param name="args">Command line argument. One string per argument. Will be quoted automatically (i.e. when a argument contains whitespace)</param>
         /// <returns></returns>
         Task<IToolResult> Run(params string[] args);
+
+        /// <summary>
+        /// File name of the executable.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        ITool WithFileName(string fileName);
 
         /// <summary>
         /// Disable throwing an exception when the exit code was not as expected.
@@ -58,6 +66,20 @@ namespace Amg.Build
         /// <param name="password"></param>
         /// <returns></returns>
         ITool RunAs(string user, string password);
+
+        /// <summary>
+        /// Call for lineHandler every line of error
+        /// </summary>
+        /// <param name="lineHandler"></param>
+        /// <returns></returns>
+        ITool OnError(Action<string> lineHandler);
+
+        /// <summary>
+        /// Call lineHandler for every line out output
+        /// </summary>
+        /// <param name="lineHandler"></param>
+        /// <returns></returns>
+        ITool OnOutput(Action<string> lineHandler);
     }
 
     /// <summary>

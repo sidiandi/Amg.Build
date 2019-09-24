@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -10,18 +11,18 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private string filename;
+        private string fileName;
 
         /// <summary />
         public MockTool(string filename)
         {
-            this.filename = filename;
+            this.fileName = filename;
         }
 
         /// <summary />
         public async Task<IToolResult> Run(params string[] args)
         {
-            Logger.Information("Would run: {filename}: {args}", filename, args);
+            Logger.Information("Would run: {filename}: {args}", fileName, args);
             await Task.CompletedTask;
             return MockResult;
         }
@@ -65,6 +66,25 @@ namespace Amg.Build
         /// <summary />
         public ITool RunAs(string user, string password)
         {
+            return this;
+        }
+
+        /// <summary />
+        public ITool OnError(Action<string> lineHandler)
+        {
+            return this;
+        }
+
+        /// <summary />
+        public ITool OnOutput(Action<string> lineHandler)
+        {
+            return this;
+        }
+
+        /// <summary />
+        public ITool WithFileName(string fileName)
+        {
+            this.fileName = fileName;
             return this;
         }
 

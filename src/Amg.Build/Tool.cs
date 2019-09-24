@@ -15,13 +15,15 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly string fileName;
+        private string fileName;
         private string[] leadingArguments = new string[] { };
         private string workingDirectory = ".";
         private int? expectedExitCode = 0;
         private IDictionary<string, string> environment = new Dictionary<string, string>();
         private string user;
         private string password;
+        private Action<string> onError = new Action<string>(_ => { });
+        private Action<string> onOutput = new Action<string>(_ => { });
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -105,9 +107,14 @@ namespace Amg.Build
         /// Create a tool. 
         /// </summary>
         /// <param name="executableFileName">.exe or .cmd file. Relative paths are resolved to current directory and PATH environment.</param>
+        [Obsolete("Use Tool.Default")]
         public Tool(string executableFileName)
         {
             this.fileName = executableFileName;
+        }
+
+        internal Tool()
+        {
         }
 
         class ResultImpl : IToolResult
@@ -184,8 +191,8 @@ namespace Amg.Build
 
                 processLog.Information("process started: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var output = p.StandardOutput.Tee(_ => processLog.Information(_)).ReadToEndAsync();
-                var error = p.StandardError.Tee(_ => processLog.Error(_)).ReadToEndAsync();
+                var output = p.StandardOutput.Tee(onOutput).ReadToEndAsync();
+                var error = p.StandardError.Tee(onError).ReadToEndAsync();
 
                 p.WaitForExit();
                 processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
@@ -222,6 +229,27 @@ namespace Amg.Build
         public static string CreateArgumentsString(IEnumerable<string> args)
         {
             return String.Join(" ", args.Select(_ => _.QuoteIfRequired()));
+        }
+
+        /// <summary />
+        public ITool OnError(Action<string> lineHandler)
+        {
+            onError = lineHandler;
+            return this;
+        }
+
+        /// <summary />
+        public ITool OnOutput(Action<string> lineHandler)
+        {
+            onOutput = lineHandler;
+            return this;
+        }
+
+        /// <summary />
+        public ITool WithFileName(string fileName)
+        {
+            this.fileName = fileName;
+            return this;
         }
     }
 }
