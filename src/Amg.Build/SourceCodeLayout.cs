@@ -9,6 +9,7 @@ namespace Amg.Build
         public string name;
         public string sourceFile;
         public string sourceDir;
+        public string propsFile;
         public string csprojFile;
         public string cmdFile;
         public string dllFile;
@@ -16,6 +17,7 @@ namespace Amg.Build
         public async Task Fix()
         {
             await FixFile(cmdFile, BootstrapperText);
+            await FixFile(propsFile, PropsText);
         }
 
         async Task FixFile(string file, string expected)
@@ -28,6 +30,7 @@ namespace Amg.Build
         public async Task Check()
         {
             await CheckFile(cmdFile, BootstrapperText);
+            await CheckFile(propsFile, PropsText);
         }
 
         async Task CheckFile(string file, string expected)
@@ -38,7 +41,7 @@ namespace Amg.Build
             }
         }
 
-        public string CsProjText => @"<Project Sdk=""Microsoft.NET.Sdk"">
+        public string PropsText => @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
