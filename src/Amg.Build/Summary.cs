@@ -42,11 +42,6 @@ namespace Amg.Build
                 .Write(@out);
         });
 
-        internal static IWritable PrintSummary(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
-        {
-            @out.WriteLine("succeeded");
-        });
-
         public static Exception GetRootCause(Exception e)
         {
             if (e is InvocationFailed)
@@ -74,6 +69,14 @@ namespace Amg.Build
                 }
             }
             @out.WriteLine("FAILED");
+        });
+
+        internal static void PrintSummary(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        {
+            if (invocations.Any(_ => _.Failed))
+            {
+                Console.Error.WriteLine("failed");
+            }
         });
 
         private static string RootCause(InvocationInfo i)

@@ -11,8 +11,8 @@ namespace Amg.Build
         /// Default tool settings
         /// </summary>
         public static ITool Default { get; set; } = new Tool()
-            .OnOutput((r, line) => Console.Out.WriteLine($"{r}:{line}"))
-            .OnError((r, line) => Console.Error.WriteLine($"{r}:{line}"));
+            .WithOnOutput(old => (r, line) => Console.Out.WriteLine($"{r}:{line}"))
+            .WithOnError(old => (r, line) => Console.Error.WriteLine($"{r}:{line}"));
 
         /// <summary>
         /// cmd.exe /c

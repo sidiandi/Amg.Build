@@ -179,22 +179,20 @@ namespace Amg.Build
                 }
                 catch (InvocationFailed)
                 {
-                    invocations = invocations.Concat(onceInterceptor.Invocations);
-                    if (options.Verbosity > Verbosity.Quiet)
-                    {
-                        Console.WriteLine(Summary.PrintTimeline(invocations));
-                    }
-                    Console.Error.WriteLine(Summary.Error(invocations));
                     return ExitCode.TargetFailed;
                 }
 
                 invocations = invocations.Concat(onceInterceptor.Invocations);
+
                 if (options.Verbosity > Verbosity.Quiet)
                 {
                     Console.WriteLine(Summary.PrintTimeline(invocations));
                 }
-                Console.WriteLine(Summary.PrintSummary(invocations));
-                return ExitCode.Success;
+
+                Summary.PrintSummary(invocations);
+                return invocations.Failed()
+                    ? ExitCode.TargetFailed
+                    : ExitCode.Success;
             }
             catch (ParseException ex)
             {

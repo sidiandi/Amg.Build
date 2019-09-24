@@ -69,18 +69,18 @@ namespace Amg.Build
         ITool RunAs(string user, string password);
 
         /// <summary>
-        /// Call for lineHandler every line of error
+        /// Call a function for every line of error
         /// </summary>
-        /// <param name="lineHandler"></param>
+        /// <param name="getLineHandler">Create the new line handler given the old one.</param>
         /// <returns></returns>
-        ITool OnError(Action<IRunning, string> lineHandler);
+        ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler);
 
         /// <summary>
-        /// Call lineHandler for every line out output
+        /// Call a function for every line of output
         /// </summary>
-        /// <param name="lineHandler"></param>
+        /// <param name="getLineHandler">Create the new line handler given the old one.</param>
         /// <returns></returns>
-        ITool OnOutput(Action<IRunning, string> lineHandler);
+        ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler);
     }
 
     /// <summary>
@@ -109,6 +109,18 @@ namespace Amg.Build
         public static ITool WithEnvironment(this ITool tool, string name, string value)
         {
             return tool.WithEnvironment(new Dictionary<string, string> { { name, value } });
+        }
+
+        /// <summary>
+        /// Disable OnError and OnOutput handlers
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <returns></returns>
+        public static ITool Silent(this ITool tool)
+        {
+            return tool
+                .WithOnOutput(old => (r, l) => { })
+                .WithOnError(old => (r, l) => { });
         }
     }
 }

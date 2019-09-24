@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -208,6 +211,14 @@ namespace Amg.Build
         }
 
         public bool Failed => Exception != null;
+    }
+
+    static class InvocationInfoExtensions
+    {
+        public static bool Failed(this IEnumerable<InvocationInfo> invocations)
+        {
+            return invocations.Any(_ => _.Failed);
+        }
     }
 
 }

@@ -247,16 +247,16 @@ namespace Amg.Build
         }
 
         /// <summary />
-        public ITool OnError(Action<IRunning, string> lineHandler)
+        public ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
-            onError = lineHandler;
+            onError = getLineHandler(onError);
             return this;
         }
 
         /// <summary />
-        public ITool OnOutput(Action<IRunning, string> lineHandler)
+        public ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
-            onOutput = lineHandler;
+            onOutput = getLineHandler(onOutput);
             return this;
         }
 

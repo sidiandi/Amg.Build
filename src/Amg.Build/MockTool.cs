@@ -70,13 +70,13 @@ namespace Amg.Build
         }
 
         /// <summary />
-        public ITool OnError(Action<IRunning, string> lineHandler)
+        public ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
             return this;
         }
 
         /// <summary />
-        public ITool OnOutput(Action<IRunning, string> lineHandler)
+        public ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
             return this;
         }
