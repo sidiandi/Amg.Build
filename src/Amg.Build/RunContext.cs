@@ -42,49 +42,6 @@ namespace Amg.Build
             this.commandLineArguments = commandLineArguments;
         }
 
-        /// <summary>
-        /// Try to determine the source directory from which the assembly of targetType was built.
-        /// </summary>
-        /// build.cmd
-        /// build\build.cs
-        /// build\build.csproj
-        /// build\bin\Debug\netcoreapp2.2\build.dll
-        /// <returns></returns>
-        static SourceCodeLayout GetSourceCodeLayout(Type targetsType)
-        {
-            try
-            {
-                var sourceCodeLayout = new SourceCodeLayout();
-                sourceCodeLayout.dllFile = targetsType.Assembly.Location;
-                sourceCodeLayout.name = sourceCodeLayout.dllFile.FileNameWithoutExtension();
-                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent().Parent();
-                sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
-                sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
-                sourceCodeLayout.propsFile = sourceCodeLayout.sourceDir.Combine($"Amg.Build.props");
-                sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
-
-                var paths = new[] {
-                    sourceCodeLayout.sourceDir,
-                    sourceCodeLayout.sourceFile,
-                    sourceCodeLayout.cmdFile,
-                    sourceCodeLayout.csprojFile
-                }.Select(path => new { path, exists = path.Exists() })
-                .ToList();
-
-                Logger.Debug("{@paths}", paths);
-                var hasSources = paths.All(_ => _.exists);
-                if (hasSources)
-                {
-                    Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
-                }
-                return hasSources ? sourceCodeLayout : null;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
         static ExitCode RequireRebuild()
         {
             Console.Out.WriteLine("Build script requires rebuild.");
@@ -108,7 +65,7 @@ namespace Amg.Build
                 },
                 onceInterceptor);
 
-                var source = GetSourceCodeLayout(targetsType);
+                var source = SourceCodeLayout.Get(targetsType);
 
                 Options options = null;
 

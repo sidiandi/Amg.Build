@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -35,7 +37,7 @@ namespace Amg.Build
 
         async Task CheckFile(string file, string expected)
         {
-            if (!((await file.ReadAllTextAsync()).Equals(expected)))
+            if (!string.Equals(await file.ReadAllTextAsync(), expected))
             {
                 Logger.Warning("{cmdFile} does not have the expected contents. Use --fix to fix.", file);
             }
@@ -87,5 +89,56 @@ goto :eof
 	set buildScriptExitCode=!errorlevel!
 	exit /b !buildScriptExitCode!
 ";
+
+        public static SourceCodeLayout Get(Type targetsType)
+        {
+            return Get(targetsType.Assembly.Location);
+        }
+
+        /// <summary>
+        /// Try to determine the source directory from which the assembly of targetType was built.
+        /// </summary>
+        /// build.cmd
+        /// build\build.cs
+        /// build\build.csproj
+        /// build\bin\Debug\netcoreapp2.2\build.dll
+        /// <returns></returns>
+        public static SourceCodeLayout Get(string dllFile)
+        {
+            try
+            {
+                var sourceCodeLayout = new SourceCodeLayout
+                {
+                    dllFile = dllFile
+                };
+                sourceCodeLayout.name = sourceCodeLayout.dllFile.FileNameWithoutExtension();
+                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent().Parent();
+                sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
+                sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
+                sourceCodeLayout.propsFile = sourceCodeLayout.sourceDir.Combine("Amg.Build.props");
+                sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
+
+                var paths = new[] {
+                    sourceCodeLayout.sourceDir,
+                    sourceCodeLayout.sourceFile,
+                    sourceCodeLayout.cmdFile,
+                    sourceCodeLayout.csprojFile
+                }.Select(path => new { path, exists = path.Exists() })
+                .ToList();
+
+                Logger.Debug("{@paths}", paths);
+                var hasSources = paths.All(_ => _.exists);
+                if (hasSources)
+                {
+                    Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
+                }
+                return hasSources ? sourceCodeLayout : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
     }
 }
