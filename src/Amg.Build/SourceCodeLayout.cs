@@ -37,7 +37,7 @@ namespace Amg.Build
             var propsLine = @"<Import Project=""Amg.Build.props"" />";
             if (!csproj.Contains(propsLine))
             {
-                Logger.Warning("{csprojFile} must containt {propsLine}", csprojFile, propsLine);
+                Logger.Warning("{csprojFile} must contain {propsLine}", csprojFile, propsLine);
             }
         }
 

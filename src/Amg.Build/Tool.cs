@@ -249,22 +249,25 @@ namespace Amg.Build
         /// <summary />
         public ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
-            onError = getLineHandler(onError);
-            return this;
+            var t = (Tool)this.MemberwiseClone();
+            t.onError = getLineHandler(onError);
+            return t;
         }
 
         /// <summary />
         public ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
-            onOutput = getLineHandler(onOutput);
-            return this;
+            var t = (Tool)this.MemberwiseClone();
+            t.onOutput = getLineHandler(onOutput);
+            return t;
         }
 
         /// <summary />
         public ITool WithFileName(string fileName)
         {
-            this.fileName = fileName;
-            return this;
+            var t = (Tool)this.MemberwiseClone();
+            t.fileName = fileName;
+            return t;
         }
     }
 }

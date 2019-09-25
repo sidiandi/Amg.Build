@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -10,6 +11,27 @@ namespace Amg.Build
     [TestFixture]
     public class ToolTests
     {
+        [Test]
+        public void SetFileName()
+        {
+            var aFileName = "a";
+            var a = Tools.Default.WithFileName(aFileName);
+            var bFileName = "b";
+            var b = a.WithFileName(bFileName);
+
+            string GetFileNameField(ITool tool)
+            {
+                return (string) tool
+                    .GetType()
+                    .GetField("fileName", BindingFlags.NonPublic|BindingFlags.Instance)
+                    .GetValue(tool);
+            }
+
+            Assert.AreEqual(aFileName, GetFileNameField(a));
+            Assert.AreEqual(bFileName, GetFileNameField(b));
+
+        }
+
         [Test]
         public async Task Run()
         {
