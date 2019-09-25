@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Security;
 using System.Threading.Tasks;
 
@@ -15,13 +17,15 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly string fileName;
-        private string[] leadingArguments = new string[] { };
-        private string workingDirectory = ".";
-        private int? expectedExitCode = 0;
-        private IDictionary<string, string> environment = new Dictionary<string, string>();
-        private string user;
-        private string password;
+        readonly string fileName;
+        readonly string[] leadingArguments = new string[] { };
+        readonly string workingDirectory = ".";
+        readonly int? expectedExitCode = 0;
+        readonly IDictionary<string, string> environment = new Dictionary<string, string>();
+        readonly string user = null;
+        readonly string password = null;
+        readonly Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
+        readonly Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -40,18 +44,13 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithArguments(IEnumerable<string> args)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.leadingArguments = leadingArguments.Concat(args).ToArray();
-            return t;
+            return With(_ => leadingArguments, leadingArguments.Concat(args).ToArray());
         }
 
         /// <summary />
         public ITool RunAs(string user, string password)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.user = user;
-            t.password = password;
-            return t;
+            return With(_ => _.user, user).With(_ => _.password, password);
         }
 
         /// <summary>
@@ -61,9 +60,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.environment = environment.Merge(environmentVariables);
-            return t;
+            return With(_ => _.environment, environment.Merge(environmentVariables));
         }
 
         /// <summary>
@@ -73,9 +70,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithWorkingDirectory(string workingDirectory)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.workingDirectory = workingDirectory;
-            return t;
+            return With(_ => _.workingDirectory, workingDirectory);
         }
 
         /// <summary>
@@ -85,9 +80,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithExitCode(int expectedExitCode)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.expectedExitCode = expectedExitCode;
-            return t;
+            return With(_ => _.expectedExitCode, expectedExitCode);
         }
 
         /// <summary>
@@ -96,18 +89,21 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool DoNotCheckExitCode()
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.expectedExitCode = null;
-            return t;
+            return With(_ => _.expectedExitCode, null);
         }
 
         /// <summary>
         /// Create a tool. 
         /// </summary>
         /// <param name="executableFileName">.exe or .cmd file. Relative paths are resolved to current directory and PATH environment.</param>
+        [Obsolete("Use Tool.Default")]
         public Tool(string executableFileName)
         {
             this.fileName = executableFileName;
+        }
+
+        internal Tool()
+        {
         }
 
         class ResultImpl : IToolResult
@@ -125,6 +121,20 @@ namespace Amg.Build
                 s.AppendChar(i);
             }
             return s;
+        }
+
+        class Running : IRunning
+        {
+            private Process process;
+
+            public Running(Process p)
+            {
+                this.process = p;
+            }
+
+            public Process Process => process;
+
+            public override string ToString() => Process.Id.ToString();
         }
 
         /// <summary>
@@ -162,17 +172,34 @@ namespace Amg.Build
 
                 startInfo.EnvironmentVariables.Add(this.environment);
 
-                var p = Process.Start(startInfo);
+                Process Start()
+                {
+                    try
+                    {
+                        return Process.Start(startInfo);
+                    }
+                    catch (System.ComponentModel.Win32Exception e)
+                    {
+                        if ((uint)e.HResult == 0x80004005)
+                        {
+                            throw new ToolStartFailed(e.Message, startInfo);
+                        }
+                        throw;
+                    }
+                }
+
+                var p = Start();
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
-                processLog.Information("process started: {FileName} {Arguments}", p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information("process {Id} started: {FileName} {Arguments}", p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var output = p.StandardOutput.Tee(_ => processLog.Information(_)).ReadToEndAsync();
-                var error = p.StandardError.Tee(_ => processLog.Error(_)).ReadToEndAsync();
+                var running = new Running(p);
+                var output = p.StandardOutput.Tee(_ => onOutput(running, _)).ReadToEndAsync();
+                var error = p.StandardError.Tee(_ => onError(running, _)).ReadToEndAsync();
 
                 p.WaitForExit();
-                processLog.Information("process exited with {ExitCode}: {FileName} {Arguments}", p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information("process {Id} exited with {ExitCode}: {FileName} {Arguments}", p.Id, p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
                 var result = (IToolResult)new ResultImpl
                 {
@@ -186,7 +213,7 @@ namespace Amg.Build
                     if (p.ExitCode != expectedExitCode.Value)
                     {
                         throw new ToolException(
-                            $"exit code {p.ExitCode}, was expecting {expectedExitCode.Value}", 
+                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.", 
                             result, startInfo);
                     }
                 }
@@ -206,6 +233,32 @@ namespace Amg.Build
         public static string CreateArgumentsString(IEnumerable<string> args)
         {
             return String.Join(" ", args.Select(_ => _.QuoteIfRequired()));
+        }
+
+        /// <summary />
+        public ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
+        {
+            return With(_ => _.onError, getLineHandler(onError));
+        }
+
+        /// <summary />
+        public ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
+        {
+            return With(_ => _.onOutput, getLineHandler(onOutput));
+        }
+
+        Tool With<T>(Expression<Func<Tool, T>> field, T newValue)
+        {
+            var t = (Tool)this.MemberwiseClone();
+            var fieldInfo = (FieldInfo)((MemberExpression)field.Body).Member;
+            fieldInfo.SetValue(t, newValue);
+            return t;
+        }
+
+        /// <summary />
+        public ITool WithFileName(string fileName)
+        {
+            return With(_ => _.fileName, fileName);
         }
     }
 }

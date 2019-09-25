@@ -20,11 +20,8 @@ namespace Amg.Build
     {
         private static Serilog.ILogger Logger;
 
-        private string sourceDir;
-        private string buildDll;
         private Type targetsType;
         private string[] commandLineArguments;
-        private readonly bool rebuildCheck;
 
         public enum ExitCode
         {
@@ -37,18 +34,12 @@ namespace Amg.Build
         }
 
         public RunContext(
-            string buildSourceFile,
-            string buildDll,
             Type targetsType,
-            string[] commandLineArguments,
-            bool rebuildCheck
+            string[] commandLineArguments
             )
         {
-            this.sourceDir = buildSourceFile.Parent();
-            this.buildDll = buildDll;
             this.targetsType = targetsType;
             this.commandLineArguments = commandLineArguments;
-            this.rebuildCheck = rebuildCheck;
         }
 
         static ExitCode RequireRebuild()
@@ -57,7 +48,7 @@ namespace Amg.Build
             return ExitCode.RebuildRequired;
         }
 
-        public ExitCode Run()
+        public async Task<ExitCode> Run()
         {
             try
             {
@@ -74,34 +65,55 @@ namespace Amg.Build
                 },
                 onceInterceptor);
 
-                var options = new Options(onceProxy);
+                var source = SourceCodeLayout.Get(targetsType);
 
-                GetOptParser.Parse(commandLineArguments, options);
+                Options options = null;
 
-                if (rebuildCheck)
+                if (source != null)
                 {
-                    if (IsOutOfDate() && !options.IgnoreClean)
+                    var sourceOptions = new OptionsWithSource(onceProxy);
+                    options = sourceOptions;
+                    GetOptParser.Parse(commandLineArguments, options);
+                    if (sourceOptions.Fix)
+                    {
+                        await source.Fix();
+                        return ExitCode.Success;
+                    }
+                    else
+                    {
+                        await source.Check();
+                    }
+                    if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
+                    {
+                        return RequireRebuild();
+                    }
+
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                        .CreateLogger();
+
+                    if (sourceOptions.Edit)
+                    {
+                        var cmd = Tools.Cmd.WithArguments("start");
+                        cmd.Run(source.csprojFile).Wait();
+                        return ExitCode.HelpDisplayed;
+                    }
+
+                    if ((sourceOptions.Clean && !sourceOptions.IgnoreClean))
                     {
                         return RequireRebuild();
                     }
                 }
-
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                    .CreateLogger();
-
-                if (options.Edit)
+                else
                 {
-                    var cmd = new Tool("cmd").WithArguments("/c", "start");
-                    var buildCsProj = sourceDir.Glob("*.csproj").First();
-                    cmd.Run(buildCsProj).Wait();
-                    return ExitCode.HelpDisplayed;
-                }
+                    options = new Options(onceProxy);
+                    GetOptParser.Parse(commandLineArguments, options);
 
-                if ((options.Clean && !options.IgnoreClean))
-                {
-                    return RequireRebuild();
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                        .CreateLogger();
                 }
 
                 if (options.Help)
@@ -124,21 +136,20 @@ namespace Amg.Build
                 }
                 catch (InvocationFailed)
                 {
-                    invocations = invocations.Concat(onceInterceptor.Invocations);
-                    if (options.Verbosity > Verbosity.Quiet)
-                    {
-                        Console.WriteLine(Summary.Print(invocations));
-                    }
-                    Console.Error.WriteLine(Summary.Error(invocations));
                     return ExitCode.TargetFailed;
                 }
 
                 invocations = invocations.Concat(onceInterceptor.Invocations);
-                if (options.Verbosity > Verbosity.Quiet)
+
+                if (options.Summary)
                 {
-                    Console.WriteLine(Summary.Print(invocations));
+                    Console.WriteLine(Summary.PrintTimeline(invocations));
                 }
-                return ExitCode.Success;
+
+                Summary.PrintSummary(invocations);
+                return invocations.Failed()
+                    ? ExitCode.TargetFailed
+                    : ExitCode.Success;
             }
             catch (ParseException ex)
             {
@@ -168,32 +179,27 @@ namespace Amg.Build
             return startupInvocation;
         }
 
-        private static string GetThisSourceFile([CallerFilePath] string filePath = null)
-        {
-            return filePath;
-        }
-
         static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
         /// <summary>
         /// Detects if the buildDll itself needs to be re-built.
         /// </summary>
         /// <returns></returns>
-        bool IsOutOfDate()
+        static bool IsOutOfDate(SourceCodeLayout layout)
         {
-            if (Regex.IsMatch(buildDll.FileName(), "test", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(layout.dllFile.FileName(), "test", RegexOptions.IgnoreCase))
             {
                 Logger.Warning("test mode detected. Out of date check skipped.");
                 return false;
             }
 
-            var sourceFiles = sourceDir.Glob("**")
+            var sourceFiles = layout.sourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");
 
             var sourceChanged = sourceFiles.LastWriteTimeUtc();
-            var buildDllChanged = buildDll.LastWriteTimeUtc();
+            var buildDllChanged = layout.dllFile.LastWriteTimeUtc();
 
             var maximalAge = TimeSpan.FromMinutes(60);
 
@@ -244,7 +250,7 @@ namespace Amg.Build
 
         private static void RunTarget(object targets, MethodInfo target, string[] arguments)
         {
-            Logger.Information("Run {target}({arguments})", target, arguments);
+            Logger.Information("Run {target}({arguments})", target.Name, arguments.Join(", "));
             var result = Wait(GetOptParser.Invoke(targets, target, arguments));
         }
 

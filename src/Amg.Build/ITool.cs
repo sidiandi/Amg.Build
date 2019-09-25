@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -14,6 +16,13 @@ namespace Amg.Build
         /// <param name="args">Command line argument. One string per argument. Will be quoted automatically (i.e. when a argument contains whitespace)</param>
         /// <returns></returns>
         Task<IToolResult> Run(params string[] args);
+
+        /// <summary>
+        /// File name of the executable.
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        ITool WithFileName(string fileName);
 
         /// <summary>
         /// Disable throwing an exception when the exit code was not as expected.
@@ -58,6 +67,31 @@ namespace Amg.Build
         /// <param name="password"></param>
         /// <returns></returns>
         ITool RunAs(string user, string password);
+
+        /// <summary>
+        /// Call a function for every line of error
+        /// </summary>
+        /// <param name="getLineHandler">Create the new line handler given the old one.</param>
+        /// <returns></returns>
+        ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler);
+
+        /// <summary>
+        /// Call a function for every line of output
+        /// </summary>
+        /// <param name="getLineHandler">Create the new line handler given the old one.</param>
+        /// <returns></returns>
+        ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler);
+    }
+
+    /// <summary>
+    /// Information about a running tool
+    /// </summary>
+    public interface IRunning
+    {
+        /// <summary>
+        /// Underlying process
+        /// </summary>
+        Process Process { get; }
     }
 
     /// <summary>
@@ -75,6 +109,18 @@ namespace Amg.Build
         public static ITool WithEnvironment(this ITool tool, string name, string value)
         {
             return tool.WithEnvironment(new Dictionary<string, string> { { name, value } });
+        }
+
+        /// <summary>
+        /// Disable OnError and OnOutput handlers
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <returns></returns>
+        public static ITool Silent(this ITool tool)
+        {
+            return tool
+                .WithOnOutput(old => (r, l) => { })
+                .WithOnError(old => (r, l) => { });
         }
     }
 }

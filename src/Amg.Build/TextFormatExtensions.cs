@@ -57,8 +57,9 @@ namespace Amg.Build
                         if (stringRepresentation.SplitLines().Skip(1).Any())
                         {
                             w.WriteLine($@"{p.Name}:
+{new string('v', 80)}
 {stringRepresentation}
-");
+{new string('^', 80)}");
                         }
                         else
                         {

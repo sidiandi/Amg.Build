@@ -122,6 +122,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return PackagesDir.Combine($"{name}.{version}.nupkg");
     }
 
+    [Once]
+    [Description("Commit pending changes and run end to end test")]
+    public virtual async Task CommitAndRunEndToEndTest(string message)
+    {
+        await Git.GitTool.Run("commit", "-m", message, "-a");
+        await EndToEndTest();
+    }
+
     [Once][Description("Complete test with .cmd bootstrapper file")]
     public virtual async Task EndToEndTest()
     {
@@ -134,8 +142,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var nugetConfigFile = testDir.Combine("nuget.config");
         await CreateNugetConfigFile(nugetConfigFile, PackagesDir);
-        var nuget = new Tool("nuget.exe").WithWorkingDirectory(testDir);
-        await nuget.Run("source");
+        await Nuget
+            .WithWorkingDirectory(testDir)
+            .Run("source");
 
         var script = testDir.Combine("build.cmd");
         await Root.Combine("examples", "skeleton").CopyTree(testDir);
@@ -146,16 +155,29 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var version = await Git.GetVersion();
 
-        var build = new Tool(script).DoNotCheckExitCode()
+        var build = Tools.Default.WithFileName(script).DoNotCheckExitCode()
             .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
             ;
 
+        void AssertRebuild(IToolResult result)
+        {
+            if (!result.Output.Contains("Build script requires rebuild."))
+            {
+                throw new Exception("Script was not rebuild.");
+            }
+        }
+
+        void AssertExitCode(IToolResult result, int expectedExitCode)
+        {
+            if (!result.ExitCode.Equals(expectedExitCode))
+            {
+                throw new Exception($"Exit code expected: {expectedExitCode}. Actual: {result.ExitCode}");
+            }
+        }
+
         {
             var result = await build.Run();
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
             if (!result.Output.Contains(version.InformationalVersion))
             {
                 throw new Exception();
@@ -168,10 +190,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         {
             var result = await build.Run();
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
             if (!String.IsNullOrEmpty(result.Error))
             {
                 throw new Exception(result.Error);
@@ -180,22 +199,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         {
             var result = await build.Run("--help");
-            if (!result.ExitCode.Equals(3))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 3);
         }
 
         {
             var result = await build.Run("--clean");
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
-            if (!result.Output.Contains("Build script requires rebuild."))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
         }
 
         {
@@ -204,17 +214,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             {
                 f.LastWriteTimeUtc = outdated;
             }
-
             var result = await build.Run();
-
-            if (!result.ExitCode.Equals(0))
-            {
-                throw new Exception();
-            }
-            if (!result.Output.Contains("Build script requires rebuild."))
-            {
-                throw new Exception();
-            }
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
         }
     }
 
@@ -242,6 +244,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Push(nugetPushSource);
     }
 
+    ITool Nuget => Tools.Default.WithFileName("nuget.exe");
+
     [Once]
     [Description("push nuget package")]
     protected virtual async Task Push(string nugetPushSource)
@@ -249,8 +253,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack(), EndToEndTest());
         var nupkgFile = await Pack();
-        var nuget = new Tool("nuget.exe");
-        await nuget.Run(
+        await Nuget.Run(
             "push",
             nupkgFile,
             "-Source", nugetPushSource

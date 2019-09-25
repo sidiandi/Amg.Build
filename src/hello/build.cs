@@ -12,7 +12,7 @@ public class BuildTargets
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 	
-	static int Main(string[] args) => Runner.Run(args, rebuildCheck: false);
+	static int Main(string[] args) => Runner.Run(args);
 
 	[Once][Description("Greet someone.")]
 	public virtual async Task Greet(string name)
@@ -39,7 +39,7 @@ public class BuildTargets
     [Once][Description("Simulate a failing tool")]
     public virtual async Task FailTool()
     {
-        await new Tool("cmd.exe").Run("/c", "fasdfasdfasd");
+        await Tools.Cmd.Run("/c", "fasdfasdfasd");
     }
 
     [Once][Description("Use failing tool")]

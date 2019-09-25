@@ -7,7 +7,7 @@ namespace Amg.Build
 {
     internal class Summary
     {
-        internal static IWritable Print(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        internal static IWritable PrintTimeline(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
             var begin = invocations
                 .Select(_ => _.Begin.GetValueOrDefault(DateTime.MaxValue))
@@ -58,18 +58,24 @@ namespace Amg.Build
 
         internal static IWritable Error(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
-            foreach (var failedTarget in invocations.OrderBy(_ => _.End)
+            @out.WriteLine();
+            foreach (var failedTarget in invocations.OrderByDescending(_ => _.End)
                 .Where(_ => _.State == InvocationInfo.States.Failed))
             {
                 var r = GetRootCause(failedTarget.Exception);
-                @out.WriteLine($"{failedTarget} failed because: {r.Message}");
                 if (!(r is InvocationFailed))
                 {
-                    @out.WriteLine($@"
-{r}
-");
+                    @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");
                 }
+            }
+            @out.WriteLine("FAILED");
+        });
 
+        internal static void PrintSummary(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        {
+            if (invocations.Any(_ => _.Failed))
+            {
+                Console.Error.WriteLine("failed");
             }
         });
 

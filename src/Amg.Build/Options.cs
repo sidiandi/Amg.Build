@@ -18,6 +18,30 @@ namespace Amg.Build
         Detailed
     };
 
+    class OptionsWithSource : Options
+    {
+        public OptionsWithSource(object targets)
+            : base(targets)
+        {
+        }
+
+        /// <summary />
+        [Short('e'), Description("Edit the build script in Visual Studio.")]
+        public bool Edit { get; set; }
+
+        /// <summary />
+        [Description("Force a rebuild of the build script")]
+        public bool Clean { get; set; }
+
+        /// <summary />
+        [Description("Ignore --clean (internal use only)")]
+        public bool IgnoreClean { get; set; }
+
+        /// <summary />
+        [Description("Fix .cmd and .csproj files.")]
+        public bool Fix { get; set; }
+    }
+
     /// <summary>
     /// Command line options
     /// </summary>
@@ -44,20 +68,10 @@ namespace Amg.Build
         public bool Help { get; set; }
 
         /// <summary />
-        [Short('e'), Description("Edit the build script in Visual Studio.")]
-        public bool Edit { get; set; }
-
-        /// <summary />
-        [Description("Force a rebuild of the build script")]
-        public bool Clean { get; set; }
-
-        /// <summary />
-        [Description("Ignore --clean (internal use only)")]
-        public bool IgnoreClean { get; set; }
-
-        /// <summary />
         [Short('v'), Description("Set the verbosity level.")]
         public Verbosity Verbosity { get; set; } = Verbosity.Normal;
-    }
 
+        [Description("show summary")]
+        public bool Summary { get; set; }
+    }
 }

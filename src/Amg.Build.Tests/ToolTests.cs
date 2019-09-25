@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -11,18 +12,50 @@ namespace Amg.Build
     public class ToolTests
     {
         [Test]
+        public void SetFileName()
+        {
+            var aFileName = "a";
+            var a = Tools.Default.WithFileName(aFileName);
+            var bFileName = "b";
+            var b = a.WithFileName(bFileName);
+
+            string GetFileNameField(ITool tool)
+            {
+                return (string) tool
+                    .GetType()
+                    .GetField("fileName", BindingFlags.NonPublic|BindingFlags.Instance)
+                    .GetValue(tool);
+            }
+
+            Assert.AreEqual(aFileName, GetFileNameField(a));
+            Assert.AreEqual(bFileName, GetFileNameField(b));
+
+        }
+
+        [Test]
         public async Task Run()
         {
-            var echo = new Tool("cmd.exe")
-                .WithArguments("/c", "echo");
+            var echo = Tools.Cmd.WithArguments("echo");
             await echo.Run("Hello");
+        }
+
+        [Test]
+        public async Task FileNotFound()
+        {
+            var programThatDoesNotExist = "program-that-does-not-exist.exe";
+            var echo = new Tool(programThatDoesNotExist);
+            var e = Assert.Throws<AggregateException>(() => echo.Run("Hello").Wait());
+            Console.WriteLine(e.InnerException);
+            Assert.That(e.InnerException is ToolStartFailed);
+            Assert.That(e.InnerException.Message.Contains(programThatDoesNotExist));
+            await Task.CompletedTask;
         }
 
         [Test]
         public async Task Environment()
         {
-            var echo = new Tool("cmd.exe")
-                .WithArguments("/c", "echo")
+            var echo = Tools.Cmd
+                .WithArguments("echo")
                 .WithEnvironment(new Dictionary<string, string>{ { "NAME", "Alice" } });
             var r = await echo.Run("Hello", "%NAME%");
             Assert.That(r.Output, Is.EqualTo("Hello Alice\r\n"));
@@ -32,8 +65,8 @@ namespace Amg.Build
         public async Task WorkingDirectory()
         {
             var workingDirectory = System.Environment.GetFolderPath(System.Environment.SpecialFolder.System);
-            var dir = new Tool("cmd.exe")
-                .WithArguments("/c", "dir")
+            var dir = Tools.Cmd
+                .WithArguments("dir")
                 .WithWorkingDirectory(workingDirectory);
             var r = await dir.Run(".");
             Assert.That(r.Output, Does.Contain(workingDirectory));
@@ -42,11 +75,11 @@ namespace Amg.Build
         [Test]
         public async Task RunError()
         {
-            var tool = new Tool("cmd.exe")
+            var tool = Tools.Cmd
                 .WithEnvironment(new Dictionary<string, string> { { "Name", "Alice" } });
             try
             {
-                await tool.Run("/c", "echo_Wrong_Command", "Hello");
+                await tool.Run("echo_Wrong_Command", "Hello");
                 Assert.Fail("must throw");
             }
             catch (Exception e)
@@ -58,12 +91,12 @@ namespace Amg.Build
             }
         }
 
-        [Test][Explicit("requires a local user test")]
+        [Test][Ignore("requires a local user test")]
         public async Task RunAs()
         {
             var user = "test";
             var password = @"adm$pwd$4$med$";
-            var tool = new Tool("cmd.exe").WithArguments("/c").RunAs(user, password);
+            var tool = Tools.Cmd.RunAs(user, password);
             await tool.Run("echo hello");
 
             var wrongPassword = @"adm$pwd$4$med";

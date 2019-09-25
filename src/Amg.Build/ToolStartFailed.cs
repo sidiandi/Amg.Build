@@ -6,37 +6,38 @@ using System.Runtime.Serialization;
 namespace Amg.Build
 {
     /// <summary>
-    /// To be thrown by ITool.Run when a call to a tool fails.
+    /// To be thrown by ITool.Run when the process cannot be started.
     /// </summary>
-    /// This is most often thrown when the exit code was not as expected.
     [Serializable]
-    public class ToolException : Exception
+    public class ToolStartFailed : Exception
     {
-        /// <summary>
-        /// Result of the tool run
-        /// </summary>
-        public IToolResult Result { get; private set; }
         /// <summary>
         /// information that was used to start the process.
         /// </summary>
         public ProcessStartInfo StartInfo { get; }
 
         /// <summary />
-        public ToolException()
+        public ToolStartFailed()
         {
         }
 
         /// <summary />
-        public ToolException(string message, IToolResult result, ProcessStartInfo startInfo)
+        public ToolStartFailed(string message, ProcessStartInfo startInfo)
             : base(message)
         {
-            this.Result = result;
             StartInfo = startInfo;
         }
 
         /// <summary />
-        protected ToolException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected ToolStartFailed(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+        }
+
+        static string GetPath(ProcessStartInfo startInfo)
+        {
+            return startInfo.EnvironmentVariables["PATH"]
+                .Split(';')
+                .Join();
         }
 
         /// <summary />
@@ -45,8 +46,11 @@ namespace Amg.Build
         {
             this.StartInfo.FileName,
             this.StartInfo.Arguments,
-            Result.ExitCode,
-            Error = Result.Error.ReduceLines(16, 4)
+            StartInfo.WorkingDirectory,
+            StartInfo.UserName,
+            Path = GetPath(StartInfo),
+            Environment = StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
+                .Select(_ => $"set {_.Key}={_.Value}").Join(),
         }.Dump()}";
 
         /// <summary />
@@ -55,9 +59,8 @@ namespace Amg.Build
         {
             this.StartInfo.FileName,
             this.StartInfo.Arguments,
-            Result.ExitCode,
-            Error = Result.Error.ReduceLines(200, 20),
-            Output = Result.Output.ReduceLines(200, 20),
+            StartInfo.UserName,
+            Path = GetPath(StartInfo),
             StartInfo.WorkingDirectory,
             Environment = StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
                 .Select(_ => $"set {_.Key}={_.Value}").Join(),
