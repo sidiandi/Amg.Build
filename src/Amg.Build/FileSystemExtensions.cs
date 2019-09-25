@@ -511,8 +511,6 @@ are more recent.
             bool useHardlinks = false,
             bool overwrite = true)
         {
-            var overwrite = true;
-
             var copyFile = useHardlinks
                 ? new Func<FileInfo, string, Task>((s, d) => CopyHardlink(s, d))
                 : new Func<FileInfo, string, Task>((s, d) => CopyFile(s, d, true));
@@ -554,7 +552,7 @@ are more recent.
                 && Math.Abs((source.LastWriteTimeUtc - dest.LastWriteTimeUtc).TotalSeconds) < 1.0;
         }
 
-        static async Task<string> CopyFile(FileInfo source, string dest, bool overwrite = false)
+        static async Task<string> CopyFile(this string source, string dest, bool overwrite = false)
         {
             return await new FileInfo(source).CopyFile(dest, overwrite);
         }
