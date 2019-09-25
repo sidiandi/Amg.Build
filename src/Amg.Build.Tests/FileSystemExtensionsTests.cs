@@ -158,12 +158,11 @@ namespace Amg.Build
             var time = Enumerable.Range(0, 3)
                 .Select(_ => MeasureTime(() => source.CopyTree(dest, useHardlinks: useHardlinks)))
                 .ToList();
+            Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
             if (!useHardlinks)
             {
                 Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds * 0.5));
             }
-
-            Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
         }
 
         [Test, TestCase(true), TestCase(false)]
