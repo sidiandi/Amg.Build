@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Security;
 using System.Threading.Tasks;
 
@@ -15,15 +17,15 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private string fileName;
-        private string[] leadingArguments = new string[] { };
-        private string workingDirectory = ".";
-        private int? expectedExitCode = 0;
-        private IDictionary<string, string> environment = new Dictionary<string, string>();
-        private string user;
-        private string password;
-        private Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
-        private Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
+        readonly string fileName;
+        readonly string[] leadingArguments = new string[] { };
+        readonly string workingDirectory = ".";
+        readonly int? expectedExitCode = 0;
+        readonly IDictionary<string, string> environment = new Dictionary<string, string>();
+        readonly string user = null;
+        readonly string password = null;
+        readonly Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
+        readonly Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -42,18 +44,13 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithArguments(IEnumerable<string> args)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.leadingArguments = leadingArguments.Concat(args).ToArray();
-            return t;
+            return With(_ => leadingArguments, leadingArguments.Concat(args).ToArray());
         }
 
         /// <summary />
         public ITool RunAs(string user, string password)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.user = user;
-            t.password = password;
-            return t;
+            return With(_ => _.user, user).With(_ => _.password, password);
         }
 
         /// <summary>
@@ -63,9 +60,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.environment = environment.Merge(environmentVariables);
-            return t;
+            return With(_ => _.environment, environment.Merge(environmentVariables));
         }
 
         /// <summary>
@@ -75,9 +70,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithWorkingDirectory(string workingDirectory)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.workingDirectory = workingDirectory;
-            return t;
+            return With(_ => _.workingDirectory, workingDirectory);
         }
 
         /// <summary>
@@ -87,9 +80,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool WithExitCode(int expectedExitCode)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.expectedExitCode = expectedExitCode;
-            return t;
+            return With(_ => _.expectedExitCode, expectedExitCode);
         }
 
         /// <summary>
@@ -98,9 +89,7 @@ namespace Amg.Build
         /// <returns></returns>
         public ITool DoNotCheckExitCode()
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.expectedExitCode = null;
-            return t;
+            return With(_ => _.expectedExitCode, null);
         }
 
         /// <summary>
@@ -249,25 +238,27 @@ namespace Amg.Build
         /// <summary />
         public ITool WithOnError(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.onError = getLineHandler(onError);
-            return t;
+            return With(_ => _.onError, getLineHandler(onError));
         }
 
         /// <summary />
         public ITool WithOnOutput(Func<Action<IRunning, string>, Action<IRunning, string>> getLineHandler)
         {
+            return With(_ => _.onOutput, getLineHandler(onOutput));
+        }
+
+        Tool With<T>(Expression<Func<Tool, T>> field, T newValue)
+        {
             var t = (Tool)this.MemberwiseClone();
-            t.onOutput = getLineHandler(onOutput);
+            var fieldInfo = (FieldInfo)((MemberExpression)field.Body).Member;
+            fieldInfo.SetValue(t, newValue);
             return t;
         }
 
         /// <summary />
         public ITool WithFileName(string fileName)
         {
-            var t = (Tool)this.MemberwiseClone();
-            t.fileName = fileName;
-            return t;
+            return With(_ => _.fileName, fileName);
         }
     }
 }
