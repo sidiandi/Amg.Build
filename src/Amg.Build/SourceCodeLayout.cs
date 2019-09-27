@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -76,14 +77,10 @@ namespace Amg.Build
         {
             get
             {
-                var fileName = Assembly.GetExecutingAssembly().Location.Parent().Combine("build.cmd.template");
-                try
+                var assembly = Assembly.GetExecutingAssembly();
+                using (var resource = assembly.GetManifestResourceStream("Amg.Build.build.cmd"))
                 {
-                    return System.IO.File.ReadAllText(fileName);
-                }
-                catch (Exception e)
-                {
-                    throw new Exception($"cannot read: {fileName}", e);
+                    return new StreamReader(resource).ReadToEnd();
                 }
             }
         }
