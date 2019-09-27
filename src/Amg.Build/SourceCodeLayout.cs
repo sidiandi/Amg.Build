@@ -20,7 +20,7 @@ namespace Amg.Build
         public string sourceDir => cmdFile.Parent().Combine(name);
         public string propsFile => sourceDir.Combine("Amg.Build.props");
         public string csprojFile => sourceDir.Combine(name + ".csproj");
-        public string dllFile => sourceDir.Combine("out", name + ".dll");
+        public string dllFile => sourceDir.Combine("bin", "Debug", "netcoreapp2.1", name + ".dll");
         public string fastDotnetRunFile => sourceDir.Combine("fast-dotnet-run.cmd");
 
         public SourceCodeLayout(string cmdFile)
@@ -152,7 +152,7 @@ namespace Amg.Build
             try
             {
                 Logger.Information("{dllFile}", dllFile);
-                var cmdFile = dllFile.Absolute().Parent().Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
+                var cmdFile = dllFile.Absolute().Parent().Parent().Parent().Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
                 var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
                 var paths = sourceCodeLayout.Files

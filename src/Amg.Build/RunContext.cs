@@ -66,7 +66,6 @@ namespace Amg.Build
                 onceInterceptor);
 
                 var source = SourceCodeLayout.Get(targetsType);
-                Logger.Information("{@source}", new { source.cmdFile });
 
                 Options options = null;
 
