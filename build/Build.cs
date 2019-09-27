@@ -126,7 +126,10 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     [Description("Commit pending changes and run end to end test")]
     public virtual async Task CommitAndRunEndToEndTest(string message)
     {
-        await Git.GitTool.Run("commit", "-m", message, "-a");
+        await Git.GitTool
+            .DoNotCheckExitCode()
+            .Run("commit", "-m", message, "-a");
+
         await EndToEndTest();
     }
 
