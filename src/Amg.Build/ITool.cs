@@ -122,5 +122,41 @@ namespace Amg.Build
                 .WithOnOutput(old => (r, l) => { })
                 .WithOnError(old => (r, l) => { });
         }
+
+        /// <summary>
+        /// Write output and error to output
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <returns></returns>
+        public static ITool IgnoreError(this ITool tool)
+        {
+            return tool
+                .WithOnOutput(old => (r, l) => { })
+                .WithOnError(old => (r, l) => { });
+        }
+
+        /// <summary>
+        /// write output and error to the console
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <returns></returns>
+        public static ITool Passthrough(this ITool tool)
+        {
+            return tool
+                .WithOnOutput(old => (r, _) => Console.WriteLine(_))
+                .WithOnError(old => (r, _) => Console.Error.WriteLine(_));
+        }
+
+        /// <summary>
+        /// Like Passthrough, but prepend the process ID to each line
+        /// </summary>
+        /// <param name="tool"></param>
+        /// <returns></returns>
+        public static ITool PrependProcessId(this ITool tool)
+        {
+            return tool
+                .WithOnOutput(old => (r, _) => Console.WriteLine($"{r.Process.Id}:{_}"))
+                .WithOnError(old => (r, _) => Console.Error.WriteLine($"{r.Process.Id}:{_}"));
+        }
     }
 }

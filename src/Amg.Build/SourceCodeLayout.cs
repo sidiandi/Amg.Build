@@ -16,22 +16,9 @@ namespace Amg.Build
         public string cmdFile;
         public string dllFile;
 
-        public async Task Fix()
-        {
-            await FixFile(cmdFile, BootstrapperText);
-            await FixFile(propsFile, PropsText);
-        }
-
-        async Task FixFile(string file, string expected)
-        {
-            await file
-                .EnsureParentDirectoryExists()
-                .WriteAllTextIfChangedAsync(expected);
-        }
-
         public async Task Check()
         {
-            await CheckFile(cmdFile, BootstrapperText);
+            await CheckFileEnd(cmdFile, BootstrapperText);
             await CheckFile(propsFile, PropsText);
             var csproj = await csprojFile.ReadAllTextAsync();
             var propsLine = @"<Import Project=""Amg.Build.props"" />";
@@ -45,7 +32,29 @@ namespace Amg.Build
         {
             if (!string.Equals(await file.ReadAllTextAsync(), expected))
             {
-                Logger.Warning("{cmdFile} does not have the expected contents. Use --fix to fix.", file);
+                Logger.Warning(@"{cmdFile} does not have the expected contents
+====
+{expected}
+====
+", file, expected);
+            }
+        }
+
+        async Task CheckFileEnd(string file, string expectedEnd)
+        {
+            var fileText = await file.ReadAllTextAsync();
+            if (fileText == null)
+            {
+                fileText = String.Empty;
+            }
+
+            if (!fileText.EndsWith(expectedEnd))
+            {
+                Logger.Warning(@"{file} does not end with
+====
+{expectedEnd}
+====
+", file, expectedEnd);
             }
         }
 
