@@ -74,15 +74,8 @@ namespace Amg.Build
                     var sourceOptions = new OptionsWithSource(onceProxy);
                     options = sourceOptions;
                     GetOptParser.Parse(commandLineArguments, options);
-                    if (sourceOptions.Fix)
-                    {
-                        await source.Fix();
-                        return ExitCode.Success;
-                    }
-                    else
-                    {
-                        await source.Check();
-                    }
+                    await source.Check();
+
                     if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
                     {
                         return RequireRebuild();

@@ -36,10 +36,6 @@ namespace Amg.Build
         /// <summary />
         [Description("Ignore --clean (internal use only)")]
         public bool IgnoreClean { get; set; }
-
-        /// <summary />
-        [Description("Fix .cmd and .csproj files.")]
-        public bool Fix { get; set; }
     }
 
     /// <summary>
