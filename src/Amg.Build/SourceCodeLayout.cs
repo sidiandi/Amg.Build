@@ -72,7 +72,21 @@ namespace Amg.Build
 </Project>
 ";
 
-        public string BootstrapperText => Assembly.GetExecutingAssembly().Location.Parent().Combine("build.cmd.template").ReadAllTextAsync().Result;
+        public string BootstrapperText
+        {
+            get
+            {
+                var fileName = Assembly.GetExecutingAssembly().Location.Parent().Combine("build.cmd.template");
+                try
+                {
+                    return System.IO.File.ReadAllText(fileName);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"cannot read: {fileName}", e);
+                }
+            }
+        }
 
         public static SourceCodeLayout Get(Type targetsType)
         {
