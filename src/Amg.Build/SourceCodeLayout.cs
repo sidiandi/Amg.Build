@@ -20,7 +20,7 @@ namespace Amg.Build
 
         public async Task Check()
         {
-            await CheckFileEnd(cmdFile, BootstrapperText);
+            await CheckFileEnd(cmdFile, BuildCmdText);
             await CheckFile(propsFile, PropsText);
             var csproj = await csprojFile.ReadAllTextAsync();
             var propsLine = @"<Import Project=""Amg.Build.props"" />";
@@ -60,28 +60,16 @@ namespace Amg.Build
             }
         }
 
-        public string PropsText => @"<Project>
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
-	<Configuration>Debug</Configuration>
-	<AmgBuildVersion Condition=""$(AmgBuildVersion)==''"" >0.*</AmgBuildVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include=""Amg.Build"" Version=""$(AmgBuildVersion)"" />
-  </ItemGroup>
-</Project>
-";
+        public string PropsText => ReadStringFromEmbeddedResource("Amg.Build.props");
 
-        public string BootstrapperText
+        public string BuildCmdText => ReadStringFromEmbeddedResource("build.cmd");
+
+        static string ReadStringFromEmbeddedResource(string resourceFileName)
         {
-            get
+            var assembly = Assembly.GetExecutingAssembly();
+            using (var resource = assembly.GetManifestResourceStream($"Amg.Build.{resourceFileName}"))
             {
-                var assembly = Assembly.GetExecutingAssembly();
-                using (var resource = assembly.GetManifestResourceStream("Amg.Build.build.cmd"))
-                {
-                    return new StreamReader(resource).ReadToEnd();
-                }
+                return new StreamReader(resource).ReadToEnd();
             }
         }
 
