@@ -160,7 +160,15 @@ namespace Amg.Build
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
+                Console.Error.WriteLine($@"An unknown error has occured.
+
+This is most likely a bug in Amg.Build
+
+Submit here: https://github.com/sidiandi/Amg.Build/issues
+
+Details:
+{ex}
+");
                 return ExitCode.UnknownError;
             }
         }
