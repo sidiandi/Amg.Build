@@ -18,6 +18,10 @@ namespace amgbuild
         [Description("Create an Amg.Build script")]
         public virtual async Task Init(string name)
         {
+            var path = name.EndsWith(".cmd")
+                ? name
+                : (name + ".cmd").Absolute();
+
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(name);
         }
     }
