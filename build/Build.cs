@@ -151,10 +151,11 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         // create script
         var name = "end-to-end-test-of-build";
-        var dotnet = await Dotnet.Tool();
-        var amgbuild = await dotnet
+        var amgbuild = (await Dotnet.Tool())
             .WithWorkingDirectory(testDir)
-            .Run(OutDir.Combine("bin", "amgbuild.dll"), name);
+            .WithArguments(OutDir.Combine("bin", "amgbuild.dll"));
+
+        await amgbuild.Run("init", name);
 
         var script = testDir.Combine($"{name}.cmd");
 
