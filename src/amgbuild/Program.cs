@@ -19,10 +19,10 @@ namespace amgbuild
         public virtual async Task Init(string name)
         {
             var path = name.EndsWith(".cmd")
-                ? name
+                ? name.Absolute()
                 : (name + ".cmd").Absolute();
 
-            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(name);
+            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
         }
     }
 }
