@@ -11,6 +11,7 @@
   <ItemGroup>
     <None Remove="Amg.Build.props" />
     <None Remove="build.cmd" />
+    <None Remove="build.csproj.template" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,6 +19,7 @@
     <EmbeddedResource Include="build.cmd">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="build.csproj.template" />
   </ItemGroup>
 
   <ItemGroup>
