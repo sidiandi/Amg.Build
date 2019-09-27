@@ -23,7 +23,7 @@ namespace Amg.Build
             var s = new SourceCodeLayout
             {
                 cmdFile = cmdFilePath,
-                name = cmdFilePath.FileName()
+                name = cmdFilePath.FileNameWithoutExtension()
             };
 
             s.sourceDir = cmdFilePath.Parent().Combine(s.name);
