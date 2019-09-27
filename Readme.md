@@ -67,13 +67,14 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* output options for ITool
 * Improve error logging
 * Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* check source files
+* output options for ITool
 * improved logging of process start failures
 * better logging of failures
 * more file system extensions

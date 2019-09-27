@@ -13,6 +13,8 @@ namespace Amg.Build
     /// </summary>
     public static class Extensions
     {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         /// <summary>
         /// Easy readable text format for a TimeSpan
         /// </summary>
