@@ -89,6 +89,7 @@ namespace Amg.Build
 
         async Task FixFile(string file, string expected)
         {
+            Logger.Information("Write {file}", file);
             await file
                 .EnsureParentDirectoryExists()
                 .WriteAllTextIfChangedAsync(expected);
