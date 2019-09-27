@@ -262,11 +262,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack(), EndToEndTest());
         var nupkgFile = await Pack();
-        await Nuget.Run(
-            "push",
-            nupkgFile,
-            "-Source", nugetPushSource
-            );
+        var push = Nuget
+            .WithArguments("push");
+        if (nugetPushSource != null)
+        {
+            push = push.WithArguments("-Source", nugetPushSource);
+        }
+
+        await push.Run(nupkgFile);
     }
 
     [Once] [Description("Open in Visual Studio")]
@@ -320,6 +323,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         }
         await gitTool.Run("push", "--tags");
         await Push("https://api.nuget.org/v3/index.json");
+
+        // also try to push to the default source
+        try
+        {
+            await Push();
+        }
+        catch
+        {
+        }
     }
 }
 
