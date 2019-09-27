@@ -221,6 +221,12 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             AssertExitCode(result, 0);
             AssertRebuild(result);
         }
+
+        {
+            var result = await build.Run("--fix");
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
+        }
     }
 
     private static async Task CreateEmptyNugetConfigFile(string nugetConfigFile)
