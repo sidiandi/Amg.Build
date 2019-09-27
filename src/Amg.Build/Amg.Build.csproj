@@ -11,7 +11,12 @@
   <ItemGroup>
     <None Remove="Amg.Build.props" />
     <None Remove="build.cmd" />
+    <None Remove="build.cs.template" />
     <None Remove="build.csproj.template" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="build.cs.template" />
   </ItemGroup>
 
   <ItemGroup>
