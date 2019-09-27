@@ -31,7 +31,7 @@ namespace Amg.Build
             s.csprojFile = s.sourceDir.Combine($"{s.name}.csproj");
             s.propsFile = s.sourceDir.Combine("Amg.Build.props");
 
-            Logger.Information("{@sourceLayout}", s); ;
+            Logger.Information("{sourceLayout}", new { s.propsFile, s.cmdFile }); ;
             await s.Fix();
 
             return s;
