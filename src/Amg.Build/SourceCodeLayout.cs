@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -13,23 +14,23 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public string name;
-        public string sourceFile;
-        public string sourceDir;
-        public string propsFile;
+        public string cmdFile;
+        public string name => cmdFile.FileNameWithoutExtension();
+        public string sourceFile => sourceDir.Combine(name + ".cs");
+        public string sourceDir => cmdFile.Parent().Combine(name);
+        public string propsFile => sourceDir.Combine("Amg.Build.props");
+        public string csprojFile => sourceDir.Combine(name + ".csproj");
+        public string dllFile => sourceDir.Combine("out", name + ".dll");
+        public string fastDotnetRunFile => sourceDir.Combine("fast-dotnet-run.cmd");
+
+        public SourceCodeLayout(string cmdFile)
+        {
+            this.cmdFile = cmdFile;
+        }
 
         public static async Task<SourceCodeLayout> Create(string cmdFilePath)
         {
-            var s = new SourceCodeLayout
-            {
-                cmdFile = cmdFilePath,
-                name = cmdFilePath.FileNameWithoutExtension()
-            };
-
-            s.sourceDir = cmdFilePath.Parent().Combine(s.name);
-            s.sourceFile = s.sourceDir.Combine($"{s.name}.cs");
-            s.csprojFile = s.sourceDir.Combine($"{s.name}.csproj");
-            s.propsFile = s.sourceDir.Combine("Amg.Build.props");
+            var s = new SourceCodeLayout(cmdFilePath);
 
             var existing = new[]
             {
@@ -43,20 +44,18 @@ namespace Amg.Build
             }
 
             await s.Fix();
-            var src = ReadStringFromEmbeddedResource("build_cs.template");
-            await s.FixFile(s.sourceFile, src);
+            await s.FixFile(s.sourceFile, ReadStringFromEmbeddedResource("name_cs"));
 
             return s;
         }
 
-        public string csprojFile;
-        public string cmdFile;
-        public string dllFile;
+        string CmdFileText => ReadStringFromEmbeddedResource("name.cmd");
+        string PropsFileText => ReadStringFromEmbeddedResource("Amg.Build.props");
 
         public async Task Check()
         {
-            await CheckFileEnd(cmdFile, BuildCmdText);
-            await CheckFile(propsFile, PropsText);
+            await CheckFileEnd(cmdFile, CmdFileText);
+            await CheckFile(propsFile, PropsFileText);
             var csproj = await csprojFile.ReadAllTextAsync();
             var propsLine = @"<Import Project=""Amg.Build.props"" />";
             if (!csproj.Contains(propsLine))
@@ -95,14 +94,10 @@ namespace Amg.Build
             }
         }
 
-        public string PropsText => ReadStringFromEmbeddedResource("Amg.Build.props");
-
-        public string BuildCmdText => ReadStringFromEmbeddedResource("build.cmd");
-
         static string ReadStringFromEmbeddedResource(string resourceFileName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            using (var resource = assembly.GetManifestResourceStream($"Amg.Build.{resourceFileName}"))
+            using (var resource = assembly.GetManifestResourceStream($"Amg.Build.template.{resourceFileName}"))
             {
                 if (resource == null)
                 {
@@ -119,12 +114,15 @@ namespace Amg.Build
 
         public async Task Fix()
         {
-            await FixFile(cmdFile, BuildCmdText);
-            await FixFile(propsFile, PropsText);
-            await FixFile(csprojFile, BuildCsProjText);
+            await FixFile(cmdFile, CmdFileText);
+            await FixFile(propsFile, PropsFileText);
+            await FixFile(csprojFile, ReadStringFromEmbeddedResource("name.csproj"));
+            await FixFile(fastDotnetRunFile, FastDotnetRunFileText);
         }
 
-        string BuildCsProjText => ReadStringFromEmbeddedResource("build.csproj.template");
+        string FastDotnetRunFileText => ReadStringFromEmbeddedResource("fast-dotnet-run.cmd");
+
+        string BuildCsProjText => ReadStringFromEmbeddedResource("name.csproj");
 
         async Task FixFile(string file, string expected)
         {
@@ -134,36 +132,31 @@ namespace Amg.Build
                 .WriteAllTextIfChangedAsync(expected);
         }
 
+        IEnumerable<string> Files => new[] {
+            cmdFile,
+            csprojFile,
+            propsFile,
+            fastDotnetRunFile
+        };
+
         /// <summary>
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>
         /// build.cmd
         /// build\build.cs
         /// build\build.csproj
-        /// build\bin\Debug\netcoreapp2.2\build.dll
+        /// build\bin\Debug\netcoreapp2.1\build.dll
         /// <returns></returns>
         internal static SourceCodeLayout Get(string dllFile)
         {
             try
             {
-                var sourceCodeLayout = new SourceCodeLayout
-                {
-                    dllFile = dllFile
-                };
-                sourceCodeLayout.name = sourceCodeLayout.dllFile.FileNameWithoutExtension();
-                sourceCodeLayout.sourceDir = sourceCodeLayout.dllFile.Parent().Parent().Parent().Parent();
-                sourceCodeLayout.sourceFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.cs");
-                sourceCodeLayout.csprojFile = sourceCodeLayout.sourceDir.Combine($"{sourceCodeLayout.name}.csproj");
-                sourceCodeLayout.propsFile = sourceCodeLayout.sourceDir.Combine("Amg.Build.props");
-                sourceCodeLayout.cmdFile = sourceCodeLayout.sourceDir.Parent().Combine($"{sourceCodeLayout.name}.cmd");
+                var cmdFile = dllFile.Absolute().Parent().Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
+                var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
-                var paths = new[] {
-                    sourceCodeLayout.sourceDir,
-                    sourceCodeLayout.sourceFile,
-                    sourceCodeLayout.cmdFile,
-                    sourceCodeLayout.csprojFile
-                }.Select(path => new { path, exists = path.Exists() })
-                .ToList();
+                var paths = sourceCodeLayout.Files
+                    .Select(path => new { path, exists = path.Exists() })
+                    .ToList();
 
                 Logger.Debug("{@paths}", paths);
                 var hasSources = paths.All(_ => _.exists);
