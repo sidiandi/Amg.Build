@@ -11,19 +11,13 @@
   <ItemGroup>
     <None Remove="Amg.Build.props" />
     <None Remove="build.cmd" />
-    <None Remove="build.cs.template" />
     <None Remove="build.csproj.template" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="build.cs.template" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <EmbeddedResource Include="build_cs.template" />
     <EmbeddedResource Include="Amg.Build.props" />
-    <EmbeddedResource Include="build.cmd">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <EmbeddedResource Include="build.cmd" />
     <EmbeddedResource Include="build.csproj.template" />
   </ItemGroup>
 

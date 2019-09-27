@@ -31,8 +31,20 @@ namespace Amg.Build
             s.csprojFile = s.sourceDir.Combine($"{s.name}.csproj");
             s.propsFile = s.sourceDir.Combine("Amg.Build.props");
 
+            var existing = new[]
+            {
+                s.sourceDir,
+                s.cmdFile,
+            }.Where(_ => _.Exists());
+
+            if (existing.Any())
+            {
+                throw new Exception($"Cannot create script because these files already exist: {existing.Join(", ")}");
+            }
+
             await s.Fix();
-            await s.FixFile(s.sourceFile, ReadStringFromEmbeddedResource("build.cs.template"));
+            var src = ReadStringFromEmbeddedResource("build_cs.template");
+            await s.FixFile(s.sourceFile, src);
 
             return s;
         }
@@ -92,6 +104,10 @@ namespace Amg.Build
             var assembly = Assembly.GetExecutingAssembly();
             using (var resource = assembly.GetManifestResourceStream($"Amg.Build.{resourceFileName}"))
             {
+                if (resource == null)
+                {
+                    throw new Exception(assembly.GetManifestResourceNames().Join());
+                }
                 return new StreamReader(resource).ReadToEnd();
             }
         }
