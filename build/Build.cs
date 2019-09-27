@@ -149,13 +149,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             .WithWorkingDirectory(testDir)
             .Run("source");
 
-        var script = testDir.Combine("build.cmd");
-
         // create script
         var name = "end-to-end-test-of-build";
         var amgbuild = (await Dotnet.Tool())
             .WithWorkingDirectory(testDir)
             .Run(OutDir.Combine("bin", "amgbuild.dll"), name);
+
+        var script = testDir.Combine($"{name}.cmd");
 
         foreach (var d in new[] { "obj", "bin"})
         {
