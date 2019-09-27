@@ -153,7 +153,7 @@ namespace Amg.Build
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex);
                 return ExitCode.UnknownError;
             }
         }
