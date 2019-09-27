@@ -153,7 +153,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         // create script
         var name = "end-to-end-test-of-build";
-        var amgbuild = (await Dotnet.Tool()).Run("run", OutDir.Combine("bin", "amgbuild.dll"), name);
+        var amgbuild = (await Dotnet.Tool())
+            .WithWorkingDirectory(testDir)
+            .Run("run", OutDir.Combine("bin", "amgbuild.dll"), name);
 
         foreach (var d in new[] { "obj", "bin"})
         {
