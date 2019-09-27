@@ -151,6 +151,7 @@ namespace Amg.Build
         {
             try
             {
+                Logger.Information("{dllFile}", dllFile);
                 var cmdFile = dllFile.Absolute().Parent().Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
                 var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
