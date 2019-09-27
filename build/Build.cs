@@ -150,7 +150,11 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             .Run("source");
 
         var script = testDir.Combine("build.cmd");
-        await Root.Combine("examples", "skeleton").CopyTree(testDir);
+
+        // create script
+        var name = "end-to-end-test-of-build";
+        var amgbuild = (await Dotnet.Tool()).Run("run", OutDir.Combine("bin", "amgbuild.dll"), name);
+
         foreach (var d in new[] { "obj", "bin"})
         {
             await testDir.Combine("build", d).EnsureNotExists();

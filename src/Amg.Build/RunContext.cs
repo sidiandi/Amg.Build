@@ -229,7 +229,13 @@ Details:
             {
                 try
                 {
-                    return (GetDefaultTarget(targets), new string[] { });
+                    var defaultTarget = GetDefaultTarget(targets);
+                    if (defaultTarget == null)
+                    {
+                        HelpText.Print(Console.Out, options);
+                        Environment.Exit((int)ExitCode.HelpDisplayed);
+                    }
+                    return (defaultTarget, new string[] { });
                 }
                 catch (Exception e)
                 {
@@ -272,20 +278,6 @@ Details:
                 t.FindByNameOrDefault(_ => _.Name, "Default"),
             }.FirstOrDefault(_ => _ != null);
 
-            if (defaultTarget == null)
-            {
-                throw new Exception($@"No default target found.
-
-Specify a target or add a method with signature
-
-    [Once] [Default]
-    public virtual async Task Default()
-    {{
-        ...
-    }}
-
-in the {targets.GetType().BaseType} class.");
-            }
             return defaultTarget;
         }
 

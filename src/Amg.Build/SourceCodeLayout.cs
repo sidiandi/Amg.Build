@@ -2,11 +2,14 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+
+[assembly: InternalsVisibleTo("amgbuild")]
 
 namespace Amg.Build
 {
-    class SourceCodeLayout
+    internal class SourceCodeLayout
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -14,6 +17,25 @@ namespace Amg.Build
         public string sourceFile;
         public string sourceDir;
         public string propsFile;
+
+        public static async Task<SourceCodeLayout> Create(string cmdFilePath)
+        {
+            var s = new SourceCodeLayout
+            {
+                cmdFile = cmdFilePath,
+                name = cmdFilePath.FileName()
+            };
+
+            s.sourceDir = cmdFilePath.Parent().Combine(s.name);
+            s.sourceFile = s.sourceDir.Combine($"{s.name}.cs");
+            s.csprojFile = s.sourceDir.Combine($"{s.name}.csproj");
+            s.propsFile = s.sourceDir.Combine("Amg.Build.props");
+
+            await s.Fix();
+
+            return s;
+        }
+
         public string csprojFile;
         public string cmdFile;
         public string dllFile;
