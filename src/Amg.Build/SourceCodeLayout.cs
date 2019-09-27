@@ -109,7 +109,7 @@ namespace Amg.Build
 
         public static SourceCodeLayout Get(Type targetsType)
         {
-            return Get(targetsType.Assembly.Location);
+            return FromDll(targetsType.Assembly.Location);
         }
 
         public async Task Fix()
@@ -147,7 +147,7 @@ namespace Amg.Build
         /// build\build.csproj
         /// build\bin\Debug\netcoreapp2.1\build.dll
         /// <returns></returns>
-        internal static SourceCodeLayout Get(string dllFile)
+        internal static SourceCodeLayout FromDll(string dllFile)
         {
             try
             {

@@ -20,6 +20,9 @@ namespace Amg.Build
             var s = await SourceCodeLayout.Create(cmdFile);
             Assert.That(s != null);
             await s.Check();
+
+            var s1 = SourceCodeLayout.FromDll(s.dllFile);
+            Assert.That(s1 != null);
         }
     }
 }
