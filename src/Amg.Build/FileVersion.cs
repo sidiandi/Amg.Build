@@ -52,11 +52,11 @@ namespace Amg.Build
 
         public bool IsNewer(FileVersion current)
         {
-            return MaxLastWriteTime > current.MaxLastWriteTime;
+            return MinLastWriteTime > current.MaxLastWriteTime;
         }
 
-        DateTime MinLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.LastWriteTimeUtc)).Min();
+        DateTime MinLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.MinLastWriteTime)).Min();
 
-        DateTime MaxLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.LastWriteTimeUtc)).Max();
+        DateTime MaxLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.MaxLastWriteTime)).Max();
     }
 }
