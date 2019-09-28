@@ -32,7 +32,9 @@ namespace Amg.Build
                     name = path.FileName(),
                     lastWriteTimeUtc = info.LastWriteTimeUtc,
                     length = 0,
-                    childs = path.EnumerateFileSystemEntries().Select(Get).ToArray()
+                    childs = path.EnumerateFileSystemEntries()
+                    .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
+                    .Select(Get).ToArray()
                 };
             }
             else
@@ -47,5 +49,14 @@ namespace Amg.Build
                 && lastWriteTimeUtc.Equals(other.lastWriteTimeUtc)
                 && childs.SequenceEqual(other.childs);
         }
+
+        public bool IsNewer(FileVersion current)
+        {
+            return MinLastWriteTime > current.MaxLastWriteTime;
+        }
+
+        DateTime MinLastWriteTime => new[] { lastWriteTimeUtc }.Concat(childs.Select(_ => _.lastWriteTimeUtc)).Min();
+
+        DateTime MaxLastWriteTime => new[] { lastWriteTimeUtc }.Concat(childs.Select(_ => _.lastWriteTimeUtc)).Max();
     }
 }

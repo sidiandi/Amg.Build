@@ -36,7 +36,7 @@ namespace Amg.Build
             }
         }
 
-        static bool IsOutOfDate(string lastFileVersionFile, FileVersion current)
+        static bool IsOutOfDate(string lastFileVersionFile, FileVersion current, string dllFile)
         {
             if (lastFileVersionFile.IsFile())
             {
@@ -53,8 +53,9 @@ namespace Amg.Build
             }
             else
             {
+                var dllVersion = FileVersion.Get(dllFile);
                 WriteJson<FileVersion>(lastFileVersionFile.EnsureParentDirectoryExists(), null);
-                return true;
+                return !dllVersion.IsNewer(current);
             }
         }
 
@@ -84,14 +85,9 @@ namespace Amg.Build
                 var csprojFile = sourceDir.Glob("*.csproj").SingleOrDefault();
                 if (csprojFile != null)
                 {
-                    if (csprojFile.WithExtension(".norebuild").IsFile())
-                    {
-                        return;
-                    }
-
                     var currentFileVersion = FileVersion.Get(sourceDir);
                     var fileVersionFile = dll + ".sources";
-                    if (IsOutOfDate(fileVersionFile, currentFileVersion))
+                    if (IsOutOfDate(fileVersionFile, currentFileVersion, dll))
                     {
                         Logger.Information("Source files at {sourceDir} have changed. Rebuilding {dll}", sourceDir, dll);
                         var lastBuildFileVersion = ReadJson<FileVersion>(fileVersionFile);
