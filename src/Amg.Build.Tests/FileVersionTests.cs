@@ -3,18 +3,27 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
     [TestFixture]
-    public class FileVersionTests
+    public class FileVersionTests : TestBase
     {
         [Test]
-        public void DllIsNewerThanSourceCode()
+        public async Task DllIsNewerThanSourceCode()
         {
             var dll = Assembly.GetExecutingAssembly().Location;
             var sourceDir = dll.Parent().Parent().Parent().Parent();
-            Assert.That(FileVersion.Get(dll).IsNewer(FileVersion.Get(sourceDir)));
+            var sourceDirVersion = FileVersion.Get(sourceDir);
+            Assert.That(FileVersion.Get(dll).IsNewer(sourceDirVersion));
+
+            var testDir = CreateEmptyTestDirectory();
+            var jsonFile = testDir.Combine("version.json");
+            Json.Write<FileVersion>(jsonFile, sourceDirVersion);
+            Console.WriteLine(await jsonFile.ReadAllTextAsync());
+            var restored = Json.Read<FileVersion>(jsonFile);
+            Assert.That(restored, Is.EqualTo(sourceDirVersion));
         }
     }
 }

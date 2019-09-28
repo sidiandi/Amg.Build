@@ -10,14 +10,12 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
-    class RebuildMyself
+    internal static class Json
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        static T ReadJson<T>(string path)
+        public static T Read<T>(string path)
         {
             // deserialize JSON directly from a file
-            using (StreamReader file = File.OpenText(path))
+            using (var file = new StreamReader(path))
             {
                 var serializer = new JsonSerializer();
                 var reader = new JsonTextReader(file);
@@ -25,7 +23,7 @@ namespace Amg.Build
             }
         }
 
-        static void WriteJson<T>(string path, T data)
+        public static void Write<T>(string path, T data)
         {
             // serialize JSON directly to a file
             using (var file = new StreamWriter(path))
@@ -36,13 +34,19 @@ namespace Amg.Build
             }
         }
 
+    }
+
+    class RebuildMyself
+    {
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         static bool IsOutOfDate(string lastFileVersionFile, FileVersion current, string dllFile)
         {
             if (lastFileVersionFile.IsFile())
             {
                 try
                 {
-                    var lastBuildSourceVersion = ReadJson<FileVersion>(lastFileVersionFile);
+                    var lastBuildSourceVersion = Json.Read<FileVersion>(lastFileVersionFile);
                     Logger.Dump(lastBuildSourceVersion);
                     Logger.Dump(current);
                     var outOfDate = !lastBuildSourceVersion.Equals(current);
@@ -55,7 +59,7 @@ namespace Amg.Build
             }
             else
             {
-                WriteJson(lastFileVersionFile, current);
+                Json.Write(lastFileVersionFile, current);
                 var dllVersion = FileVersion.Get(dllFile);
                 return !dllVersion.IsNewer(current);
             }
@@ -94,7 +98,7 @@ namespace Amg.Build
                     if (IsOutOfDate(fileVersionFile, currentFileVersion, dll))
                     {
                         Logger.Information("Source files at {sourceDir} have changed. Rebuilding {dll}", sourceDir, dll);
-                        var lastBuildFileVersion = ReadJson<FileVersion>(fileVersionFile);
+                        var lastBuildFileVersion = Json.Read<FileVersion>(fileVersionFile);
                         var oldDll = (dll + "." + Path.GetRandomFileName() + ".old").EnsureFileNotExists();
                         dll.Move(oldDll);
                         var dotnet = await Once.Create<Dotnet>().Tool();
@@ -105,7 +109,7 @@ namespace Amg.Build
                             "--force",
                             csprojFile);
                         
-                        WriteJson(fileVersionFile, currentFileVersion);
+                        Json.Write(fileVersionFile, currentFileVersion);
                         
                         var result = await dotnet
                             .Passthrough()

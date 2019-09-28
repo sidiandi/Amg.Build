@@ -6,10 +6,10 @@ namespace Amg.Build
 {
     class FileVersion : IEquatable<FileVersion>
     {
-        public string Name { get; private set; }
-        public DateTime LastWriteTimeUtc { get; private set; }
-        public long Length { get; private set; }
-        public FileVersion[] Childs { get; private set; }
+        public string Name { get; set; }
+        public DateTime LastWriteTimeUtc { get; set; }
+        public long Length { get; set; }
+        public FileVersion[] Childs { get; set; }
 
         public static FileVersion Get(string path)
         {
