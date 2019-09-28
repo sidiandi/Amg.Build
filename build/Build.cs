@@ -133,7 +133,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await EndToEndTest();
     }
 
-    [Once][Description("Complete test with .cmd bootstrapper file")]
+    string TargetFramework => "netcoreapp3.0";
+
+    [Once, Description("Complete test with .cmd bootstrapper file")]
     public virtual async Task EndToEndTest()
     {
         await Git.EnsureNoPendingChanges();
@@ -153,7 +155,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var name = "end-to-end-test-of-build";
         var amgbuild = (await Dotnet.Tool())
             .WithWorkingDirectory(testDir)
-            .WithArguments(Root.Combine("src", "amgbuild", "bin", Configuration, "netcoreapp2.2", "amgbuild.dll"));
+            .WithArguments(Root.Combine("src", "amgbuild", "bin", Configuration, TargetFramework, "amgbuild.dll"));
 
        await amgbuild.Run("init", name);
 
