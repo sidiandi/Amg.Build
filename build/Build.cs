@@ -153,9 +153,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var name = "end-to-end-test-of-build";
         var amgbuild = (await Dotnet.Tool())
             .WithWorkingDirectory(testDir)
-            .WithArguments(OutDir.Combine("bin", "amgbuild.dll"));
+            .WithArguments(Root.Combine("src", "amgbuild", "bin", Configuration, "netcoreapp2.2", "amgbuild.dll"));
 
-        await amgbuild.Run("init", name);
+       await amgbuild.Run("init", name);
 
         var script = testDir.Combine($"{name}.cmd");
 
