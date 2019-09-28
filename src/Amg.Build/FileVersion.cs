@@ -6,10 +6,10 @@ namespace Amg.Build
 {
     class FileVersion : IEquatable<FileVersion>
     {
-        public string name;
-        public DateTime lastWriteTimeUtc;
-        public long length;
-        public FileVersion[] childs;
+        public string Name { get; private set; }
+        public DateTime LastWriteTimeUtc { get; private set; }
+        public long Length { get; private set; }
+        public FileVersion[] Childs { get; private set; }
 
         public static FileVersion Get(string path)
         {
@@ -18,10 +18,10 @@ namespace Amg.Build
                 var info = new FileInfo(path);
                 return new FileVersion
                 {
-                    name = path.FileName(),
-                    lastWriteTimeUtc = info.LastWriteTimeUtc,
-                    length = info.Length,
-                    childs = new FileVersion[] { }
+                    Name = path.FileName(),
+                    LastWriteTimeUtc = info.LastWriteTimeUtc,
+                    Length = info.Length,
+                    Childs = new FileVersion[] { }
                 };
             }
             else if (path.IsDirectory())
@@ -29,10 +29,10 @@ namespace Amg.Build
                 var info = new DirectoryInfo(path);
                 return new FileVersion
                 {
-                    name = path.FileName(),
-                    lastWriteTimeUtc = info.LastWriteTimeUtc,
-                    length = 0,
-                    childs = path.EnumerateFileSystemEntries()
+                    Name = path.FileName(),
+                    LastWriteTimeUtc = info.LastWriteTimeUtc,
+                    Length = 0,
+                    Childs = path.EnumerateFileSystemEntries()
                     .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
                     .Select(Get).ToArray()
                 };
@@ -45,9 +45,9 @@ namespace Amg.Build
 
         public bool Equals(FileVersion other)
         {
-            return name.Equals(other.name)
-                && lastWriteTimeUtc.Equals(other.lastWriteTimeUtc)
-                && childs.SequenceEqual(other.childs);
+            return Name.Equals(other.Name)
+                && LastWriteTimeUtc.Equals(other.LastWriteTimeUtc)
+                && Childs.SequenceEqual(other.Childs);
         }
 
         public bool IsNewer(FileVersion current)
@@ -55,8 +55,8 @@ namespace Amg.Build
             return MaxLastWriteTime > current.MaxLastWriteTime;
         }
 
-        DateTime MinLastWriteTime => new[] { lastWriteTimeUtc }.Concat(childs.Select(_ => _.lastWriteTimeUtc)).Min();
+        DateTime MinLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.LastWriteTimeUtc)).Min();
 
-        DateTime MaxLastWriteTime => new[] { lastWriteTimeUtc }.Concat(childs.Select(_ => _.lastWriteTimeUtc)).Max();
+        DateTime MaxLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.LastWriteTimeUtc)).Max();
     }
 }
