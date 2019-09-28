@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
+
     /// <summary>
     /// Mixed extensions
     /// </summary>

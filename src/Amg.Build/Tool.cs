@@ -13,6 +13,7 @@ namespace Amg.Build
     /// Start a command line tool.
     /// </summary>
     /// Immutable. To customize, use the With... methods.
+    [Obsolete("Use Tools.Default")]
     public class Tool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -96,7 +97,7 @@ namespace Amg.Build
         /// Create a tool. 
         /// </summary>
         /// <param name="executableFileName">.exe or .cmd file. Relative paths are resolved to current directory and PATH environment.</param>
-        [Obsolete("Use Tool.Default")]
+        [Obsolete("Use Tools.Default")]
         public Tool(string executableFileName)
         {
             this.fileName = executableFileName;

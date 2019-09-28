@@ -9,16 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Amg.Build.props" />
-    <None Remove="build.cmd" />
-    <None Remove="build.csproj.template" />
+    <Compile Remove="template/name/name.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="build_cs.template" />
-    <EmbeddedResource Include="Amg.Build.props" />
-    <EmbeddedResource Include="build.cmd" />
-    <EmbeddedResource Include="build.csproj.template" />
+    <EmbeddedResource Include="template/name.cmd" />
+    <EmbeddedResource Include="template/name/name.cs" />
+    <EmbeddedResource Include="template/name/Amg.Build.props" />
+    <EmbeddedResource Include="template/name/name.csproj" />
   </ItemGroup>
 
   <ItemGroup>

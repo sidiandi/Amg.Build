@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Amg.Build
 {
     [TestFixture]
-    public class ToolTests
+    public class ToolTests : TestBase
     {
         [Test]
         public void SetFileName()
@@ -21,9 +21,9 @@ namespace Amg.Build
 
             string GetFileNameField(ITool tool)
             {
-                return (string) tool
+                return (string)tool
                     .GetType()
-                    .GetField("fileName", BindingFlags.NonPublic|BindingFlags.Instance)
+                    .GetField("fileName", BindingFlags.NonPublic | BindingFlags.Instance)
                     .GetValue(tool);
             }
 
@@ -56,7 +56,7 @@ namespace Amg.Build
         {
             var echo = Tools.Cmd
                 .WithArguments("echo")
-                .WithEnvironment(new Dictionary<string, string>{ { "NAME", "Alice" } });
+                .WithEnvironment(new Dictionary<string, string> { { "NAME", "Alice" } });
             var r = await echo.Run("Hello", "%NAME%");
             Assert.That(r.Output, Is.EqualTo("Hello Alice\r\n"));
         }
@@ -91,7 +91,7 @@ namespace Amg.Build
             }
         }
 
-        [Test][Ignore("requires a local user test")]
+        [Test] [Ignore("requires a local user test")]
         public async Task RunAs()
         {
             var user = "test";

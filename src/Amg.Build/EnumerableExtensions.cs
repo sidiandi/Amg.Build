@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Amg.Build
 {
@@ -355,6 +356,35 @@ namespace Amg.Build
 
                 return _;
             });
+        }
+
+        /// <summary>
+        /// Splits a string and returns the re-combined components
+        /// </summary>
+        /// "1.2.3".Lineage(".") returns ["1", "1.2", "1.2.3"]
+        /// <param name="x"></param>
+        /// <param name="separator"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> Lineage(this string x, string separator)
+        {
+            var p = x.Split(new[] { separator }, StringSplitOptions.None);
+            return p.Lineage().Select(_ => _.Join(separator));
+        }
+
+        /// <summary>
+        /// Sequence of sequences that contain successively more elements of e
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static IEnumerable<IEnumerable<T>> Lineage<T>(this IEnumerable<T> e)
+        {
+            var count = 0;
+            foreach (var i in e)
+            {
+                ++count;
+                yield return e.Take(count);
+            }
         }
     }
 }

@@ -201,7 +201,7 @@ Details:
                 return false;
             }
 
-            var sourceFiles = layout.sourceDir.Glob("**")
+            var sourceFiles = layout.SourceDir.Glob("**")
                 .Exclude("bin")
                 .Exclude("obj")
                 .Exclude(".vs");

@@ -30,10 +30,10 @@ public class BuildTargets
         await Greet(Enumerable.Range(0, 100).Select(_ => "Very long name ").Join());
 	}
 
-    [Once]
+    [Once, Default]
 	public virtual async Task Default()
 	{
-		await GreetAll();
+        await Greet("Alice"); 
 	}
 
     [Once][Description("Simulate a failing tool")]
