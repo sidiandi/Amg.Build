@@ -56,65 +56,15 @@ namespace Amg.Build
                     .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                     .CreateLogger();
 
-                var builder = new DefaultProxyBuilder();
-                var generator = new ProxyGenerator(builder);
-                var onceInterceptor = new OnceInterceptor();
-                var onceProxy = generator.CreateClassProxy(targetsType, new ProxyGenerationOptions
-                {
-                    Hook = new OnceHook()
-                },
-                onceInterceptor);
+                var onceProxy = Once.Create(targetsType);
 
-                var source = SourceCodeLayout.Get(targetsType);
+                var options = new Options(onceProxy);
+                GetOptParser.Parse(commandLineArguments, options);
 
-                Options options = null;
-
-                if (source != null)
-                {
-                    var sourceOptions = new OptionsWithSource(onceProxy);
-                    options = sourceOptions;
-                    GetOptParser.Parse(commandLineArguments, options);
-                    if (sourceOptions.Fix)
-                    {
-                        await source.Fix();
-                        return ExitCode.Success;
-                    }
-                    else
-                    {
-                        await source.Check();
-                    }
-                    if (IsOutOfDate(source) && !sourceOptions.IgnoreClean)
-                    {
-                        return RequireRebuild();
-                    }
-
-                    Logger = Log.Logger = new LoggerConfiguration()
-                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                        .CreateLogger();
-
-                    if (sourceOptions.Edit)
-                    {
-                        var cmd = Tools.Cmd.WithArguments("start");
-                        cmd.Run(source.csprojFile).Wait();
-                        return ExitCode.HelpDisplayed;
-                    }
-
-                    if ((sourceOptions.Clean && !sourceOptions.IgnoreClean))
-                    {
-                        return RequireRebuild();
-                    }
-                }
-                else
-                {
-                    options = new Options(onceProxy);
-                    GetOptParser.Parse(commandLineArguments, options);
-
-                    Logger = Log.Logger = new LoggerConfiguration()
-                        .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                            outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                        .CreateLogger();
-                }
+                Logger = Log.Logger = new LoggerConfiguration()
+                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
+                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
+                    .CreateLogger();
 
                 if (options.Help)
                 {
@@ -132,14 +82,14 @@ namespace Amg.Build
 
                 try
                 {
-                    RunTarget(options.Targets, target, targetArguments);
+                    await RunTarget(options.Targets, target, targetArguments);
                 }
                 catch (InvocationFailed)
                 {
                     return ExitCode.TargetFailed;
                 }
 
-                invocations = invocations.Concat(onceInterceptor.Invocations);
+                invocations.Concat(((IInvocationSource)onceProxy).Invocations);
 
                 if (options.Summary)
                 {
@@ -162,7 +112,7 @@ namespace Amg.Build
             {
                 Console.Error.WriteLine($@"An unknown error has occured.
 
-This is most likely a bug in Amg.Build
+This is a bug in Amg.Build.
 
 Submit here: https://github.com/sidiandi/Amg.Build/issues
 
@@ -262,10 +212,10 @@ Details:
             }
         }
 
-        private static void RunTarget(object targets, MethodInfo target, string[] arguments)
+        private static async Task RunTarget(object targets, MethodInfo target, string[] arguments)
         {
             Logger.Information("Run {target}({arguments})", target.Name, arguments.Join(", "));
-            var result = Wait(GetOptParser.Invoke(targets, target, arguments));
+            await AsTask(GetOptParser.Invoke(targets, target, arguments));
         }
 
         private static MethodInfo GetDefaultTarget(object targets)
@@ -286,24 +236,15 @@ Details:
         /// </summary>
         /// <param name="returnValue"></param>
         /// <returns></returns>
-        static object Wait(object returnValue)
+        static Task AsTask(object returnValue)
         {
             if (returnValue is Task task)
             {
-                try
-                {
-                    task.Wait();
-                    return null;
-                }
-                catch (System.AggregateException aggregateException)
-                {
-                    aggregateException.Handle(e => throw e);
-                    throw;
-                }
+                return (Task)task;
             }
             else
             {
-                return returnValue;
+                return Task.FromResult(returnValue);
             }
         }
 

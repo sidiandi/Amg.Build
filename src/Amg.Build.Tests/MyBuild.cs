@@ -27,7 +27,8 @@ namespace Amg.Build
         public virtual async Task Version()
         {
             await Task.WhenAll(Git.GetVersion(), Dotnet.Version());
-            var v = await Dotnet.Version();
+            var vt = Dotnet.Version();
+            var v = await vt;
             Console.WriteLine(v);
         }
 

@@ -66,12 +66,20 @@ namespace Amg.Build
         /// <param name="commandLineArguments"></param>
         /// <returns></returns>
         public static async Task BuildIfOutOfDate(
+            Assembly assembly,
             string sourceFile,
             string[] commandLineArguments)
         {
+            var entryAssembly = Assembly.GetEntryAssembly();
+            if (!entryAssembly.Equals(assembly))
+            {
+                Logger.Warning("Cannot rebuild an assembly {assembly} that is not the entry assembly {entryAssembly}", assembly, entryAssembly);
+                return;
+            }
+
             if (sourceFile.IsFile())
             {
-                var dll = Assembly.GetEntryAssembly().Location;
+                var dll = assembly.Location;
                 var sourceDir = sourceFile.Parent();
                 var csprojFile = sourceDir.Glob("*.csproj").SingleOrDefault();
                 if (csprojFile != null)

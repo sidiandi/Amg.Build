@@ -52,7 +52,6 @@ namespace Amg.Build
             await Create(s.csprojFile, "name.name.csproj");
             await Create(s.sourceFile, "name.name.cs");
             await Create(s.propsFile, "name.Amg.Build.props");
-            await Create(s.rootDir.Combine("out", "fastrun.cmd"), "name.out.fastrun.cmd");
             return s;
         }
 

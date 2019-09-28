@@ -3,7 +3,8 @@
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	<NoWarn>CS0618</NoWarn>
+  	<NoWarn>CS0618</NoWarn>
+	<TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
    <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />
@@ -11,13 +12,6 @@
   <PropertyGroup>
     <!-- SolutionDir is not defined when building projects explicitly -->
     <SolutionDir Condition=" '$(SolutionDir)' == '' ">$(MSBuildThisFileDirectory)</SolutionDir>
-    <RootDir>$(MSBuildThisFileDirectory)..\</RootDir>
-    <BaseIntermediateOutputPath>$(RootDir)out\$(Configuration)\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>$(RootDir)out\$(Configuration)\obj\$(MSBuildProjectName)\</IntermediateOutputPath>
-    <OutputPath>$(RootDir)out\$(Configuration)\bin</OutputPath>
-    <OutDir>$(OutputPath)</OutDir>
-    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <DocumentationFile>$(RootDir)out\$(Configuration)\doc\$(MSBuildProjectName).xml</DocumentationFile>
-	<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+  	<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>

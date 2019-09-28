@@ -14,14 +14,7 @@ namespace amgbuild
 
         static int Main(string[] args)
         {
-            if (args.Length > 0 && args[0].Equals("run"))
-            {
-                return Runner.Once<Program>().Run(args).Result;
-            }
-            else
-            {
-                return Runner.Run(args);
-            }
+            return Runner.Run(args);
         }
 
         [Once]
@@ -33,17 +26,6 @@ namespace amgbuild
                 : (name + ".cmd").Absolute();
 
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
-        }
-
-        [Once] virtual protected Dotnet Dotnet => Runner.Once<Dotnet>();
-
-        [Once]
-        [Description("Run a dotnet project")]
-        public virtual async Task<int> Run(string[] dotnetArgs)
-        {
-            var dotnet = await Dotnet.Tool();
-            var r = await dotnet.Run(dotnetArgs);
-            return r.ExitCode;
         }
     }
 }

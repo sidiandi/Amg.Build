@@ -67,6 +67,7 @@ namespace Amg.Build
                 .CreateLogger();
 
             RebuildMyself.BuildIfOutOfDate(
+                type.Assembly,
                 sourceFile,
                 commandLineArguments).Wait();
 

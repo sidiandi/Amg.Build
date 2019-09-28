@@ -3,13 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
+
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace Amg.Build
 {
     /// <summary>
     /// Creates proxies for classes that execute methods marked with [Once] only once.
     /// </summary>
+
+    internal interface IInvocationSource
+    {
+        IEnumerable<InvocationInfo> Invocations { get; }
+    }
+
     public class Once : IServiceProvider
     {
         /// <summary>
@@ -88,17 +97,38 @@ namespace Amg.Build
         /// <returns></returns>
         public static T Create<T>(params object[] ctorArguments) where T : class
         {
-            var onceInterceptor = new OnceInterceptor();
-            var onceProxy = generator.CreateClassProxy(
-                typeof(T),
-                new ProxyGenerationOptions
-                {
-                    Hook = new OnceHook()
-                },
+            return (T)Create(typeof(T), ctorArguments);
+        }
+
+        class InvocationSource : IInvocationSource
+        {
+            public InvocationSource(IEnumerable<InvocationInfo> invocations)
+            {
+                Invocations = invocations;
+            }
+
+            public IEnumerable<InvocationInfo> Invocations { get; private set; }
+        }
+
+        /// <summary>
+        /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <returns></returns>
+        public static object Create(Type type, params object[] ctorArguments)
+        {
+            var interceptor = new OnceInterceptor();
+
+            var options = new ProxyGenerationOptions
+            {
+                Hook = new OnceHook(),
+            };
+            options.AddMixinInstance(new InvocationSource(interceptor.Invocations));
+
+            return generator.CreateClassProxy(
+                type,
+                options,
                 ctorArguments,
-                onceInterceptor);
-            var proxy = (T)onceProxy;
-            return proxy;
+                interceptor);
         }
 
         /// <summary />
