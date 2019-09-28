@@ -67,12 +67,14 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* Improve error logging
+* nullable references
 * Adapter to use Cake extensions
 * Fail on the first failed target
 
 ## Done
 
+* netcoreapp3.0
+* Improve error logging
 * option to fix source files
 * check source files
 * output options for ITool
