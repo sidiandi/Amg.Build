@@ -82,9 +82,11 @@ namespace Amg.Build
             if (sourceFile.IsFile())
             {
                 var dll = assembly.Location;
+                var name = sourceFile.FileNameWithoutExtension();
                 var sourceDir = sourceFile.Parent();
-                var csprojFile = sourceDir.Glob("*.csproj").SingleOrDefault();
-                if (csprojFile != null)
+                var csprojFile = sourceDir.Combine(name + ".csproj");
+                var cmdFile = sourceDir.Parent().Combine(sourceFile.FileNameWithoutExtension() + ".cmd");
+                if (csprojFile.IsFile() && cmdFile.IsFile())
                 {
                     var currentFileVersion = FileVersion.Get(sourceDir);
                     var fileVersionFile = dll + ".sources";
