@@ -216,12 +216,6 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         }
 
         {
-            var result = await build.Run("--clean");
-            AssertExitCode(result, 0);
-            AssertRebuild(result);
-        }
-
-        {
             var outdated = DateTime.UtcNow.AddDays(-1);
             foreach (var f in testDir.Combine("build", "bin").Glob("**/*").EnumerateFileInfos())
             {
