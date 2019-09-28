@@ -3,15 +3,15 @@
   <PropertyGroup>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  	<NoWarn>CS0618</NoWarn>
-	<TargetFramework>netcoreapp3.0</TargetFramework>
+    <NoWarn>CS0618</NoWarn>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
-   <ItemGroup>
+  <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />
   </ItemGroup>
   <PropertyGroup>
     <!-- SolutionDir is not defined when building projects explicitly -->
     <SolutionDir Condition=" '$(SolutionDir)' == '' ">$(MSBuildThisFileDirectory)</SolutionDir>
-  	<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 </Project>
