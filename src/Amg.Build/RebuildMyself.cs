@@ -53,9 +53,8 @@ namespace Amg.Build
             }
             else
             {
+                WriteJson(lastFileVersionFile, current);
                 var dllVersion = FileVersion.Get(dllFile);
-                Logger.Dump(dllVersion);
-                Logger.Dump(current);
                 return !dllVersion.IsNewer(current);
             }
         }
