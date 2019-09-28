@@ -47,8 +47,6 @@ namespace Amg.Build
                 try
                 {
                     var lastBuildSourceVersion = Json.Read<FileVersion>(lastFileVersionFile);
-                    Logger.Dump(lastBuildSourceVersion);
-                    Logger.Dump(current);
                     var outOfDate = !lastBuildSourceVersion.Equals(current);
                     return outOfDate;
                 }
