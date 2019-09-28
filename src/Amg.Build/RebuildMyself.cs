@@ -84,6 +84,11 @@ namespace Amg.Build
                 var csprojFile = sourceDir.Glob("*.csproj").SingleOrDefault();
                 if (csprojFile != null)
                 {
+                    if (csprojFile.WithExtension(".norebuild").IsFile())
+                    {
+                        return;
+                    }
+
                     var currentFileVersion = FileVersion.Get(sourceDir);
                     var fileVersionFile = dll + ".sources";
                     if (IsOutOfDate(fileVersionFile, currentFileVersion))
