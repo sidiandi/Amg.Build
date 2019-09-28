@@ -174,7 +174,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         void AssertRebuild(IToolResult result)
         {
-            if (!result.Output.Contains("Build script requires rebuild."))
+            if (!result.Output.Contains("Rebuilding"))
             {
                 throw new Exception("Script was not rebuild.");
             }
