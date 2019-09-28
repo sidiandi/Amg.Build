@@ -93,7 +93,7 @@ namespace Amg.Build
                     {
                         Logger.Information("Source files at {sourceDir} have changed. Rebuilding {dll}", sourceDir, dll);
                         var lastBuildFileVersion = ReadJson<FileVersion>(fileVersionFile);
-                        var oldDll = (dll + ".old").EnsureFileNotExists();
+                        var oldDll = (dll + "." + Path.GetRandomFileName() + ".old").EnsureFileNotExists();
                         dll.Move(oldDll);
                         var dotnet = await Once.Create<Dotnet>().Tool();
                         
