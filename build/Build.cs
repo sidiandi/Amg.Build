@@ -217,10 +217,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         {
             var outdated = DateTime.UtcNow.AddDays(-1);
-            foreach (var f in testDir.Combine("build", "bin").Glob("**/*").EnumerateFileInfos())
-            {
-                f.LastWriteTimeUtc = outdated;
-            }
+            var sourceFile = testDir.Combine(name, name + ".cs");
+            new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
             var result = await build.Run();
             AssertExitCode(result, 0);
             AssertRebuild(result);
