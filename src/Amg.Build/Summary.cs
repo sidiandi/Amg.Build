@@ -76,6 +76,14 @@ namespace Amg.Build
             if (invocations.Any(_ => _.Failed))
             {
                 Console.Error.WriteLine("failed");
+                Console.Error.WriteLine(@"			
+         )
+        (
+          ,
+       ___)\
+      (_____)
+     (_______)
+");
             }
         });
 
