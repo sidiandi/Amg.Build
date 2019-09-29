@@ -24,11 +24,9 @@ namespace Amg.Build
         }
 
         [Test]
-        public void EmptyGlobReturnsOnlyTheRoot()
+        public void EmptyGlobReturnsEmpty()
         {
-            AssertSequencesAreEqual(
-                TestDir.Glob(),
-                new[] { TestDir });
+            Assert.That(!TestDir.Glob().Any());
         }
 
         /*

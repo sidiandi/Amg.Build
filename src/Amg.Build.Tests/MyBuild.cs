@@ -8,9 +8,14 @@ namespace Amg.Build
 {
     public class MyBuild
     {
-        protected MyBuild(string? result = null)
+        protected MyBuild(string? result)
         {
             this.result = result ?? String.Empty;
+        }
+
+        protected MyBuild()
+        {
+            this.result = String.Empty;
         }
 
         [Description("Release or Debug")]

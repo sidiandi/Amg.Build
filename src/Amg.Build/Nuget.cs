@@ -40,7 +40,7 @@ namespace Amg.Build
         [Once]
         protected virtual Nuget GetChocolatey()
         {
-            return Create(source: "https://chocolatey.org/api/v2/");
+            return Create(null, "https://chocolatey.org/api/v2/");
         }
 
         /// <summary>
@@ -151,6 +151,11 @@ Files:
         protected Nuget(ITool? nuget = null, string? source = null)
         {
             tool = nuget;
+            this.source = source;
+        }
+
+        protected Nuget()
+        {
         }
 
         ITool? tool;

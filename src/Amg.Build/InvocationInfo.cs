@@ -97,6 +97,22 @@ namespace Amg.Build
             public object ReturnValue => GetReturnValue();
         }
 
+        internal static bool TryGetResultType(Task task, out Type resultType)
+        {
+            var taskType = task.GetType();
+            if (taskType.IsGenericType)
+            {
+                if (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult"))
+                {
+                    resultType = taskType.GenericTypeArguments[0];
+                    return true;
+                }
+            }
+
+            resultType = null!;
+            return false;
+        }
+
         public InvocationInfo(OnceInterceptor interceptor, string id, IInvocation invocation)
         {
             this.interceptor = interceptor;
@@ -108,11 +124,9 @@ namespace Amg.Build
             invocation.Proceed();
             if (ReturnValue is Task task)
             {
-                var returnType = task.GetType();
-                if (returnType.IsGenericType)
+                if (TryGetResultType(task, out var resultType))
                 {
-                    var resultHandlerType = typeof(TaskResultHandler<>)
-                      .MakeGenericType(returnType.GetGenericArguments()[0]);
+                    var resultHandlerType = typeof(TaskResultHandler<>).MakeGenericType(resultType);
                     var resultHandler = (IReturnValueSource)Activator.CreateInstance(resultHandlerType, this, task);
                     invocation.ReturnValue = resultHandler.ReturnValue;
                 }

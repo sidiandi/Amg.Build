@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -31,6 +32,14 @@ namespace Amg.Build
     [TestFixture]
     public class OnceTests
     {
+        [Test]
+        public async Task Once()
+        {
+            var once = Amg.Build.Once.Create<MyBuild>();
+            await once.All();
+            Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
+        }
+
         [Test]
         public void OnlyExecutesOnce()
         {

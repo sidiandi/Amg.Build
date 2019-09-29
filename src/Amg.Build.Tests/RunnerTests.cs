@@ -10,14 +10,6 @@ namespace Amg.Build
     public class RunnerTests : TestBase
     {
         [Test]
-        public async Task Once()
-        {
-            var once = Runner.Once<MyBuild>();
-            await once.All();
-            Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
-        }
-
-        [Test]
         public void Run()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { });
