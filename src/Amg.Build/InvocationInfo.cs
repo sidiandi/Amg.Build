@@ -148,7 +148,6 @@ namespace Amg.Build
 {exception}", this, Summary.ErrorDetails(this));
             Console.Error.WriteLine($"{this} failed.");
             var invocationFailed = new InvocationFailed(this);
-            Once.OnFail(invocationFailed);
             return invocationFailed;
         }
 

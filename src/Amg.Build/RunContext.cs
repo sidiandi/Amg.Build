@@ -56,7 +56,6 @@ namespace Amg.Build
                     .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                     .CreateLogger();
 
-                Once.TerminateOnFail = true;
                 var onceProxy = Once.Create(targetsType);
 
                 var options = new Options(onceProxy);

@@ -145,25 +145,5 @@ namespace Amg.Build
         }
 
         Dictionary<Type, object> onceInstanceCache = new Dictionary<Type, object>();
-
-        internal static Action<InvocationFailed> OnFail = (i) => { };
-
-        public static bool TerminateOnFail
-        {
-            set
-            {
-                if (value)
-                {
-                    OnFail = (invocationFailed) =>
-                    {
-                        Environment.Exit((int)RunContext.ExitCode.TargetFailed);
-                    };
-                }
-                else
-                {
-                    OnFail = (invocationFailed) => { };
-                }
-            }
-        }
     }
 }

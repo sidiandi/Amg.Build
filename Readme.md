@@ -67,11 +67,11 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
+* Terminate on the first failed [Once] call.
 * Adapter to use Cake extensions
 
 ## Done
 
-* Fail on the first failed target
 * nullable references
 * netcoreapp3.0
 * Improve error logging
