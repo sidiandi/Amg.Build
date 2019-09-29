@@ -56,6 +56,7 @@ namespace Amg.Build
                     .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
                     .CreateLogger();
 
+                Once.TerminateOnFail = true;
                 var onceProxy = Once.Create(targetsType);
 
                 var options = new Options(onceProxy);
@@ -65,6 +66,11 @@ namespace Amg.Build
                     .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
                         outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
                     .CreateLogger();
+
+                if (options.Verbosity == Verbosity.Quiet)
+                {
+                    Tools.Default = Tools.Default.Silent();
+                }
 
                 if (options.Help)
                 {
@@ -86,10 +92,9 @@ namespace Amg.Build
                 }
                 catch (InvocationFailed)
                 {
-                    return ExitCode.TargetFailed;
                 }
 
-                invocations.Concat(((IInvocationSource)onceProxy).Invocations);
+                invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
 
                 if (options.Summary)
                 {

@@ -1,7 +1,8 @@
 {
   "profiles": {
     "hello": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "usefail"
     }
   }
 }

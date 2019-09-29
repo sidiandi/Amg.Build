@@ -14,7 +14,7 @@ namespace Amg.Build
 
         private readonly IInvocation? invocation;
         private readonly OnceInterceptor? interceptor;
-        public Exception? Exception { get; set; }
+        public Exception? Exception { get; private set; }
 
         public InvocationInfo(string id, DateTime begin, DateTime end)
         {
@@ -48,17 +48,12 @@ namespace Amg.Build
                 {
                     var r = await task;
                     r = (Result?) invocationInfo.InterceptReturnValue(r);
+                    invocationInfo.Complete();
                     return r;
                 }
                 catch (Exception ex)
                 {
-                    invocationInfo.Exception = ex;
-                    Logger.Fatal("{task} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
-                    throw new InvocationFailed(ex, invocationInfo);
-                }
-                finally
-                {
-                    invocationInfo.Complete();
+                    throw invocationInfo.Fail(ex);
                 }
             }
 
@@ -81,16 +76,11 @@ namespace Amg.Build
                 try
                 {
                     await task;
+                    invocationInfo.Complete();
                 }
                 catch (Exception ex)
                 {
-                    invocationInfo.Exception = ex;
-                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
-                    throw new InvocationFailed(ex, invocationInfo);
-                }
-                finally
-                {
-                    invocationInfo.Complete();
+                    throw invocationInfo.Fail(ex);
                 }
             }
 
@@ -147,6 +137,19 @@ namespace Amg.Build
         void Complete()
         {
             End = DateTime.UtcNow;
+            Logger.Information("{target} suceeded", this);
+        }
+
+        private InvocationFailed Fail(Exception exception)
+        {
+            End = DateTime.UtcNow;
+            this.Exception = exception;
+            Logger.Fatal(@"{target} failed.
+{exception}", this, Summary.ErrorDetails(this));
+            Console.Error.WriteLine($"{this} failed.");
+            var invocationFailed = new InvocationFailed(this);
+            Once.OnFail(invocationFailed);
+            return invocationFailed;
         }
 
         public virtual DateTime? Begin { get; set; }
@@ -167,7 +170,7 @@ namespace Amg.Build
             return x;
         }
 
-        public override string ToString() => Id.OneLine().Truncate(32);
+        public override string ToString() => $"Target {Id.OneLine().Truncate(32)}";
 
         public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 

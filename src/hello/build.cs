@@ -42,10 +42,18 @@ public class BuildTargets
         await Tools.Cmd.Run("/c", "fasdfasdfasd");
     }
 
+    [Once]
+    [Description("Runs forever")]
+    public virtual async Task RunForever()
+    {
+        await Tools.Default.WithFileName("cmd")
+            .Run();
+    }
+
     [Once][Description("Use failing tool")]
     public virtual async Task UseFailingTool()
     {
-        await FailTool();
+        await Task.WhenAll(FailTool(), RunForever());
     }
 }
 

@@ -195,7 +195,7 @@ namespace Amg.Build
         /// <param name="begin"></param>
         /// <param name="end"></param>
         /// <returns></returns>
-        public static string TimeBar(int width, DateTime rangeBegin, DateTime? rangeEnd, DateTime? begin, DateTime? end)
+        public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime? begin, DateTime? end)
         {
             if (begin != null && end != null)
             {
@@ -216,6 +216,15 @@ namespace Amg.Build
         {
             return new Writable(w);
         }
+
+        public static IWritable Indent(this IWritable writable, string prefix) => GetWritable(o =>
+        {
+            var lines = writable.ToString().SplitLines().Select(_ => prefix + _);
+            foreach (var line in lines)
+            {
+                o.WriteLine(line);
+            }
+        });
 
         /// <summary>
         /// Skip lines in the middle if text exceed maxLines lines.

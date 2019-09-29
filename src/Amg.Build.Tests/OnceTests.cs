@@ -35,6 +35,7 @@ namespace Amg.Build
         [Test]
         public async Task Once()
         {
+            Amg.Build.Once.TerminateOnFail = false;
             var once = Amg.Build.Once.Create<MyBuild>();
             await once.All();
             Assert.That(once.result, Is.EqualTo("CompileLinkPack"));

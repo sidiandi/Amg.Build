@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Amg.Build
     /// </summary>
     /// Immutable. To customize, use the With... methods.
     [Obsolete("Use Tools.Default")]
-    public class Tool : ITool
+    public partial class Tool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
@@ -27,6 +28,17 @@ namespace Amg.Build
         readonly string? password = null;
         readonly Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
         readonly Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
+
+        static Tool()
+        {
+            var domain = AppDomain.CurrentDomain;
+            domain.ProcessExit += new EventHandler(domain_ProcessExit);
+        }
+
+        static void domain_ProcessExit(object sender, EventArgs e)
+        {
+            KillAll();
+        }
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -62,6 +74,24 @@ namespace Amg.Build
         public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
         {
             return With(_ => _.environment, environment.Merge(environmentVariables));
+        }
+
+        static readonly List<IRunning> RunningProcesses = new List<IRunning>();
+
+        internal static void KillAll()
+        {
+            for (; ; )
+            {
+                IRunning? i = null;
+                lock (RunningProcesses)
+                {
+                    if (RunningProcesses.Count == 0) break;
+                    i = RunningProcesses[0];
+                    RunningProcesses.RemoveAt(0);
+                }
+                Logger.Information("Killing still running ITool process {process}", i);
+                i.Process.Kill();
+            }
         }
 
         /// <summary>
@@ -107,20 +137,6 @@ namespace Amg.Build
         {
         }
 
-        class ResultImpl : IToolResult
-        {
-            public ResultImpl(int exitCode, string output, string error)
-            {
-                ExitCode = exitCode;
-                Output = output;
-                Error = error;
-            }
-
-            public int ExitCode { get; set; }
-            public string Output { get; set; }
-            public string Error { get; set; }
-        }
-
         static SecureString GetSecureString(string password)
         {
             var s = new SecureString();
@@ -131,20 +147,6 @@ namespace Amg.Build
             return s;
         }
 
-        class Running : IRunning
-        {
-            private Process process;
-
-            public Running(Process p)
-            {
-                this.process = p;
-            }
-
-            public Process Process => process;
-
-            public override string ToString() => Process.Id.ToString();
-        }
-
         /// <summary>
         /// Runs the tool
         /// </summary>
@@ -152,12 +154,12 @@ namespace Amg.Build
         /// <returns></returns>
         public Task<IToolResult> Run(params string[] args)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Factory.StartNew((Func<IToolResult>)(() =>
             {
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = fileName,
-                    Arguments = CreateArgumentsString(leadingArguments.Concat(args)),
+                    Arguments = CreateArgumentsString(leadingArguments.Concat<string>(args)),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     WorkingDirectory = workingDirectory,
@@ -168,7 +170,7 @@ namespace Amg.Build
                 if (user != null)
                 {
                     var userParts = user.Split('\\');
-                    var userName = userParts.Last();
+                    var userName = userParts.Last<string>();
                     if (userParts.Length >= 2)
                     {
                         var domain = userParts[0];
@@ -203,18 +205,26 @@ namespace Amg.Build
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
-                processLog.Information("process {Id} started: {FileName} {Arguments}", p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information(
+                    "process {Id} started: {FileName} {Arguments}",
+                    p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
 
                 var running = new Running(p);
                 var output = p.StandardOutput.Tee(_ => onOutput(running, _)).ReadToEndAsync();
                 var error = p.StandardError.Tee(_ => onError(running, _)).ReadToEndAsync();
+                running.WaitForExit();
 
-                p.WaitForExit();
-                processLog.Information("process {Id} exited with {ExitCode}: {FileName} {Arguments}", p.Id, p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information(
+                    "process {Id} exited with {ExitCode}: {FileName} {Arguments}",
+                    p.Id,
+                    p.ExitCode,
+                    p.StartInfo.FileName,
+                    p.StartInfo.Arguments);
 
-                IToolResult result = new ResultImpl(
-                    exitCode: p.ExitCode, 
-                    output: output.Result, 
+
+                var result = (IToolResult)new ResultImpl(
+                    exitCode: p.ExitCode,
+                    output: output.Result,
                     error: error.Result);
 
                 if (expectedExitCode != null)
@@ -222,14 +232,14 @@ namespace Amg.Build
                     if (p.ExitCode != expectedExitCode.Value)
                     {
                         throw new ToolException(
-                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.", 
+                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.",
                             result, startInfo);
                     }
                 }
 
                 return result;
 
-            }, TaskCreationOptions.LongRunning);
+            }), TaskCreationOptions.LongRunning);
         }
 
         /// <summary>
