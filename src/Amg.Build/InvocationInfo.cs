@@ -53,7 +53,7 @@ namespace Amg.Build
                 catch (Exception ex)
                 {
                     invocationInfo.Exception = ex;
-                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
+                    Logger.Fatal("{task} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
                     throw new InvocationFailed(ex, invocationInfo);
                 }
                 finally
@@ -119,7 +119,7 @@ namespace Amg.Build
             this.invocation = invocation;
             this.Id = id;
 
-            Logger.Information("Begin {id}", Id);
+            Logger.Information("{task} started", this);
             Begin = DateTime.UtcNow;
             invocation.Proceed();
             if (ReturnValue is Task task)
@@ -139,6 +139,7 @@ namespace Amg.Build
             else
             {
                 invocation.ReturnValue = InterceptReturnValue(invocation.ReturnValue);
+                Logger.Information("{task} suceeded.", this);
                 Complete();
             }
         }
@@ -146,7 +147,6 @@ namespace Amg.Build
         void Complete()
         {
             End = DateTime.UtcNow;
-            Logger.Information("End {id}", Id);
         }
 
         public virtual DateTime? Begin { get; set; }
