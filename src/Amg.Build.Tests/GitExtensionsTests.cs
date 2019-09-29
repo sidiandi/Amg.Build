@@ -10,7 +10,7 @@ namespace Amg.Build
     [TestFixture]
     public class GitExtensionsTests : TestBase
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         [Test, TestCase(""), TestCase("src")]
         public async Task Rebuild(string relativeSourceDir)
@@ -32,7 +32,8 @@ namespace Amg.Build
                 output = await gitHelper.IfChanged(output, sourceDir, async () =>
                 {
                     ++count;
-                    await output.WriteAllTextAsync(await sourceFile.ReadAllTextAsync());
+                    var text = await sourceFile.ReadAllTextAsync();
+                    await output.WriteAllTextAsync(text!);
                 });
             }
 
@@ -47,7 +48,7 @@ namespace Amg.Build
                 output = await gitHelper.IfChanged(output, sourceDir, async () =>
                 {
                     ++count;
-                    await output.WriteAllTextAsync(await sourceFile.ReadAllTextAsync());
+                    await output.WriteAllTextAsync((await sourceFile.ReadAllTextAsync())!);
                 });
             }
             Assert.AreEqual(2, count);

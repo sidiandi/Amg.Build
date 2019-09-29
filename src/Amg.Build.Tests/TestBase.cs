@@ -19,15 +19,9 @@ namespace Amg.Build
                 .CreateLogger();
         }
 
-        protected string CreateEmptyTestDirectory([CallerMemberName] string name = null)
+        protected string CreateEmptyTestDirectory([CallerMemberName] string name = null!)
         {
-            var a = this.GetType().Assembly;
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                a.GetCustomAttribute<AssemblyCompanyAttribute>().Company,
-                a.GetCustomAttribute<AssemblyProductAttribute>().Product,
-                "test",
-                name);
+            var dir = this.GetType().GetProgramDataDirectory().Combine(name);
             return dir.EnsureDirectoryIsEmpty();
         }
 

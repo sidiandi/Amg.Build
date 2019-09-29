@@ -15,7 +15,7 @@ namespace Amg.Build
     /// For examples, see Amg.Build.Tests/FileSystemExtensionsTests.cs
     public static class FileSystemExtensions
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         /// <summary>
         /// Creates the parent directory of path is necessary. 
@@ -178,7 +178,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="path"></param>
         /// <returns>text</returns>
-        public static async Task<string> ReadAllTextAsync(this string path)
+        public static async Task<string?> ReadAllTextAsync(this string path)
         {
             try
             {
@@ -217,7 +217,7 @@ namespace Amg.Build
         /// <returns>path</returns>
         public static async Task<string> WriteAllTextIfChangedAsync(this string path, string text)
         {
-            var hasChanged = !path.IsFile() || !((await path.ReadAllTextAsync()).Equals(text));
+            var hasChanged = !path.IsFile() || !object.Equals(await path.ReadAllTextAsync(), text);
 
             if (hasChanged)
             {
@@ -312,9 +312,7 @@ are more recent.
             var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
                 .ToList();
 
-            var m = files
-                .MaxElement(_ => _.LastWrite)
-                .SingleOrDefault();
+            var m = files.MaxElement(_ => _.LastWrite);
 
             if (m == null)
             {
@@ -348,9 +346,7 @@ are more recent.
             var files = paths.Select(_ => new { Path = _, LastWrite = _.LastWriteTimeUtc() })
                 .ToList();
 
-            var m = files
-                .MaxElement(_ => _.LastWrite)
-                .SingleOrDefault();
+            var m = files.MaxElement(_ => _.LastWrite);
 
             if (m == null)
             {
@@ -424,9 +420,14 @@ are more recent.
         /// <param name="path"></param>
         /// <param name="pattern">Glob pattern to include. If omitted, an empty glob is returned.</param>
         /// <returns></returns>
-        public static Glob Glob(this string path, string pattern = null)
+        public static Glob Glob(this string path, string? pattern = null)
         {
-            return new Glob(path).Include(pattern);
+            var g = new Glob(path);
+            if (pattern != null)
+            {
+                g = g.Include((string)pattern);
+            }
+            return g;
         }
 
         /// <summary>
@@ -687,13 +688,33 @@ are more recent.
         public static string GetProgramDataDirectory(this System.Type type)
         {
             var assembly = type.Assembly;
-            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new[]
+            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new []
             {
                 assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Map(_ => _.Company),
                 assembly.GetCustomAttribute<AssemblyProductAttribute>().Map(_ => _.Product),
                 type.Name
             }.Where(_ => !String.IsNullOrEmpty(_))
+            .NotNull()
             .ToArray());
+        }
+
+        /// <summary>
+        /// Gets the ProgramData directory for type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string GetProgramDataDirectory(this Assembly assembly)
+        {
+            var p = new[]
+            {
+                assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Map(_ => _.Company),
+                assembly.GetCustomAttribute<AssemblyProductAttribute>().Map(_ => _.Product),
+                assembly.GetName().Name
+            }
+            .NotNull()
+            .Select(_ => _.MakeValidFileName());
+
+            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(p.ToArray());
         }
 
         /// <summary>

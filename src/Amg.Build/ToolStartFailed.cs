@@ -17,11 +17,6 @@ namespace Amg.Build
         public ProcessStartInfo StartInfo { get; }
 
         /// <summary />
-        public ToolStartFailed()
-        {
-        }
-
-        /// <summary />
         public ToolStartFailed(string message, ProcessStartInfo startInfo)
             : base(message)
         {
@@ -31,6 +26,7 @@ namespace Amg.Build
         /// <summary />
         protected ToolStartFailed(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            StartInfo = null!;
         }
 
         static string GetPath(ProcessStartInfo startInfo)

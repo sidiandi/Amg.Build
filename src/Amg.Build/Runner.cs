@@ -14,7 +14,7 @@ namespace Amg.Build
     /// </summary>
     public class Runner
     {
-        private static Serilog.ILogger Logger;
+        private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         /// <summary>
         /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
@@ -26,9 +26,10 @@ namespace Amg.Build
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
         public static int Run<TargetsDerivedClass>(
             string[] commandLineArguments, 
-            [CallerFilePath] string callerFilePath = null) where TargetsDerivedClass : class
+            [CallerFilePath] string? callerFilePath = null)
+            where TargetsDerivedClass : class
         {
-            return Run(typeof(TargetsDerivedClass), commandLineArguments, callerFilePath);
+            return Run(typeof(TargetsDerivedClass), commandLineArguments, callerFilePath!);
         }
 
         /// <summary>
@@ -36,7 +37,7 @@ namespace Amg.Build
         /// </summary>
         /// <param name="callerFilePath"></param>
         /// <returns></returns>
-        public static string RootDirectory([CallerFilePath] string callerFilePath = null)
+        public static string RootDirectory([CallerFilePath] string callerFilePath = null!)
         {
             return callerFilePath.Parent().Parent();
         }
@@ -52,15 +53,15 @@ namespace Amg.Build
         /// <param name="commandLineArguments"></param>
         /// <param name="sourceFile"></param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run(string[] commandLineArguments, [CallerFilePath] string sourceFile = null)
+        public static int Run(string[] commandLineArguments, [CallerFilePath] string? sourceFile = null)
         {
             StackFrame frame = new StackFrame(1);
             var method = frame.GetMethod();
             var type = method.DeclaringType;
-            return Run(type, commandLineArguments, sourceFile);
+            return Run(type, commandLineArguments, sourceFile!);
         }
 
-        static int Run(Type type, string[] commandLineArguments, string sourceFile = null)
+        static int Run(Type type, string[] commandLineArguments, string sourceFile)
         {
             Logger = Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
@@ -83,41 +84,9 @@ namespace Amg.Build
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         [Obsolete("use Once.Create")]
-        public static T Once<T>(T template) where T: class
+        public static T Once<T>(params object[] ctorArguments) where T: class
         {
-            return Once<T>(_ => InitializeFields(_, template));
-        }
-
-        static void InitializeFields<T>(T target, T template)
-        {
-            foreach (var field in template.GetType().GetFields(BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public))
-            {
-                field.SetValue(target, field.GetValue(template));
-            }
-        }
-
-        /// <summary>
-        /// Creates an instance of T where all methods marked with [Once] are only executed once.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        [Obsolete("use Once.Create")]
-        public static T Once<T>() where T: class
-        {
-            return Amg.Build.Once.Instance.Get<T>();
-        }
-
-        /// <summary>
-        /// Creates an instance of T where all methods marked with [Once] are only executed once.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        [Obsolete("use Once.Create")]
-        public static T Once<T>(Action<T> initializer) where T : class
-        {
-            var o = Amg.Build.Once.Create<T>();
-            initializer(o);
-            return o;
+            return Amg.Build.Once.Create<T>(ctorArguments);
         }
     }
 }

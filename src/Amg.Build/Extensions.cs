@@ -14,7 +14,7 @@ namespace Amg.Build
     /// </summary>
     public static class Extensions
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         /// <summary>
         /// Easy readable text format for a TimeSpan
@@ -146,11 +146,11 @@ namespace Amg.Build
         /// <param name="x"></param>
         /// <param name="mapper"></param>
         /// <returns></returns>
-        public static Y Map<Y, X>(this X x, Func<X, Y> mapper) where X: class
+        public static Y? Map<Y, X>(this X? x, Func<X, Y> mapper) where X: class where Y: class
         {
             if (x == null)
             {
-                return default(Y);
+                return default;
             }
             else
             {

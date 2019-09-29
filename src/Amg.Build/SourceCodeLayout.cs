@@ -12,7 +12,7 @@ namespace Amg.Build
 {
     internal class SourceCodeLayout
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         public SourceCodeLayout(string cmdFile)
         {
@@ -59,7 +59,7 @@ namespace Amg.Build
         {
             await CheckFileEnd(cmdFile, BuildCmdText);
             await CheckFile(propsFile, ReadStringFromEmbeddedResource("Amg.Build.props"));
-            var csproj = await csprojFile.ReadAllTextAsync();
+            var csproj = await csprojFile.ReadAllTextAsync() ?? String.Empty;
             var propsLine = @"<Import Project=""Amg.Build.props"" />";
             if (!csproj.Contains(propsLine))
             {
@@ -114,7 +114,7 @@ namespace Amg.Build
             }
         }
 
-        public static SourceCodeLayout Get(Type targetsType)
+        public static SourceCodeLayout? Get(Type targetsType)
         {
             return FromDll(targetsType.Assembly.Location);
         }
@@ -140,7 +140,7 @@ namespace Amg.Build
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>
         /// <returns></returns>
-        internal static SourceCodeLayout FromDll(string dllFile)
+        internal static SourceCodeLayout? FromDll(string dllFile)
         {
             try
             {
@@ -176,7 +176,7 @@ namespace Amg.Build
 
     internal class SourceCodeLayoutOutDir
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         public SourceCodeLayoutOutDir(string cmdFile)
         {
@@ -224,14 +224,25 @@ namespace Amg.Build
         {
             await CheckFileEnd(cmdFile, BuildCmdText);
             await CheckFile(propsFile, ReadStringFromEmbeddedResource("Amg.Build.props"));
-            var csproj = await csprojFile.ReadAllTextAsync();
-            var propsLine = @"<Import Project=""Amg.Build.props"" />";
-            if (!csproj.Contains(propsLine))
-            {
-                Logger.Warning("{csprojFile} must contain {propsLine}", csprojFile, propsLine);
-            }
+            await CheckCsprojFile();
         }
 
+        async Task CheckCsprojFile()
+        {
+            if (!csprojFile.IsFile())
+            {
+                Logger.Warning("{csprojFile} does not exist.", csprojFile);
+            }
+            else
+            {
+                var csproj = await csprojFile.ReadAllTextAsync() ?? String.Empty;
+                var propsLine = @"<Import Project=""Amg.Build.props"" />";
+                if (!csproj.Contains(propsLine))
+                {
+                    Logger.Warning("{csprojFile} must contain {propsLine}", csprojFile, propsLine);
+                }
+            }
+        }
         async Task CheckFile(string file, string expected)
         {
             if (!string.Equals(await file.ReadAllTextAsync(), expected))
@@ -279,7 +290,7 @@ namespace Amg.Build
             }
         }
 
-        public static SourceCodeLayout Get(Type targetsType)
+        public static SourceCodeLayout? Get(Type targetsType)
         {
             return FromDll(targetsType.Assembly.Location);
         }
@@ -305,7 +316,7 @@ namespace Amg.Build
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>
         /// <returns></returns>
-        internal static SourceCodeLayout FromDll(string dllFile)
+        internal static SourceCodeLayout? FromDll(string dllFile)
         {
             try
             {

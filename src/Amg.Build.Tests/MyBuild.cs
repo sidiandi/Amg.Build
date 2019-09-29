@@ -8,13 +8,18 @@ namespace Amg.Build
 {
     public class MyBuild
     {
+        protected MyBuild(string? result = null)
+        {
+            this.result = result ?? String.Empty;
+        }
+
         [Description("Release or Debug")]
-        public string Configuration { get; set; }
+        public string Configuration { get; set; } = "Release";
 
         public virtual string result { get; set; } = String.Empty;
 
         [Once]
-        protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Runner.RootDirectory());
+        protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());
 
         [Once]
         protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();

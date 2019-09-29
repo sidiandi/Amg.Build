@@ -36,7 +36,7 @@ namespace Amg.Build
                     Name = _.Id.Truncate(32),
                     State = _.State,
                     Duration = _.Duration.HumanReadable(),
-                    Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin.Value, _.End.Value)
+                    Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin, _.End)
                 })
                 .ToTable()
                 .Write(@out);
@@ -62,7 +62,8 @@ namespace Amg.Build
             foreach (var failedTarget in invocations.OrderByDescending(_ => _.End)
                 .Where(_ => _.State == InvocationInfo.States.Failed))
             {
-                var r = GetRootCause(failedTarget.Exception);
+                var exception = failedTarget.Exception!;
+                var r = GetRootCause(exception);
                 if (!(r is InvocationFailed))
                 {
                     @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");

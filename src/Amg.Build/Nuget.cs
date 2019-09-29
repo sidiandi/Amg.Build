@@ -12,15 +12,24 @@ namespace Amg.Build
     /// </summary>
     public class Nuget
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        string source = null;
+        string? source = null;
 
         /// <summary>
         /// ITool wrapper for nuget.exe
         /// </summary>
         [Once]
         public virtual Task<ITool> Tool => ProvideNugetTool();
+
+        async Task<ITool> ProvideNugetTool()
+        {
+            if (tool == null)
+            {
+                tool = await Runner.Once<Tools>().Get(new Uri("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"));
+            }
+            return tool;
+        }
 
         /// <summary>
         /// Access the Chocolatey repository
@@ -31,14 +40,7 @@ namespace Amg.Build
         [Once]
         protected virtual Nuget GetChocolatey()
         {
-            return Runner.Once(new Nuget(){source = "https://chocolatey.org/api/v2/" });
-        }
-
-        /// <summary />
-        [Once]
-        protected virtual async Task<ITool> ProvideNugetTool()
-        {
-            return await Runner.Once<Tools>().Get(new Uri("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"));
+            return Create(source: "https://chocolatey.org/api/v2/");
         }
 
         /// <summary>
@@ -52,8 +54,8 @@ namespace Amg.Build
         [Once]
         public virtual async Task<ITool> GetTool(
             string packageId,
-            string version = null,
-            string executable = null
+            string? version = null,
+            string? executable = null
             )
         {
             var installDir = await Get(packageId, version);
@@ -75,7 +77,7 @@ namespace Amg.Build
         [Once]
         public virtual async Task<string> Get(
             string packageId,
-            string version = null
+            string? version = null
             )
         {
             var install = (await Tool)
@@ -101,22 +103,28 @@ namespace Amg.Build
             var actualPackageId = m.Groups[1].Value;
             var dir = m.Groups[2].Value;
 
-            m = Regex.Match(r.Output, @"Successfully installed '([^ ]+) ([^ ]+)' to");
-            if (m.Success)
+            string GetActualVersion()
             {
-                version = m.Groups[2].Value;
-            }
-            else
-            {
-                m = Regex.Match(r.Output, $@"Package ""{packageId.ToLower()}\.([^""]+)"" is already installed.", RegexOptions.IgnoreCase);
+                m = Regex.Match(r.Output, @"Successfully installed '([^ ]+) ([^ ]+)' to");
                 if (m.Success)
                 {
-                    version = m.Groups[1].Value;
+                    return m.Groups[2].Value;
                 }
+                else
+                {
+                    m = Regex.Match(r.Output, $@"Package ""{packageId.ToLower()}\.([^""]+)"" is already installed.", RegexOptions.IgnoreCase);
+                    if (m.Success)
+                    {
+                        return m.Groups[1].Value;
+                    }
+                }
+                throw new Exception($"Cannot determine version from\r\n{r.Output}");
             }
 
+            var actualVersion = GetActualVersion();
+
             var installDir =
-                version.Lineage(".").Reverse()
+                actualVersion.Lineage(".").Reverse()
                 .Select(versionDir => dir.Combine(new[] { packageId, versionDir }.Join(".")))
                 .First(_ => _.IsDirectory());
 
@@ -140,18 +148,21 @@ Files:
         }
 
         /// <summary />
-        protected Nuget()
+        protected Nuget(ITool? nuget = null, string? source = null)
         {
+            tool = nuget;
         }
+
+        ITool? tool;
 
         /// <summary>
         /// Create an instance where every method marked with [Once] is only executed once and its results are cached.
         /// </summary>
         /// <param name="nuget"></param>
         /// <returns></returns>
-        public static Nuget Create(ITool nuget = null)
+        public static Nuget Create(ITool? nuget = null, string? source = null)
         {
-            return Runner.Once<Nuget>();
+            return Once.Create<Nuget>(nuget, source);
         }
     }
 }

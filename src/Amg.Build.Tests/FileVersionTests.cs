@@ -16,7 +16,11 @@ namespace Amg.Build
             var dll = Assembly.GetExecutingAssembly().Location;
             var sourceDir = dll.Parent().Parent().Parent().Parent();
             var sourceDirVersion = FileVersion.Get(sourceDir);
-            Assert.That(FileVersion.Get(dll).IsNewer(sourceDirVersion));
+            if (sourceDirVersion == null)
+            {
+                throw new Exception();
+            }
+            Assert.That(FileVersion.Get(dll)!.IsNewer(sourceDirVersion));
 
             var testDir = CreateEmptyTestDirectory();
             var jsonFile = testDir.Combine("version.json");

@@ -38,7 +38,7 @@ namespace Amg.Build
 
     class RebuildMyself
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         static bool IsOutOfDate(string lastFileVersionFile, FileVersion current, string dllFile)
         {
@@ -59,6 +59,10 @@ namespace Amg.Build
             {
                 Json.Write(lastFileVersionFile, current);
                 var dllVersion = FileVersion.Get(dllFile);
+                if (dllVersion == null)
+                {
+                    return true;
+                }
                 return !dllVersion.IsNewer(current);
             }
         }
@@ -92,30 +96,33 @@ namespace Amg.Build
                 if (csprojFile.IsFile() && cmdFile.IsFile())
                 {
                     var currentFileVersion = FileVersion.Get(sourceDir);
-                    var fileVersionFile = dll + ".sources";
-                    if (IsOutOfDate(fileVersionFile, currentFileVersion, dll))
+                    if (currentFileVersion != null)
                     {
-                        Logger.Information("Source files at {sourceDir} have changed. Rebuilding {dll}", sourceDir, dll);
-                        var lastBuildFileVersion = Json.Read<FileVersion>(fileVersionFile);
-                        var oldDll = (dll + "." + Path.GetRandomFileName() + ".old").EnsureFileNotExists();
-                        dll.Move(oldDll);
-                        var dotnet = await Once.Create<Dotnet>().Tool();
-                        
-                        await dotnet
-                            .WithEnvironment("Configuration", "Debug")
-                            .Run("build",
-                            "--force",
-                            csprojFile);
-                        
-                        Json.Write(fileVersionFile, currentFileVersion);
-                        
-                        var result = await dotnet
-                            .Passthrough()
-                            .DoNotCheckExitCode()
-                            .WithArguments(dll)
-                            .Run(commandLineArguments);
-                        
-                        Environment.Exit(result.ExitCode);
+                        var fileVersionFile = dll + ".sources";
+                        if (IsOutOfDate(fileVersionFile, currentFileVersion, dll))
+                        {
+                            Logger.Information("Source files at {sourceDir} have changed. Rebuilding {dll}", sourceDir, dll);
+                            var lastBuildFileVersion = Json.Read<FileVersion>(fileVersionFile);
+                            var oldDll = (dll + "." + Path.GetRandomFileName() + ".old").EnsureFileNotExists();
+                            dll.Move(oldDll);
+                            var dotnet = await Once.Create<Dotnet>().Tool();
+
+                            await dotnet
+                                .WithEnvironment("Configuration", "Debug")
+                                .Run("build",
+                                "--force",
+                                csprojFile);
+
+                            Json.Write(fileVersionFile, currentFileVersion);
+
+                            var result = await dotnet
+                                .Passthrough()
+                                .DoNotCheckExitCode()
+                                .WithArguments(dll)
+                                .Run(commandLineArguments);
+
+                            Environment.Exit(result.ExitCode);
+                        }
                     }
                 }
             }

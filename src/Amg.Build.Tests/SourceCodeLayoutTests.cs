@@ -8,7 +8,7 @@ namespace Amg.Build
     [TestFixture]
     class SourceCodeLayoutTests : TestBase
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         [Test]
         public async Task Create()

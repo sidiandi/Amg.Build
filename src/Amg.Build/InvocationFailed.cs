@@ -6,21 +6,21 @@ namespace Amg.Build
     [Serializable]
     internal class InvocationFailed : Exception
     {
-        private Exception ex;
-        private InvocationInfo invocationInfo;
+        private Exception? exception;
+        private InvocationInfo? invocationInfo;
 
         public InvocationFailed()
         {
         }
 
-         public InvocationFailed(Exception ex, InvocationInfo invocationInfo)
-            : base($"{invocationInfo} failed.", ex)
+        public InvocationFailed(Exception exception, InvocationInfo invocationInfo)
+           : base($"{invocationInfo} failed.", exception)
         {
-            this.ex = ex;
+            this.exception = exception;
             this.invocationInfo = invocationInfo;
         }
 
-         protected InvocationFailed(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected InvocationFailed(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 

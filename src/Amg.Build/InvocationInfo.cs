@@ -10,16 +10,20 @@ namespace Amg.Build
 {
     class InvocationInfo
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private readonly IInvocation invocation;
-        private readonly OnceInterceptor interceptor;
+        private readonly IInvocation? invocation;
+        private readonly OnceInterceptor? interceptor;
+        public Exception? Exception { get; set; }
 
         public InvocationInfo(string id, DateTime begin, DateTime end)
         {
             this.Id = id;
             Begin = begin;
             End = end;
+            invocation = null;
+            interceptor = null;
+            Exception = null;
         }
 
         interface IReturnValueSource
@@ -27,23 +31,23 @@ namespace Amg.Build
             object ReturnValue { get; }
         }
 
-        class TaskResultHandler<Result> : IReturnValueSource
+        class TaskResultHandler<Result> : IReturnValueSource where Result : class
         {
             private readonly InvocationInfo invocationInfo;
-            private readonly Task<Result> task;
+            private readonly Task<Result?> task;
 
-            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result> task)
+            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result?> task)
             {
                 this.invocationInfo = invocationInfo;
                 this.task = task;
             }
 
-            async Task<Result> GetReturnValue()
+            async Task<Result?> GetReturnValue()
             {
                 try
                 {
                     var r = await task;
-                    r = (Result)invocationInfo.InterceptReturnValue(r);
+                    r = (Result?) invocationInfo.InterceptReturnValue(r);
                     return r;
                 }
                 catch (Exception ex)
@@ -144,34 +148,14 @@ namespace Amg.Build
             }
         }
 
-        internal object InterceptReturnValue(object x)
+        internal object? InterceptReturnValue(object? x)
         {
-            if (Amg.Build.Once.HasOnceMethods(x))
-            {
-                /*
-                var builder = new DefaultProxyBuilder();
-                var generator = new ProxyGenerator(builder);
-                var onceProxy = generator.CreateClassProxyWithTarget(x.GetType(), x,
-                    new ProxyGenerationOptions
-                    {
-                        Hook = new OnceHook()
-                    },
-                    new OnceInterceptor(interceptor, invocation.Method.Name),
-                    new LogInvocationInterceptor());
-                return onceProxy;
-                */
-                return x;
-            }
-            else
-            {
-                return x;
-            }
+            return x;
         }
 
         public override string ToString() => Id.OneLine().Truncate(32);
 
-        public Exception Exception { get; set; }
-        public object ReturnValue => invocation.ReturnValue;
+        public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 
         public enum States
         {

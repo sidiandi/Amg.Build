@@ -11,7 +11,13 @@ namespace Amg.Build
         public long Length { get; set; }
         public FileVersion[] Childs { get; set; }
 
-        public static FileVersion Get(string path)
+        public FileVersion()
+        {
+            Name = String.Empty;
+            Childs = new FileVersion[] { };
+        }
+
+        public static FileVersion? Get(string path)
         {
             if (path.IsFile())
             {
@@ -34,7 +40,9 @@ namespace Amg.Build
                     Length = 0,
                     Childs = path.EnumerateFileSystemEntries()
                     .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
-                    .Select(Get).ToArray()
+                    .Select(Get)
+                    .NotNull()
+                    .ToArray()
                 };
             }
             else

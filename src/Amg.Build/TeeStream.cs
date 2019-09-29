@@ -23,9 +23,9 @@ namespace Amg.Build
             return c;
         }
 
-        public override string ReadLine()
+        public override string? ReadLine()
         {
-            var line = input.ReadLine();
+            string? line = input.ReadLine();
             if (line != null)
             {
                 output.WriteLine(line);

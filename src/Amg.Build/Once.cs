@@ -26,19 +26,24 @@ namespace Amg.Build
         /// </summary>
         public static Once Instance { get; } = new Once();
 
-        internal static bool HasOnceMethods(object x)
+        internal static bool HasOnceMethods(object? x)
         {
-            if (x == null) return false;
-
-            var type = x.GetType();
-            return type.GetMethods(
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic)
-                .Any(_ => Has(_));
+            if (x == null)
+            {
+                return false;
+            }
+            else
+            {
+                var type = x.GetType();
+                return type.GetMethods(
+                    BindingFlags.Instance |
+                    BindingFlags.Public |
+                    BindingFlags.NonPublic)
+                    .Any(_ => Has(_));
+            }
         }
 
-        internal static PropertyInfo GetPropertyInfo(MethodInfo method)
+        internal static PropertyInfo? GetPropertyInfo(MethodInfo method)
         {
             if (!method.IsSpecialName) return null;
             return method.DeclaringType.GetProperty(method.Name.Substring(4),
@@ -95,7 +100,7 @@ namespace Amg.Build
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Create<T>(params object[] ctorArguments) where T : class
+        public static T Create<T>(params object?[] ctorArguments) where T : class
         {
             return (T)Create(typeof(T), ctorArguments);
         }
@@ -114,7 +119,7 @@ namespace Amg.Build
         /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
         /// </summary>
         /// <returns></returns>
-        public static object Create(Type type, params object[] ctorArguments)
+        public static object Create(Type type, params object?[] ctorArguments)
         {
             var interceptor = new OnceInterceptor();
 

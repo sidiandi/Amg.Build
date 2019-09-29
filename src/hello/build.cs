@@ -10,7 +10,7 @@ using System.Threading;
 
 public class BuildTargets
 {
-    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 	
 	static int Main(string[] args) => Runner.Run(args);
 

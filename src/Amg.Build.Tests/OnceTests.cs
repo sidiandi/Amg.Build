@@ -7,16 +7,9 @@ namespace Amg.Build
     {
         public string Name { get; }
 
-        public Hello(string name)
+        protected Hello(string name)
         {
             Name = name;
-        }
-
-        /// <summary>
-        /// required by Castle.DynamicProxy
-        /// </summary>
-        public Hello()
-        {
         }
 
         [Once]

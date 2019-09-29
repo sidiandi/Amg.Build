@@ -29,7 +29,7 @@ namespace Amg.Build
                 .ReturnValue;
         }
 
-        string prefix;
+        readonly string? prefix;
 
         string GenerateCacheKey(string name, object[] arguments)
         {

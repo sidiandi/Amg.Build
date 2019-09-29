@@ -16,15 +16,15 @@ namespace Amg.Build
     [Obsolete("Use Tools.Default")]
     public class Tool : ITool
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        readonly string fileName;
+        readonly string? fileName;
         readonly string[] leadingArguments = new string[] { };
-        readonly string workingDirectory = ".";
+        readonly string? workingDirectory = ".";
         readonly int? expectedExitCode = 0;
         readonly IDictionary<string, string> environment = new Dictionary<string, string>();
-        readonly string user = null;
-        readonly string password = null;
+        readonly string? user = null;
+        readonly string? password = null;
         readonly Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
         readonly Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
 
@@ -109,6 +109,13 @@ namespace Amg.Build
 
         class ResultImpl : IToolResult
         {
+            public ResultImpl(int exitCode, string output, string error)
+            {
+                ExitCode = exitCode;
+                Output = output;
+                Error = error;
+            }
+
             public int ExitCode { get; set; }
             public string Output { get; set; }
             public string Error { get; set; }
@@ -168,7 +175,10 @@ namespace Amg.Build
                         startInfo.Domain = domain;
                     }
                     startInfo.UserName = userName;
-                    startInfo.Password = GetSecureString(password);
+                    if (password != null)
+                    {
+                        startInfo.Password = GetSecureString(password);
+                    }
                 }
 
                 startInfo.EnvironmentVariables.Add(this.environment);
@@ -202,12 +212,10 @@ namespace Amg.Build
                 p.WaitForExit();
                 processLog.Information("process {Id} exited with {ExitCode}: {FileName} {Arguments}", p.Id, p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
 
-                var result = (IToolResult)new ResultImpl
-                {
-                    ExitCode = p.ExitCode,
-                    Error = error.Result,
-                    Output = output.Result
-                };
+                IToolResult result = new ResultImpl(
+                    exitCode: p.ExitCode, 
+                    output: output.Result, 
+                    error: error.Result);
 
                 if (expectedExitCode != null)
                 {

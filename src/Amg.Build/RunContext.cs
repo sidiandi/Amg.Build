@@ -18,7 +18,7 @@ namespace Amg.Build
     /// </summary>
     internal class RunContext
     {
-        private static Serilog.ILogger Logger;
+        private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         private Type targetsType;
         private string[] commandLineArguments;
@@ -185,7 +185,10 @@ Details:
                         HelpText.Print(Console.Out, options);
                         Environment.Exit((int)ExitCode.HelpDisplayed);
                     }
-                    return (defaultTarget, new string[] { });
+                    else
+                    {
+                        return (defaultTarget, new string[] { });
+                    }
                 }
                 catch (Exception e)
                 {
@@ -218,7 +221,7 @@ Details:
             await AsTask(GetOptParser.Invoke(targets, target, arguments));
         }
 
-        private static MethodInfo GetDefaultTarget(object targets)
+        private static MethodInfo? GetDefaultTarget(object targets)
         {
             var t = HelpText.Targets(targets.GetType());
             var defaultTarget = new[]

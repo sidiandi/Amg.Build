@@ -59,7 +59,7 @@ namespace Amg.Build.Windows
             }
         }
 
-        static string[] GetFileSiblingHardLinks(string filepath)
+        static string[]? GetFileSiblingHardLinks(string filepath)
         {
             List<string> result = new List<string>();
             uint stringLength = 256;

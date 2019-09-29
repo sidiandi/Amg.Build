@@ -17,9 +17,9 @@ namespace Amg.Build
         void CopyFile(
             string existingFileName, 
             string newFileName, 
-            IProgress<CopyFileProgress> progress = null,
+            IProgress<CopyFileProgress>? progress = null,
             System.Threading.CancellationToken cancellationToken = new CancellationToken(), 
-            CopyFileOptions options = null);
+            CopyFileOptions? options = null);
 
         /// <summary>
         /// Returns information about a hard linked file.

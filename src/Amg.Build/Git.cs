@@ -11,21 +11,24 @@ namespace Amg.Build
     /// </summary>
     public class Git
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         /// <summary>
-        /// Constructor. You need to set RootDirectory before using the methods of the created instance.
+        /// Constructor. To be called via Once.Create
         /// </summary>
-        protected Git(){}
+        protected Git(string rootDirectory)
+        {
+            this.RootDirectory = rootDirectory;
+        }
 
         /// <summary>
         /// Create an instance where all methods marked with [Once] will only be called once.
         /// </summary>
-        /// <param name="testDir"></param>
+        /// <param name="rootDirectory"></param>
         /// <returns></returns>
-        public static Git Create(string testDir)
+        public static Git Create(string rootDirectory)
         {
-            return Runner.Once<Git>(_ => _.RootDirectory = testDir);
+            return Once.Create<Git>(rootDirectory);
         }
 
         /// <summary>

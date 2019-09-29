@@ -1,10 +1,12 @@
 <Project>
   <Import Project="../out/$(Configuration)/Version.props" />
   <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>8.0</LangVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <NoWarn>CS0618</NoWarn>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />

@@ -12,7 +12,7 @@ namespace Amg.Build
     /// </summary>
     public static class EnumerableExtensions
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         /// <summary>
         /// Concat one (1) new element
@@ -52,18 +52,21 @@ namespace Amg.Build
         /// </summary>
         /// <param name="multiLineString"></param>
         /// <returns></returns>
-        public static IEnumerable<string> SplitLines(this string multiLineString)
+        public static IEnumerable<string> SplitLines(this string? multiLineString)
         {
-            using (var r = new StringReader(multiLineString))
+            if (multiLineString != null)
             {
-                while (true)
+                using (var r = new StringReader(multiLineString))
                 {
-                    var line = r.ReadLine();
-                    if (line == null)
+                    while (true)
                     {
-                        break;
+                        var line = r.ReadLine();
+                        if (line == null)
+                        {
+                            break;
+                        }
+                        yield return line;
                     }
-                    yield return line;
                 }
             }
         }
@@ -78,7 +81,45 @@ namespace Amg.Build
         /// <param name="second"></param>
         /// <param name="resultSelector"></param>
         /// <returns></returns>
+        public static IEnumerable<TResult> ZipOrDefaultValue<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
+        {
+            using (var i0 = first.GetEnumerator())
+            using (var i1 = second.GetEnumerator())
+            {
+                while (true)
+                {
+                    var firstHasElement = i0.MoveNext();
+                    var secondHasElement = i1.MoveNext();
+                    if (firstHasElement || secondHasElement)
+                    {
+                        yield return resultSelector(
+                            firstHasElement ? i0.Current : default,
+                            secondHasElement ? i1.Current : default
+                            );
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+#nullable disable
+        /// <summary>
+        /// Zips together two sequences. The shorter sequence is padded with default values.
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <param name="resultSelector"></param>
+        /// <returns></returns>
         public static IEnumerable<TResult> ZipOrDefault<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
+            where TResult : class
+            where TFirst : class
+            where TSecond : class
         {
             using (var i0 = first.GetEnumerator())
             using (var i1 = second.GetEnumerator())
@@ -103,6 +144,27 @@ namespace Amg.Build
         }
 
         /// <summary>
+        /// Pads the sequence with null if it is not long enough
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="e"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> Pad<T>(this IEnumerable<T> e, int count)
+        {
+            using (var currentItem = e.GetEnumerator())
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    yield return currentItem.MoveNext()
+                        ? currentItem.Current
+                        : default(T);
+                }
+            }
+        }
+#nullable enable
+
+        /// <summary>
         /// Returns the element i for which selector(i) is maximal
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -110,10 +172,13 @@ namespace Amg.Build
         /// <param name="e"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
-        public static IEnumerable<T> MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector) where Y : IComparable
+        public static T? MaxElement<T, Y>(this IEnumerable<T> e, Func<T, Y> selector)
+            where T : class
+            where Y : IComparable 
         {
             using (var i = e.GetEnumerator())
             {
+#nullable disable
                 T max = default(T);
                 Y maxValue = default(Y);
                 bool found = false;
@@ -134,9 +199,8 @@ namespace Amg.Build
                         max = i.Current;
                     }
                 }
-                return found
-                    ? new[] { max }
-                    : Enumerable.Empty<T>();
+                return found ? max : default(T);
+#nullable enable
             }
         }
 
@@ -151,7 +215,7 @@ namespace Amg.Build
         /// <param name="query">the name (part) to be found.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException">When query does not identify a named element.</exception>
-        public static T FindByNameOrDefault<T>(this IEnumerable<T> candidates, Func<T, string> name, string query)
+        public static T? FindByNameOrDefault<T>(this IEnumerable<T> candidates, Func<T, string> name, string query) where T : class
         {
             try
             {
@@ -175,8 +239,11 @@ namespace Amg.Build
         /// <param name="itemsName"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentOutOfRangeException">When query does not identify a named element.</exception>
-        public static T FindByName<T>(this IEnumerable<T> candidates, Func<T, string> name, string query,
-            string itemsName = null)
+        public static T FindByName<T>(
+            this IEnumerable<T> candidates, 
+            Func<T, string> name, 
+            string query,
+            string? itemsName = null)
         {
             var r = candidates.SingleOrDefault(option =>
                 name(option).Equals(query, StringComparison.InvariantCultureIgnoreCase));
@@ -224,10 +291,10 @@ namespace Amg.Build
         /// <param name="description"></param>
         /// <returns></returns>
         public static IEnumerable<T> Progress<T>(this IEnumerable<T> e, 
-            Func<T, double> metric = null, 
+            Func<T, double>? metric = null, 
             TimeSpan updateInterval = default(TimeSpan),
-            string metricUnit = null,
-            string description = null
+            string? metricUnit = null,
+            string? description = null
             )
         {
             if (description == null)
@@ -316,7 +383,7 @@ namespace Amg.Build
         /// <returns></returns>
         public static IEnumerable<T> Progress<T>(this IEnumerable<T> e,
             IProgress<ProgressUpdate<T>> progress,
-            Func<T, double> metric = null,
+            Func<T, double>? metric = null,
             TimeSpan updateInterval = default(TimeSpan)
             )
         {
@@ -385,6 +452,11 @@ namespace Amg.Build
                 ++count;
                 yield return e.Take(count);
             }
+        }
+
+        public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> e) where T : class
+        {
+            return e.Where(_ => _ != null).Cast<T>();
         }
     }
 }
