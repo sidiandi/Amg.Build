@@ -45,19 +45,16 @@ namespace Amg.Build
         {
             var once = new Once();
             var name = "Alice";
-            var hello = once.Add<Hello>(name);
+            var hello = once.Get<Hello>(name);
             hello.Greet();
             hello.Greet();
 
-            var hello2 = once.Get<Hello>();
+            var hello2 = once.Get<Hello>(name);
             hello2.Greet();
             hello2.Greet();
 
             Assert.That(hello.Count, Is.EqualTo(1));
             Assert.That(hello2.Name, Is.EqualTo(name));
-
-            var hello3 = (Hello) once.GetService(typeof(Hello));
-            Assert.That(hello3.Name, Is.EqualTo(name));
         }
     }
 }

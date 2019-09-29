@@ -8,7 +8,7 @@ using Castle.DynamicProxy;
 
 namespace Amg.Build
 {
-    class InvocationInfo
+    partial class InvocationInfo
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
@@ -29,62 +29,6 @@ namespace Amg.Build
         interface IReturnValueSource
         {
             object ReturnValue { get; }
-        }
-
-        class TaskResultHandler<Result> : IReturnValueSource where Result : class
-        {
-            private readonly InvocationInfo invocationInfo;
-            private readonly Task<Result?> task;
-
-            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result?> task)
-            {
-                this.invocationInfo = invocationInfo;
-                this.task = task;
-            }
-
-            async Task<Result?> GetReturnValue()
-            {
-                try
-                {
-                    var r = await task;
-                    r = (Result?) invocationInfo.InterceptReturnValue(r);
-                    invocationInfo.Complete();
-                    return r;
-                }
-                catch (Exception ex)
-                {
-                    throw invocationInfo.Fail(ex);
-                }
-            }
-
-            public object ReturnValue => GetReturnValue();
-        }
-
-        class TaskHandler : IReturnValueSource
-        {
-            private InvocationInfo invocationInfo;
-            private Task task;
-
-            public TaskHandler(InvocationInfo invocationInfo, Task task)
-            {
-                this.invocationInfo = invocationInfo;
-                this.task = task;
-            }
-
-            async Task GetReturnValue()
-            {
-                try
-                {
-                    await task;
-                    invocationInfo.Complete();
-                }
-                catch (Exception ex)
-                {
-                    throw invocationInfo.Fail(ex);
-                }
-            }
-
-            public object ReturnValue => GetReturnValue();
         }
 
         internal static bool TryGetResultType(Task task, out Type resultType)
@@ -148,6 +92,8 @@ namespace Amg.Build
 {exception}", this, Summary.ErrorDetails(this));
             Console.Error.WriteLine($"{this} failed.");
             var invocationFailed = new InvocationFailed(this);
+            Tool.KillAll();
+            Once.Instance.CancelAll();
             return invocationFailed;
         }
 

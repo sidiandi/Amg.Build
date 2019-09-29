@@ -32,7 +32,7 @@ namespace Amg.Build
         /// <param name="e"></param>
         /// <param name="separator"></param>
         /// <returns></returns>
-        public static string Join(this IEnumerable<object> e, string separator)
+        public static string Join(this IEnumerable<object?> e, string separator)
         {
             return string.Join(separator, e.Where(_ => _ != null));
         }

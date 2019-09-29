@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
@@ -19,12 +21,17 @@ namespace Amg.Build
         IEnumerable<InvocationInfo> Invocations { get; }
     }
 
-    public class Once : IServiceProvider
+    public class Once
     {
         /// <summary>
         /// Default instance
         /// </summary>
         public static Once Instance { get; } = new Once();
+
+        public Once()
+        {
+            waitUntilCancelled = Task.Delay(-1, cancelAll.Token);
+        }
 
         internal static bool HasOnceMethods(object? x)
         {
@@ -73,27 +80,7 @@ namespace Amg.Build
             }
         }
 
-        /// <summary>
-        /// Get an instance of T that executes methods marked with [Once] only once and caches the result.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Get<T>() where T: class
-        {
-            return Add<T>();
-        }
-
         static ProxyGenerator generator = new ProxyGenerator(new DefaultProxyBuilder());
-
-        /// <summary>
-        /// Get an instance of T that executes methods marked with [Once] only once and caches the result.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Add<T>(params object[] ctorArguments) where T : class
-        {
-            return (T)onceInstanceCache.GetOrAdd(typeof(T), () => Create<T>(ctorArguments));
-        }
 
         /// <summary>
         /// Get an instance of T that executes methods marked with [Once] only once and caches the result.
@@ -121,7 +108,29 @@ namespace Amg.Build
         /// <returns></returns>
         public static object Create(Type type, params object?[] ctorArguments)
         {
-            var interceptor = new OnceInterceptor();
+            return Instance.Get(type, ctorArguments);
+        }
+
+        readonly IDictionary<string, object> _cache = new Dictionary<string, object>();
+
+        static string GenerateCacheKey(Type type, object?[] arguments)
+        {
+            return $"{type.FullName}({arguments.Join(", ")})";
+        }
+
+        /// <summary>
+        /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <returns></returns>
+        public T Get<T>(params object?[] ctorArguments) => (T) Get(typeof(T), ctorArguments);
+
+        /// <summary>
+        /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <returns></returns>
+        object Get(Type type, params object?[] ctorArguments)
+        {
+            var interceptor = new OnceInterceptor(waitUntilCancelled);
 
             var options = new ProxyGenerationOptions
             {
@@ -136,14 +145,12 @@ namespace Amg.Build
                 interceptor);
         }
 
-        /// <summary />
-        public object GetService(Type serviceType)
+        public void CancelAll()
         {
-            return GetType().GetMethod(nameof(Get))
-                .MakeGenericMethod(serviceType)
-                .Invoke(this, new object[] { });
+            cancelAll.Cancel();
         }
 
-        Dictionary<Type, object> onceInstanceCache = new Dictionary<Type, object>();
+        CancellationTokenSource cancelAll = new CancellationTokenSource();
+        Task waitUntilCancelled;
     }
 }
