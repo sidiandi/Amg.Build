@@ -15,7 +15,7 @@
   <ItemGroup>
     <EmbeddedResource Include="template/name.cmd" />
     <EmbeddedResource Include="template/name/name.cs" />
-    <EmbeddedResource Include="template/name/Amg.Build.props" />
+    <EmbeddedResource Include="template/name/Directory.Build.props" />
     <EmbeddedResource Include="template/name/name.csproj" />
   </ItemGroup>
 

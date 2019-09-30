@@ -149,7 +149,7 @@ Details:
         /// <returns></returns>
         static bool IsOutOfDate(SourceCodeLayout layout)
         {
-            if (Regex.IsMatch(layout.dllFile.FileName(), "test", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(layout.DllFile.FileName(), "test", RegexOptions.IgnoreCase))
             {
                 Logger.Warning("test mode detected. Out of date check skipped.");
                 return false;
@@ -161,7 +161,7 @@ Details:
                 .Exclude(".vs");
 
             var sourceChanged = sourceFiles.LastWriteTimeUtc();
-            var buildDllChanged = layout.dllFile.LastWriteTimeUtc();
+            var buildDllChanged = layout.DllFile.LastWriteTimeUtc();
 
             var maximalAge = TimeSpan.FromMinutes(60);
 
