@@ -92,7 +92,7 @@ namespace Amg.Build
                 var name = sourceFile.FileNameWithoutExtension();
                 var sourceDir = sourceFile.Parent();
                 var csprojFile = sourceDir.Combine(name + ".csproj");
-                var cmdFile = sourceDir.Parent().Combine(sourceFile.FileNameWithoutExtension() + ".cmd");
+                var cmdFile = sourceDir.Parent().Combine(sourceFile.FileNameWithoutExtension() + SourceCodeLayout.CmdExtension);
                 if (csprojFile.IsFile() && cmdFile.IsFile())
                 {
                     var currentFileVersion = FileVersion.Get(sourceDir);

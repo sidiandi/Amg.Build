@@ -27,7 +27,7 @@ namespace Amg.Build
         protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());
 
         [Once]
-        protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();
+        protected virtual Dotnet Dotnet => Once.Create<Dotnet>();
 
         [Once]
         MyBuild Nested => Runner.Once<MyBuild>();

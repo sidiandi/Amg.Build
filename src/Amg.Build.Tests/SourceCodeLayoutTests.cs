@@ -15,7 +15,7 @@ namespace Amg.Build
         {
             var testDir = CreateEmptyTestDirectory();
             var name = "hello";
-            var cmdFile = testDir.Combine(name + ".cmd");
+            var cmdFile = testDir.Combine(name + SourceCodeLayout.CmdExtension);
             var s = await SourceCodeLayout.Create(cmdFile);
 
             // cannot create again, because files exist.

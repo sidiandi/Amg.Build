@@ -1,11 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Amg.Build\Amg.Build.csproj" />
   </ItemGroup>
-
 </Project>

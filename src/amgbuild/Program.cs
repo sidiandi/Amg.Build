@@ -17,15 +17,49 @@ namespace amgbuild
             return Runner.Run(args);
         }
 
+        static string PathFromName(string name)
+        {
+            if (name.Contains("."))
+            {
+                // treat as path
+                var path = name.Absolute();
+                if (!path.HasExtension(SourceCodeLayout.CmdExtension))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(name), name, $"Must have {SourceCodeLayout.CmdExtension} extension.");
+                }
+                return path;
+            }
+            else
+            {
+                return (name + SourceCodeLayout.CmdExtension).Absolute();
+            }
+        }
+
         [Once]
         [Description("Create an Amg.Build script")]
-        public virtual async Task Init(string name)
+        public virtual async Task New(string name)
         {
-            var path = name.EndsWith(".cmd")
-                ? name.Absolute()
-                : (name + ".cmd").Absolute();
+            var path = PathFromName(name);
 
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
+        }
+
+        [Once]
+        [Description("Fix an Amg.Build script")]
+        public virtual async Task Fix(string cmdFile)
+        {
+            if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
+            {
+                throw new ArgumentOutOfRangeException(nameof(cmdFile), cmdFile, "Must have .cmd extension.");
+            }
+
+            if (!cmdFile.IsFile())
+            {
+                throw new ArgumentOutOfRangeException(nameof(cmdFile), cmdFile, "File not found.");
+            }
+
+            var sourceLayout = new SourceCodeLayout(cmdFile);
+            await sourceLayout.Fix();
         }
     }
 }

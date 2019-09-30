@@ -13,9 +13,14 @@ namespace Amg.Build
     internal class SourceCodeLayout
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+        public static string CmdExtension => ".cmd";
 
         public SourceCodeLayout(string cmdFile)
         {
+            if (!cmdFile.HasExtension(CmdExtension))
+            {
+                Logger.Information(nameof(cmdFile), cmdFile, $"Must have extension {SourceCodeLayout.CmdExtension}");
+            }
             this.CmdFile = cmdFile;
         }
 
@@ -30,11 +35,12 @@ namespace Amg.Build
 
         static async Task Create(string path, string templateName)
         {
-            var text = ReadStringFromEmbeddedResource("Amg.Build.template." + templateName);
+            var text = ReadTemplate(templateName);
             if (path.Exists())
             {
                 throw new Exception($"File {path} exists");
             }
+            Logger.Information("Write {path}", path);
             await path
                 .EnsureParentDirectoryExists()
                 .WriteAllTextIfChangedAsync(text);
@@ -91,9 +97,14 @@ namespace Amg.Build
             }
         }
 
-        public string PropsText => ReadStringFromEmbeddedResource("Directory.Build.props");
+        public string PropsText => ReadTemplate("name.Directory.Build.props");
 
-        public string BuildCmdText => ReadStringFromEmbeddedResource("build.cmd");
+        public string BuildCmdText => ReadTemplate("name.cmd");
+
+        static string ReadTemplate(string templateName)
+        {
+            return ReadStringFromEmbeddedResource("Amg.Build.template." + templateName);
+        }
 
         static string ReadStringFromEmbeddedResource(string resourceFileName)
         {
@@ -120,16 +131,22 @@ namespace Amg.Build
         {
             await FixFile(CmdFile, BuildCmdText);
             await FixFile(PropsFile, PropsText);
+            await FixFile(SourceDir.Combine(".gitignore"), ReadTemplate("name..gitignore"));
         }
 
-        string BuildCsProjText => ReadStringFromEmbeddedResource("build.csproj.template");
+        string BuildCsProjText => ReadTemplate("build.csproj.template");
 
         async Task FixFile(string file, string expected)
         {
-            Logger.Information("Write {file}", file);
-            await file
-                .EnsureParentDirectoryExists()
-                .WriteAllTextIfChangedAsync(expected);
+            var actualText = await file.ReadAllTextAsync();
+            if (!object.Equals(expected, actualText))
+            {
+                var backup = file.MoveToBackup();
+                Logger.Information("Writing {file}", file);
+                await file
+                    .EnsureParentDirectoryExists()
+                    .WriteAllTextIfChangedAsync(expected);
+            }
         }
 
         /// <summary>
@@ -142,7 +159,7 @@ namespace Amg.Build
             {
                 Logger.Dump(new { dllFile });
 
-                var cmdFile = dllFile.Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
+                var cmdFile = dllFile.Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
                 var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
                 var paths = new[] {

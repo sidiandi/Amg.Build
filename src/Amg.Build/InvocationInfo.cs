@@ -73,7 +73,6 @@ namespace Amg.Build
             else
             {
                 invocation.ReturnValue = InterceptReturnValue(invocation.ReturnValue);
-                Logger.Information("{task} suceeded.", this);
                 Complete();
             }
         }
@@ -81,7 +80,7 @@ namespace Amg.Build
         void Complete()
         {
             End = DateTime.UtcNow;
-            Logger.Information("{target} suceeded", this);
+            Logger.Information("{target} succeeded", this);
         }
 
         private InvocationFailed Fail(Exception exception)

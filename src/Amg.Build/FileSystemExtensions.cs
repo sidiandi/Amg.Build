@@ -170,7 +170,16 @@ namespace Amg.Build
         /// <returns></returns>
         public static string Parent(this string path)
         {
-            return System.IO.Path.GetDirectoryName(path);
+            var p = Path.GetDirectoryName(path);
+            if (String.IsNullOrEmpty(p))
+            {
+                p = Path.GetDirectoryName(path.Absolute());
+            }
+            if (p == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(path), path, "Cannot determine parent.");
+            }
+            return p;
         }
 
         /// <summary>
@@ -852,6 +861,29 @@ are more recent.
                 if (!buffer0.Take(read0).SequenceEqual(buffer1.Take(read1)))
                 {
                     return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Move path to a numbered backup location if it exists.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string? MoveToBackup(this string path)
+        {
+            if (!path.Exists())
+            {
+                return null;
+            }
+
+            for (var i = 0; ; ++i)
+            {
+                var backup = path + $".backup{i}";
+                if (!backup.Exists())
+                {
+                    Logger.Information("Backup of {path} at {backup}.", path, backup);
+                    return path.Move(backup);
                 }
             }
         }
