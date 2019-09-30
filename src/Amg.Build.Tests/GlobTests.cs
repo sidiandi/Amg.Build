@@ -11,22 +11,22 @@ namespace Amg.Build
     [TestFixture]
     public class GlobTests : TestBase
     {
-        string testDir;
+        string TestDir => _testDir!;
+
+        string? _testDir;
 
         [OneTimeSetUp]
         public async Task CreateTestDir()
         {
-            testDir = CreateEmptyTestDirectory();
-            await testDir.Combine("hello.txt").WriteAllTextAsync("hello");
-            await testDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
+            _testDir = CreateEmptyTestDirectory();
+            await TestDir.Combine("hello.txt").WriteAllTextAsync("hello");
+            await TestDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
         }
 
         [Test]
-        public void EmptyGlobReturnsOnlyTheRoot()
+        public void EmptyGlobReturnsEmpty()
         {
-            AssertSequencesAreEqual(
-                testDir.Glob(),
-                new[] { testDir });
+            Assert.That(!TestDir.Glob().Any());
         }
 
         /*
@@ -41,13 +41,13 @@ namespace Amg.Build
         public void Globstar()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("**"),
+                TestDir.Glob("**"),
                 new[]
                 {
-                    testDir.Combine("a"),
-                    testDir.Combine("hello.txt"),
-                    testDir.Combine(@"a\b"),
-                    testDir.Combine(@"a\b\c")
+                    TestDir.Combine("a"),
+                    TestDir.Combine("hello.txt"),
+                    TestDir.Combine(@"a\b"),
+                    TestDir.Combine(@"a\b\c")
                 });
         }
 
@@ -55,11 +55,11 @@ namespace Amg.Build
         public void GlobstarExclude()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("**").Exclude("b"),
+                TestDir.Glob("**").Exclude("b"),
                 new[]
                 {
-                    testDir.Combine("a"),
-                    testDir.Combine("hello.txt")
+                    TestDir.Combine("a"),
+                    TestDir.Combine("hello.txt")
                 });
         }
 
@@ -67,11 +67,11 @@ namespace Amg.Build
         public void ExcludeSubPaths()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("**").Exclude("a/b"),
+                TestDir.Glob("**").Exclude("a/b"),
                 new[]
                 {
-                    testDir.Combine("a"),
-                    testDir.Combine("hello.txt")
+                    TestDir.Combine("a"),
+                    TestDir.Combine("hello.txt")
                 });
         }
 
@@ -97,10 +97,10 @@ namespace Amg.Build
         public void FindFileRecursive()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("**/c"),
+                TestDir.Glob("**/c"),
                 new[]
                 {
-                    testDir.Combine("a\\b\\c")
+                    TestDir.Combine("a\\b\\c")
                 });
         }
 
@@ -108,10 +108,10 @@ namespace Amg.Build
         public void FindFileRecursive2()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("**/b/**/c"),
+                TestDir.Glob("**/b/**/c"),
                 new[]
                 {
-                    testDir.Combine("a/b/c")
+                    TestDir.Combine("a/b/c")
                 });
         }
 
@@ -119,10 +119,10 @@ namespace Amg.Build
         public void Wildcard()
         {
             AssertSequencesAreEqual(
-                testDir.Glob("*.txt"),
+                TestDir.Glob("*.txt"),
                 new[]
                 {
-                    testDir.Combine("hello.txt")
+                    TestDir.Combine("hello.txt")
                 });
         }
 
@@ -130,13 +130,13 @@ namespace Amg.Build
         public void RootDoesNotExistsReturnsEmpty()
         {
             AssertSequencesAreEqual(
-                testDir.Combine("not_exists").Glob(),
+                TestDir.Combine("not_exists").Glob(),
                 new string[]
                 {
                 });
         }
 
-        private static void AssertSequencesAreEqual<T>(IEnumerable<T> actual, IEnumerable<T> expected)
+        private static void AssertSequencesAreEqual<T>(IEnumerable<T> actual, IEnumerable<T> expected) where T: class
         {
             Assert.That(actual.SequenceEqual(expected), () => $@"Sequences do not match.
 

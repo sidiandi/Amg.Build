@@ -11,7 +11,7 @@ namespace Amg.Build
     /// </summary>
     public static class GitExtensions
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         static string GetReference(this Git git, string path)
         {

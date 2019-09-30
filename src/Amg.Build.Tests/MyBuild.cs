@@ -8,16 +8,26 @@ namespace Amg.Build
 {
     public class MyBuild
     {
+        protected MyBuild(string? result)
+        {
+            this.result = result ?? String.Empty;
+        }
+
+        protected MyBuild()
+        {
+            this.result = String.Empty;
+        }
+
         [Description("Release or Debug")]
-        public string Configuration { get; set; }
+        public string Configuration { get; set; } = "Release";
 
         public virtual string result { get; set; } = String.Empty;
 
         [Once]
-        protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Runner.RootDirectory());
+        protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());
 
         [Once]
-        protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();
+        protected virtual Dotnet Dotnet => Once.Create<Dotnet>();
 
         [Once]
         MyBuild Nested => Runner.Once<MyBuild>();
@@ -27,7 +37,8 @@ namespace Amg.Build
         public virtual async Task Version()
         {
             await Task.WhenAll(Git.GetVersion(), Dotnet.Version());
-            var v = await Dotnet.Version();
+            var vt = Dotnet.Version();
+            var v = await vt;
             Console.WriteLine(v);
         }
 

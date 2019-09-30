@@ -15,7 +15,7 @@ namespace Amg.Build.Windows
     /// </summary>
     internal class FileSystem : IFileSystem
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         public static FileSystem Current
         {
@@ -29,7 +29,7 @@ namespace Amg.Build.Windows
             }
         }
 
-        static FileSystem current = null;
+        static FileSystem? current = null;
 
         /// <summary>
         /// Create a hardlink at fileName that points to existingFileName
@@ -51,11 +51,11 @@ namespace Amg.Build.Windows
         const int ERROR_PATH_NOT_FOUND = 3;
 
         public void CopyFile(
-            string existingFileName, 
-            string newFileName, 
-            IProgress<CopyFileProgress> progress = null, 
-            CancellationToken ct = new CancellationToken(), 
-            CopyFileOptions options = null)
+            string existingFileName,
+            string newFileName,
+            IProgress<CopyFileProgress>? progress = null,
+            CancellationToken ct = new CancellationToken(),
+            CopyFileOptions? options = null)
         {
             Int32 pbCancel = 0;
 
@@ -66,7 +66,8 @@ namespace Amg.Build.Windows
 
             var begin = DateTime.UtcNow;
 
-            var progressCallback = progress != null ? new NativeMethods.CopyProgressRoutine(
+            var progressCallback = progress != null 
+                ? new NativeMethods.CopyProgressRoutine(
                 (
                     long TotalFileSize,
                     long TotalBytesTransferred,
@@ -95,7 +96,8 @@ namespace Amg.Build.Windows
                     {
                         return NativeMethods.CopyProgressResult.PROGRESS_CONTINUE;
                     }
-                }) : null;
+                }) 
+                : null;
 
             NativeMethods.CopyFileEx(
                 existingFileName,

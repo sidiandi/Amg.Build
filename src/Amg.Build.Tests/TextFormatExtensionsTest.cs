@@ -14,11 +14,9 @@ namespace Amg.Build
         {
             var text = Enumerable.Range(0, 1000).Select(_ => $"Line {_}").Join();
 
-            var shortened = text.ReduceLines(10,2);
-
+            var shortened = text.ReduceLines(10,2).ToString();
             Console.WriteLine(shortened);
-
-            Assert.That(shortened.ToString().SplitLines().Count(), Is.EqualTo(10));
+            Assert.That(shortened.SplitLines().Count(), Is.EqualTo(10));
         }
 
         [Test]

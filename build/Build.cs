@@ -32,10 +32,10 @@ public partial class BuildTargets
     string LibDir => SrcDir.Combine(name);
 
     [Once]
-    protected virtual Dotnet Dotnet => Runner.Once<Dotnet>();
+    protected virtual Dotnet Dotnet => Once.Create<Dotnet>();
 
     [Once]
-    protected virtual Git Git => Runner.Once<Git>(_ => _.RootDirectory = Root);
+    protected virtual Git Git => Git.Create(Runner.RootDirectory());
 
     [Once]
     protected virtual async Task PrepareBuild()
@@ -50,7 +50,7 @@ public partial class BuildTargets
     {
         await WriteAssemblyInformationFile();
         await WriteVersionPropsFile();
-        await (await Dotnet.Tool()).Run("build", SlnFile, 
+        await (await Dotnet.Tool()).Run("build", SlnFile,
             "--configuration", this.Configuration);
     }
 
@@ -85,18 +85,20 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 ");
     }
 
-    [Once] [Description("run unit tests")]
-	public virtual async Task Test()
+    [Once]
+    [Description("run unit tests")]
+    public virtual async Task Test()
     {
         await Build();
-        await (await Dotnet.Tool()).Run("test", 
-            SlnFile, 
+        await (await Dotnet.Tool()).Run("test",
+            SlnFile,
             "--no-build",
             "--configuration", Configuration
             );
     }
 
-    [Once] [Description("measure code coverage")]
+    [Once]
+    [Description("measure code coverage")]
     public virtual async Task CodeCoverage()
     {
         await Build();
@@ -105,7 +107,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             );
     }
 
-    [Once] [Description("pack nuget package")]
+    [Once]
+    [Description("pack nuget package")]
     public virtual async Task<string> Pack()
     {
         var version = (await Git.GetVersion()).NuGetVersionV2;
@@ -133,7 +136,9 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await EndToEndTest();
     }
 
-    [Once][Description("Complete test with .cmd bootstrapper file")]
+    string TargetFramework => "netcoreapp3.0";
+
+    [Once, Description("Complete test with .cmd bootstrapper file")]
     public virtual async Task EndToEndTest()
     {
         await Git.EnsureNoPendingChanges();
@@ -153,13 +158,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var name = "end-to-end-test-of-build";
         var amgbuild = (await Dotnet.Tool())
             .WithWorkingDirectory(testDir)
-            .WithArguments(OutDir.Combine("bin", "amgbuild.dll"));
+            .WithArguments(Root.Combine("src", "amgbuild", "bin", Configuration, TargetFramework, "amgbuild.dll"));
 
-        await amgbuild.Run("init", name);
+        await amgbuild.Run("new", name);
 
         var script = testDir.Combine($"{name}.cmd");
 
-        foreach (var d in new[] { "obj", "bin"})
+        foreach (var d in new[] { "obj", "bin" })
         {
             await testDir.Combine("build", d).EnsureNotExists();
         }
@@ -172,7 +177,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         void AssertRebuild(IToolResult result)
         {
-            if (!result.Output.Contains("Build script requires rebuild."))
+            if (!result.Output.Contains("Rebuilding"))
             {
                 throw new Exception("Script was not rebuild.");
             }
@@ -214,24 +219,10 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         }
 
         {
-            var result = await build.Run("--clean");
-            AssertExitCode(result, 0);
-            AssertRebuild(result);
-        }
-
-        {
             var outdated = DateTime.UtcNow.AddDays(-1);
-            foreach (var f in testDir.Combine("build", "bin").Glob("**/*").EnumerateFileInfos())
-            {
-                f.LastWriteTimeUtc = outdated;
-            }
+            var sourceFile = testDir.Combine(name, name + ".cs");
+            new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
             var result = await build.Run();
-            AssertExitCode(result, 0);
-            AssertRebuild(result);
-        }
-
-        {
-            var result = await build.Run("--fix");
             AssertExitCode(result, 0);
             AssertRebuild(result);
         }
@@ -255,7 +246,8 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 </configuration>");
     }
 
-    [Once] [Description("push nuget package")]
+    [Once]
+    [Description("push nuget package")]
     protected virtual async Task Push()
     {
         await Push(nugetPushSource);
@@ -280,12 +272,13 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         await push.Run(nupkgFile);
     }
 
-    [Once] [Description("Open in Visual Studio")]
+    [Once]
+    [Description("Open in Visual Studio")]
     public virtual async Task OpenInVisualStudio()
     {
-        foreach (var configuration in new[] { ConfigurationRelease, ConfigurationDebug})
+        foreach (var configuration in new[] { ConfigurationRelease, ConfigurationDebug })
         {
-            var b = Runner.Once<BuildTargets>();
+            var b = Once.Create<BuildTargets>();
             b.Configuration = configuration;
             await b.PrepareBuild();
         }
@@ -296,12 +289,14 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             UseShellExecute = true
         });
     }
-	
-    [Once][Description("Test")][Default]
+
+    [Once]
+    [Description("Test")]
+    [Default]
     public virtual async Task Default()
-	{
-		await Test();
-	}
+    {
+        await Test();
+    }
 
     static string IncreasePatchVersion(string version)
     {
@@ -310,11 +305,12 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         return i.Select(_ => _.ToString()).Join(".");
     }
 
-    [Once][Description("Build a release version and push to nuget.org")]
+    [Once]
+    [Description("Build a release version and push to nuget.org")]
     public virtual async Task Release()
     {
         await Git.EnsureNoPendingChanges();
-        var git = Runner.Once<Git>(_ => _.RootDirectory = this.Root);
+        var git = Git.Create(this.Root);
         var v = await git.GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
         var gitTool = Git.GitTool;

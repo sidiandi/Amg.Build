@@ -67,12 +67,15 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* Improve error logging
+* Terminate on the first failed [Once] call.
 * Adapter to use Cake extensions
-* Fail on the first failed target
 
 ## Done
 
+* creator tool "amgbuild.exe" creates and fixes Amg.Build scripts
+* nullable references
+* netcoreapp3.0
+* Improve error logging
 * option to fix source files
 * check source files
 * output options for ITool

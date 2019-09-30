@@ -29,10 +29,13 @@ namespace Amg.Build
         IWritable PublicApi(Type t) => TextFormatExtensions.GetWritable(w =>
         {
             foreach (var i in t.GetMethods()
-                .Where(_ => _.DeclaringType.Equals(t))
+                .Where(_ => object.Equals(_.DeclaringType, t))
             )
             {
-                w.WriteLine($"{i.DeclaringType.Assembly.GetName().Name}:{i.DeclaringType.FullName}.{i.Name}({Parameters(i)}): {Nice(i.ReturnType)}");
+                if (i.DeclaringType != null)
+                {
+                    w.WriteLine($"{i.DeclaringType.Assembly.GetName().Name}:{i.DeclaringType.FullName}.{i.Name}({Parameters(i)}): {Nice(i.ReturnType)}");
+                }
             }
         });
 

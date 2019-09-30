@@ -22,11 +22,6 @@ namespace Amg.Build
         public ProcessStartInfo StartInfo { get; }
 
         /// <summary />
-        public ToolException()
-        {
-        }
-
-        /// <summary />
         public ToolException(string message, IToolResult result, ProcessStartInfo startInfo)
             : base(message)
         {
@@ -37,6 +32,8 @@ namespace Amg.Build
         /// <summary />
         protected ToolException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            Result = null!;
+            StartInfo = null!;
         }
 
         /// <summary />

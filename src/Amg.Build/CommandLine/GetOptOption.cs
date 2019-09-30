@@ -48,7 +48,7 @@ namespace Amg.CommandLine
                     {
                         _property.GetCustomAttribute<DescriptionAttribute>().Map(_ => _.Description),
                         ValueSyntax(this.Type)
-                    }.Join(" ");
+                    }.NotNull().Join(" ");
                 }
             }
 
@@ -84,30 +84,28 @@ namespace Amg.CommandLine
             {
                 try
                 {
-                    object value = null;
                     if (toType == typeof(bool))
                     {
-                        value = bool.Parse(stringValue);
+                        return bool.Parse(stringValue);
                     }
                     else if (toType == typeof(int))
                     {
-                        value = int.Parse(stringValue);
+                        return int.Parse(stringValue);
                     }
                     else if (toType == typeof(double))
                     {
-                        value = double.Parse(stringValue);
+                        return double.Parse(stringValue);
                     }
                     else if (toType == typeof(string))
                     {
-                        value = stringValue;
+                        return stringValue;
                     }
                     else if (toType.IsEnum)
                     {
                         var enumName = Enum.GetNames(toType).FindByName(_ => _, stringValue, "values");
-                        value = Enum.Parse(toType, enumName);
+                        return Enum.Parse(toType, enumName);
                     }
-
-                    return value;
+                    throw new Exception($"Cannot parse {stringValue.Quote()} as {toType.Name}.");
                 }
                 catch (Exception e)
                 {

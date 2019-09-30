@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Amg.Build
 {
     [TestFixture]
-    public class ToolTests
+    public class ToolTests : TestBase
     {
         [Test]
         public void SetFileName()
@@ -19,12 +19,17 @@ namespace Amg.Build
             var bFileName = "b";
             var b = a.WithFileName(bFileName);
 
-            string GetFileNameField(ITool tool)
+            string? GetFileNameField(ITool tool)
             {
-                return (string) tool
+                var field = tool
                     .GetType()
-                    .GetField("fileName", BindingFlags.NonPublic|BindingFlags.Instance)
-                    .GetValue(tool);
+                    .GetField("fileName", BindingFlags.NonPublic | BindingFlags.Instance);
+                
+                if (field == null)
+                {
+                    throw new InvalidOperationException();
+                }
+                return (string?) field.GetValue(tool);
             }
 
             Assert.AreEqual(aFileName, GetFileNameField(a));
@@ -45,9 +50,10 @@ namespace Amg.Build
             var programThatDoesNotExist = "program-that-does-not-exist.exe";
             var echo = new Tool(programThatDoesNotExist);
             var e = Assert.Throws<AggregateException>(() => echo.Run("Hello").Wait());
-            Console.WriteLine(e.InnerException);
-            Assert.That(e.InnerException is ToolStartFailed);
-            Assert.That(e.InnerException.Message.Contains(programThatDoesNotExist));
+            var ie = e.InnerException!;
+            Console.WriteLine(ie);
+            Assert.That(ie is ToolStartFailed);
+            Assert.That(ie.Message.Contains(programThatDoesNotExist));
             await Task.CompletedTask;
         }
 
@@ -56,7 +62,7 @@ namespace Amg.Build
         {
             var echo = Tools.Cmd
                 .WithArguments("echo")
-                .WithEnvironment(new Dictionary<string, string>{ { "NAME", "Alice" } });
+                .WithEnvironment(new Dictionary<string, string> { { "NAME", "Alice" } });
             var r = await echo.Run("Hello", "%NAME%");
             Assert.That(r.Output, Is.EqualTo("Hello Alice\r\n"));
         }
@@ -91,7 +97,7 @@ namespace Amg.Build
             }
         }
 
-        [Test][Ignore("requires a local user test")]
+        [Test] [Ignore("requires a local user test")]
         public async Task RunAs()
         {
             var user = "test";
@@ -105,7 +111,7 @@ namespace Amg.Build
             {
                 wrongPasswordTool.Run("echo hello").Wait();
             });
-            Assert.That(ex.InnerException.Message, Is.EqualTo("The user name or password is incorrect"));
+            Assert.That(ex.InnerException!.Message, Is.EqualTo("The user name or password is incorrect"));
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Amg.Build
 {
     internal class LogInvocationInterceptor : StandardInterceptor
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         private StringBuilder sb = new StringBuilder();
         private List<string> invocations = new List<string>();

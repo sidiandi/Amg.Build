@@ -8,18 +8,22 @@ using Castle.DynamicProxy;
 
 namespace Amg.Build
 {
-    class InvocationInfo
+    partial class InvocationInfo
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private readonly IInvocation invocation;
-        private readonly OnceInterceptor interceptor;
+        private readonly IInvocation? invocation;
+        private readonly OnceInterceptor? interceptor;
+        public Exception? Exception { get; private set; }
 
         public InvocationInfo(string id, DateTime begin, DateTime end)
         {
             this.Id = id;
             Begin = begin;
             End = end;
+            invocation = null;
+            interceptor = null;
+            Exception = null;
         }
 
         interface IReturnValueSource
@@ -27,70 +31,20 @@ namespace Amg.Build
             object ReturnValue { get; }
         }
 
-        class TaskResultHandler<Result> : IReturnValueSource
+        internal static bool TryGetResultType(Task task, out Type resultType)
         {
-            private readonly InvocationInfo invocationInfo;
-            private readonly Task<Result> task;
-
-            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result> task)
+            var taskType = task.GetType();
+            if (taskType.IsGenericType)
             {
-                this.invocationInfo = invocationInfo;
-                this.task = task;
-            }
-
-            async Task<Result> GetReturnValue()
-            {
-                try
+                if (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult"))
                 {
-                    var r = await task;
-                    r = (Result)invocationInfo.InterceptReturnValue(r);
-                    return r;
-                }
-                catch (Exception ex)
-                {
-                    invocationInfo.Exception = ex;
-                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
-                    throw new InvocationFailed(ex, invocationInfo);
-                }
-                finally
-                {
-                    invocationInfo.Complete();
+                    resultType = taskType.GenericTypeArguments[0];
+                    return true;
                 }
             }
 
-            public object ReturnValue => GetReturnValue();
-        }
-
-        class TaskHandler : IReturnValueSource
-        {
-            private InvocationInfo invocationInfo;
-            private Task task;
-
-            public TaskHandler(InvocationInfo invocationInfo, Task task)
-            {
-                this.invocationInfo = invocationInfo;
-                this.task = task;
-            }
-
-            async Task GetReturnValue()
-            {
-                try
-                {
-                    await task;
-                }
-                catch (Exception ex)
-                {
-                    invocationInfo.Exception = ex;
-                    Logger.Fatal("{target} failed: {exception}", invocationInfo, InvocationFailed.ShortMessage(ex));
-                    throw new InvocationFailed(ex, invocationInfo);
-                }
-                finally
-                {
-                    invocationInfo.Complete();
-                }
-            }
-
-            public object ReturnValue => GetReturnValue();
+            resultType = null!;
+            return false;
         }
 
         public InvocationInfo(OnceInterceptor interceptor, string id, IInvocation invocation)
@@ -99,16 +53,14 @@ namespace Amg.Build
             this.invocation = invocation;
             this.Id = id;
 
-            Logger.Information("Begin {id}", Id);
+            Logger.Information("{task} started", this);
             Begin = DateTime.UtcNow;
             invocation.Proceed();
             if (ReturnValue is Task task)
             {
-                var returnType = task.GetType();
-                if (returnType.IsGenericType)
+                if (TryGetResultType(task, out var resultType))
                 {
-                    var resultHandlerType = typeof(TaskResultHandler<>)
-                      .MakeGenericType(returnType.GetGenericArguments()[0]);
+                    var resultHandlerType = typeof(TaskResultHandler<>).MakeGenericType(resultType);
                     var resultHandler = (IReturnValueSource)Activator.CreateInstance(resultHandlerType, this, task);
                     invocation.ReturnValue = resultHandler.ReturnValue;
                 }
@@ -128,7 +80,20 @@ namespace Amg.Build
         void Complete()
         {
             End = DateTime.UtcNow;
-            Logger.Information("End {id}", Id);
+            Logger.Information("{target} succeeded", this);
+        }
+
+        private InvocationFailed Fail(Exception exception)
+        {
+            End = DateTime.UtcNow;
+            this.Exception = exception;
+            Logger.Fatal(@"{target} failed.
+{exception}", this, Summary.ErrorDetails(this));
+            Console.Error.WriteLine($"{this} failed.");
+            var invocationFailed = new InvocationFailed(this);
+            Tool.KillAll();
+            Once.Instance.CancelAll();
+            return invocationFailed;
         }
 
         public virtual DateTime? Begin { get; set; }
@@ -144,34 +109,14 @@ namespace Amg.Build
             }
         }
 
-        internal object InterceptReturnValue(object x)
+        internal object? InterceptReturnValue(object? x)
         {
-            if (Amg.Build.Once.HasOnceMethods(x))
-            {
-                /*
-                var builder = new DefaultProxyBuilder();
-                var generator = new ProxyGenerator(builder);
-                var onceProxy = generator.CreateClassProxyWithTarget(x.GetType(), x,
-                    new ProxyGenerationOptions
-                    {
-                        Hook = new OnceHook()
-                    },
-                    new OnceInterceptor(interceptor, invocation.Method.Name),
-                    new LogInvocationInterceptor());
-                return onceProxy;
-                */
-                return x;
-            }
-            else
-            {
-                return x;
-            }
+            return x;
         }
 
-        public override string ToString() => Id.OneLine().Truncate(32);
+        public override string ToString() => $"Target {Id.OneLine().Truncate(32)}";
 
-        public Exception Exception { get; set; }
-        public object ReturnValue => invocation.ReturnValue;
+        public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 
         public enum States
         {

@@ -7,7 +7,7 @@ namespace Amg.CommandLine
 {
     class RunnerOptions
     {
-        public object Options { get; set; }
+        public object? Options { get; set; }
 
         [Short('h'), Description("Print help and exit.")]
         public bool Help { get; set; } = false;

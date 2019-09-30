@@ -27,7 +27,7 @@ namespace Amg.Build.Windows
 {
     internal static class NativeMethods
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         [DllImport("msvcrt.dll")]
         internal static extern int memcmp(byte[] b1, byte[] b2, long count);
@@ -229,7 +229,7 @@ namespace Amg.Build.Windows
         public static extern bool CopyFileEx(
            string lpExistingFileName, 
            string lpNewFileName,
-           CopyProgressRoutine lpProgressRoutine, 
+           CopyProgressRoutine? lpProgressRoutine, 
            IntPtr lpData, 
            ref Int32 pbCancel,
            CopyFileFlags dwCopyFlags);

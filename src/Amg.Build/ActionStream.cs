@@ -10,7 +10,7 @@ namespace Amg.Build
     public class ActionStream : TextWriter
     {
         private Action<string> output;
-        StringBuilder startedLine = null;
+        StringBuilder? startedLine = null;
 
         /// <summary />
         public ActionStream(Action<string> output)

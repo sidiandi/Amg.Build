@@ -10,7 +10,7 @@ using System.Threading;
 
 public class BuildTargets
 {
-    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 	
 	static int Main(string[] args) => Runner.Run(args);
 
@@ -30,10 +30,10 @@ public class BuildTargets
         await Greet(Enumerable.Range(0, 100).Select(_ => "Very long name ").Join());
 	}
 
-    [Once]
+    [Once, Default]
 	public virtual async Task Default()
 	{
-		await GreetAll();
+        await Greet("Alice"); 
 	}
 
     [Once][Description("Simulate a failing tool")]
@@ -42,10 +42,18 @@ public class BuildTargets
         await Tools.Cmd.Run("/c", "fasdfasdfasd");
     }
 
+    [Once]
+    [Description("Runs forever")]
+    public virtual async Task RunForever()
+    {
+        await Tools.Default.WithFileName("cmd")
+            .Run();
+    }
+
     [Once][Description("Use failing tool")]
     public virtual async Task UseFailingTool()
     {
-        await FailTool();
+        await Task.WhenAll(FailTool(), RunForever());
     }
 }
 

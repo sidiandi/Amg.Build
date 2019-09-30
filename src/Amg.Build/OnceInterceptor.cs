@@ -1,18 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
 namespace Amg.Build
 {
     internal class OnceInterceptor : IInterceptor
     {
-        public OnceInterceptor()
+        public OnceInterceptor(Task waitUntilCancelled)
         {
+            _waitUntilCancelled = waitUntilCancelled;
             prefix = null;
             _cache = new Dictionary<string, InvocationInfo>();
         }
 
-        public OnceInterceptor(OnceInterceptor parent, string prefix)
+        public Task _waitUntilCancelled { get; }
+
+        public OnceInterceptor(Task waitUntilCancelled, OnceInterceptor parent, string prefix)
+        : this(waitUntilCancelled)
         {
             this.prefix = prefix;
             _cache = parent._cache;
@@ -29,7 +34,7 @@ namespace Amg.Build
                 .ReturnValue;
         }
 
-        string prefix;
+        readonly string? prefix;
 
         string GenerateCacheKey(string name, object[] arguments)
         {

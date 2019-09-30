@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("amgbuild")]
@@ -12,56 +12,59 @@ namespace Amg.Build
 {
     internal class SourceCodeLayout
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        public string cmdFile;
-        public string name => cmdFile.FileNameWithoutExtension();
-        public string sourceFile => sourceDir.Combine(name + ".cs");
-        public string sourceDir => cmdFile.Parent().Combine(name);
-        public string propsFile => sourceDir.Combine("Amg.Build.props");
-        public string csprojFile => sourceDir.Combine(name + ".csproj");
-        public string dllFile => sourceDir.Combine("bin", "Debug", "netcoreapp2.1", name + ".dll");
-        public string fastDotnetRunFile => sourceDir.Combine("fast-dotnet-run.cmd");
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+        public static string CmdExtension => ".cmd";
 
         public SourceCodeLayout(string cmdFile)
         {
-            this.cmdFile = cmdFile;
+            if (!cmdFile.HasExtension(CmdExtension))
+            {
+                Logger.Information(nameof(cmdFile), cmdFile, $"Must have extension {SourceCodeLayout.CmdExtension}");
+            }
+            this.CmdFile = cmdFile;
+        }
+
+        public string CmdFile {get;}
+        public string RootDir => CmdFile.Parent();
+        public string Name => CmdFile.FileNameWithoutExtension();
+        public string SourceDir => CmdFile.Parent().Combine(Name);
+        public string SourceFile => SourceDir.Combine(Name + ".cs");
+        public string CsprojFile => SourceDir.Combine(Name + ".csproj");
+        public string PropsFile => SourceDir.Combine("Directory.Build.props");
+        public string DllFile => SourceDir.Parent().Parent().Combine("out", "Debug", "bin", Name + ".dll");
+
+        static async Task Create(string path, string templateName)
+        {
+            var text = ReadTemplate(templateName);
+            if (path.Exists())
+            {
+                throw new Exception($"File {path} exists");
+            }
+            Logger.Information("Write {path}", path);
+            await path
+                .EnsureParentDirectoryExists()
+                .WriteAllTextIfChangedAsync(text);
         }
 
         public static async Task<SourceCodeLayout> Create(string cmdFilePath)
         {
             var s = new SourceCodeLayout(cmdFilePath);
-
-            var existing = new[]
-            {
-                s.sourceDir,
-                s.cmdFile,
-            }.Where(_ => _.Exists());
-
+            var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
             if (existing.Any())
             {
-                throw new Exception($"Cannot create script because these files already exist: {existing.Join(", ")}");
+                throw new Exception($"Already exists: {existing.Join(", ")}");
             }
-
-            await s.Fix();
-            await s.FixFile(s.sourceFile, ReadStringFromEmbeddedResource("name_cs"));
-
+            await Create(s.CmdFile, "name.cmd");
+            await Create(s.CsprojFile, "name.name.csproj");
+            await Create(s.SourceFile, "name.name.cs");
+            await Create(s.PropsFile, "name.Directory.Build.props");
             return s;
         }
 
-        string CmdFileText => ReadStringFromEmbeddedResource("name.cmd");
-        string PropsFileText => ReadStringFromEmbeddedResource("Amg.Build.props");
-
         public async Task Check()
         {
-            await CheckFileEnd(cmdFile, CmdFileText);
-            await CheckFile(propsFile, PropsFileText);
-            var csproj = await csprojFile.ReadAllTextAsync();
-            var propsLine = @"<Import Project=""Amg.Build.props"" />";
-            if (!csproj.Contains(propsLine))
-            {
-                Logger.Warning("{csprojFile} must contain {propsLine}", csprojFile, propsLine);
-            }
+            await CheckFileEnd(CmdFile, BuildCmdText);
+            await CheckFile(PropsFile, PropsText);
         }
 
         async Task CheckFile(string file, string expected)
@@ -94,76 +97,86 @@ namespace Amg.Build
             }
         }
 
+        public string PropsText => ReadTemplate("name.Directory.Build.props");
+
+        public string BuildCmdText => ReadTemplate("name.cmd");
+
+        static string ReadTemplate(string templateName)
+        {
+            return ReadStringFromEmbeddedResource("Amg.Build.template." + templateName);
+        }
+
         static string ReadStringFromEmbeddedResource(string resourceFileName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            using (var resource = assembly.GetManifestResourceStream($"Amg.Build.template.{resourceFileName}"))
+            using (var resource = assembly.GetManifestResourceStream(resourceFileName))
             {
                 if (resource == null)
                 {
-                    throw new Exception(assembly.GetManifestResourceNames().Join());
+                    throw new ArgumentOutOfRangeException(
+                        nameof(resourceFileName), 
+                        resourceFileName,
+                        $"available resources:\r\n{ assembly.GetManifestResourceNames().Join()}");
                 }
                 return new StreamReader(resource).ReadToEnd();
             }
         }
 
-        public static SourceCodeLayout Get(Type targetsType)
+        public static SourceCodeLayout? Get(Type targetsType)
         {
             return FromDll(targetsType.Assembly.Location);
         }
 
         public async Task Fix()
         {
-            await FixFile(cmdFile, CmdFileText);
-            await FixFile(propsFile, PropsFileText);
-            await FixFile(csprojFile, ReadStringFromEmbeddedResource("name.csproj"));
-            await FixFile(fastDotnetRunFile, FastDotnetRunFileText);
+            await FixFile(CmdFile, BuildCmdText);
+            await FixFile(PropsFile, PropsText);
+            await FixFile(SourceDir.Combine(".gitignore"), ReadTemplate("name..gitignore"));
         }
 
-        string FastDotnetRunFileText => ReadStringFromEmbeddedResource("fast-dotnet-run.cmd");
-
-        string BuildCsProjText => ReadStringFromEmbeddedResource("name.csproj");
+        string BuildCsProjText => ReadTemplate("build.csproj.template");
 
         async Task FixFile(string file, string expected)
         {
-            Logger.Information("Write {file}", file);
-            await file
-                .EnsureParentDirectoryExists()
-                .WriteAllTextIfChangedAsync(expected);
+            var actualText = await file.ReadAllTextAsync();
+            if (!object.Equals(expected, actualText))
+            {
+                var backup = file.MoveToBackup();
+                Logger.Information("Writing {file}", file);
+                await file
+                    .EnsureParentDirectoryExists()
+                    .WriteAllTextIfChangedAsync(expected);
+            }
         }
-
-        IEnumerable<string> Files => new[] {
-            cmdFile,
-            csprojFile,
-            propsFile,
-            fastDotnetRunFile
-        };
 
         /// <summary>
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>
-        /// build.cmd
-        /// build\build.cs
-        /// build\build.csproj
-        /// build\bin\Debug\netcoreapp2.1\build.dll
         /// <returns></returns>
-        internal static SourceCodeLayout FromDll(string dllFile)
+        internal static SourceCodeLayout? FromDll(string dllFile)
         {
             try
             {
-                Logger.Information("{dllFile}", dllFile);
-                var cmdFile = dllFile.Absolute().Parent().Parent().Parent().Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + ".cmd");
+                Logger.Dump(new { dllFile });
+
+                var cmdFile = dllFile.Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
                 var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
-                var paths = sourceCodeLayout.Files
-                    .Select(path => new { path, exists = path.Exists() })
-                    .ToList();
+                var paths = new[] {
+                    sourceCodeLayout.SourceDir,
+                    sourceCodeLayout.CmdFile,
+                }.Select(path => new { path, exists = path.Exists() })
+                .ToList();
 
                 Logger.Information("{@paths}", paths);
                 var hasSources = paths.All(_ => _.exists);
                 if (hasSources)
                 {
-                    Logger.Information("sources: {@sourceCodeLayout}", sourceCodeLayout);
+                    Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
+                }
+                else
+                {
+                    Logger.Warning("Files not found: {@filesNotFound}", paths.Where(_ => !_.exists));
                 }
                 return hasSources ? sourceCodeLayout : null;
             }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Amg.Build
 {
@@ -36,7 +37,7 @@ namespace Amg.Build
                     Name = _.Id.Truncate(32),
                     State = _.State,
                     Duration = _.Duration.HumanReadable(),
-                    Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin.Value, _.End.Value)
+                    Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin, _.End)
                 })
                 .ToTable()
                 .Write(@out);
@@ -62,7 +63,8 @@ namespace Amg.Build
             foreach (var failedTarget in invocations.OrderByDescending(_ => _.End)
                 .Where(_ => _.State == InvocationInfo.States.Failed))
             {
-                var r = GetRootCause(failedTarget.Exception);
+                var exception = failedTarget.Exception!;
+                var r = GetRootCause(exception);
                 if (!(r is InvocationFailed))
                 {
                     @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");
@@ -71,17 +73,62 @@ namespace Amg.Build
             @out.WriteLine("FAILED");
         });
 
-        internal static void PrintSummary(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        internal static IWritable ErrorDetails(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
         {
-            if (invocations.Any(_ => _.Failed))
+            var ex = failed.Exception;
+            if (ex != null)
             {
-                Console.Error.WriteLine("FAILED");
+                if (ex is InvocationFailed)
+                {
+                    o.WriteLine(ex.Message);
+                }
+                else
+                {
+                    o.WriteLine();
+                    o.WriteLine($"{ex.GetType()}: {ex.Message}");
+                    o.Write(ex.StackTrace.SplitLines()
+                        .Where(_ => !Regex.IsMatch(_, @"(at System.Threading.|--- End of stack trace from previous location where exception was thrown ---|Amg.Build.InvocationInfo.TaskHandler.GetReturnValue)"))
+                        .Join());
+                }
+            }
+        });
+
+        internal static IWritable ErrorMessage(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
+        {
+            var ex = failed.Exception;
+            if (ex != null)
+            {
+                foreach (var sl in ex.SourceLocations().Reverse().Skip(1).Take(1))
+                {
+                    o.WriteLine($@"{sl}: {failed} failed at {failed.End!:o}. Reason:
+{ErrorDetails(failed).Indent("  ")}");
+                }
+            }
+        });
+
+        internal static void PrintSummary(IEnumerable<InvocationInfo> invocations)
+        {
+            if (invocations.Failed())
+            {
+                foreach (var fail in invocations.Where(_ => _.Failed))
+                {
+                    ErrorMessage(fail).Write(Console.Error);
+                }
+                /*
+                Console.Error.WriteLine(@"			
+         )
+        (
+          ,
+       ___)\
+      (_____)
+     (_______)
+");
+                */
             }
             else
             {
-                Console.WriteLine("success");
             }
-        });
+        }
 
         private static string RootCause(InvocationInfo i)
         {

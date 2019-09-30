@@ -19,7 +19,12 @@ namespace Amg.Build
             return files.FirstOrDefault();
         }
 
-        static internal IEnumerable<string> FileAndLineFromStackTrace(this string stackTrace)
+        internal static IEnumerable<string> SourceLocations(this Exception exception)
+        {
+            return exception.StackTrace.FileAndLineFromStackTrace();
+        }
+
+        static IEnumerable<string> FileAndLineFromStackTrace(this string stackTrace)
         {
             return Regex.Matches(stackTrace, @"in (.*):line (\d+)").Cast<Match>()
                 .Select(m => new { file = m.Groups[1].Value, line = m.Groups[2].Value })

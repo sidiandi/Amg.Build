@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,19 +14,31 @@ namespace Amg.Build
     /// Start a command line tool.
     /// </summary>
     /// Immutable. To customize, use the With... methods.
-    public class Tool : ITool
+    [Obsolete("Use Tools.Default")]
+    public partial class Tool : ITool
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        readonly string fileName;
+        readonly string? fileName;
         readonly string[] leadingArguments = new string[] { };
-        readonly string workingDirectory = ".";
+        readonly string? workingDirectory = ".";
         readonly int? expectedExitCode = 0;
         readonly IDictionary<string, string> environment = new Dictionary<string, string>();
-        readonly string user = null;
-        readonly string password = null;
+        readonly string? user = null;
+        readonly string? password = null;
         readonly Action<IRunning, string> onError = new Action<IRunning, string>((r, _) => Console.Error.WriteLine(_));
         readonly Action<IRunning, string> onOutput = new Action<IRunning, string>((r, _) => Console.Out.WriteLine(_));
+
+        static Tool()
+        {
+            var domain = AppDomain.CurrentDomain;
+            domain.ProcessExit += new EventHandler(domain_ProcessExit);
+        }
+
+        static void domain_ProcessExit(object sender, EventArgs e)
+        {
+            KillAll();
+        }
 
         /// <summary>
         /// Prepends arguments to every Run call.
@@ -63,6 +76,24 @@ namespace Amg.Build
             return With(_ => _.environment, environment.Merge(environmentVariables));
         }
 
+        static readonly List<IRunning> RunningProcesses = new List<IRunning>();
+
+        internal static void KillAll()
+        {
+            for (; ; )
+            {
+                IRunning? i = null;
+                lock (RunningProcesses)
+                {
+                    if (RunningProcesses.Count == 0) break;
+                    i = RunningProcesses[0];
+                    RunningProcesses.RemoveAt(0);
+                }
+                Logger.Information("Killing still running ITool process {process}", i);
+                i.Process.Kill();
+            }
+        }
+
         /// <summary>
         /// Set the working directory for the tool. Default: current directory
         /// </summary>
@@ -96,7 +127,7 @@ namespace Amg.Build
         /// Create a tool. 
         /// </summary>
         /// <param name="executableFileName">.exe or .cmd file. Relative paths are resolved to current directory and PATH environment.</param>
-        [Obsolete("Use Tool.Default")]
+        [Obsolete("Use Tools.Default")]
         public Tool(string executableFileName)
         {
             this.fileName = executableFileName;
@@ -104,13 +135,6 @@ namespace Amg.Build
 
         internal Tool()
         {
-        }
-
-        class ResultImpl : IToolResult
-        {
-            public int ExitCode { get; set; }
-            public string Output { get; set; }
-            public string Error { get; set; }
         }
 
         static SecureString GetSecureString(string password)
@@ -123,20 +147,6 @@ namespace Amg.Build
             return s;
         }
 
-        class Running : IRunning
-        {
-            private Process process;
-
-            public Running(Process p)
-            {
-                this.process = p;
-            }
-
-            public Process Process => process;
-
-            public override string ToString() => Process.Id.ToString();
-        }
-
         /// <summary>
         /// Runs the tool
         /// </summary>
@@ -144,12 +154,12 @@ namespace Amg.Build
         /// <returns></returns>
         public Task<IToolResult> Run(params string[] args)
         {
-            return Task.Factory.StartNew(() =>
+            return Task.Factory.StartNew((Func<IToolResult>)(() =>
             {
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = fileName,
-                    Arguments = CreateArgumentsString(leadingArguments.Concat(args)),
+                    Arguments = CreateArgumentsString(leadingArguments.Concat<string>(args)),
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     WorkingDirectory = workingDirectory,
@@ -160,14 +170,17 @@ namespace Amg.Build
                 if (user != null)
                 {
                     var userParts = user.Split('\\');
-                    var userName = userParts.Last();
+                    var userName = userParts.Last<string>();
                     if (userParts.Length >= 2)
                     {
                         var domain = userParts[0];
                         startInfo.Domain = domain;
                     }
                     startInfo.UserName = userName;
-                    startInfo.Password = GetSecureString(password);
+                    if (password != null)
+                    {
+                        startInfo.Password = GetSecureString(password);
+                    }
                 }
 
                 startInfo.EnvironmentVariables.Add(this.environment);
@@ -192,35 +205,41 @@ namespace Amg.Build
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
-                processLog.Information("process {Id} started: {FileName} {Arguments}", p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information(
+                    "process {Id} started: {FileName} {Arguments}",
+                    p.Id, p.StartInfo.FileName, p.StartInfo.Arguments);
 
                 var running = new Running(p);
                 var output = p.StandardOutput.Tee(_ => onOutput(running, _)).ReadToEndAsync();
                 var error = p.StandardError.Tee(_ => onError(running, _)).ReadToEndAsync();
+                running.WaitForExit();
 
-                p.WaitForExit();
-                processLog.Information("process {Id} exited with {ExitCode}: {FileName} {Arguments}", p.Id, p.ExitCode, p.StartInfo.FileName, p.StartInfo.Arguments);
+                processLog.Information(
+                    "process {Id} exited with {ExitCode}: {FileName} {Arguments}",
+                    p.Id,
+                    p.ExitCode,
+                    p.StartInfo.FileName,
+                    p.StartInfo.Arguments);
 
-                var result = (IToolResult)new ResultImpl
-                {
-                    ExitCode = p.ExitCode,
-                    Error = error.Result,
-                    Output = output.Result
-                };
+
+                var result = (IToolResult)new ResultImpl(
+                    exitCode: p.ExitCode,
+                    output: output.Result,
+                    error: error.Result);
 
                 if (expectedExitCode != null)
                 {
                     if (p.ExitCode != expectedExitCode.Value)
                     {
                         throw new ToolException(
-                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.", 
+                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.",
                             result, startInfo);
                     }
                 }
 
                 return result;
 
-            }, TaskCreationOptions.LongRunning);
+            }), TaskCreationOptions.LongRunning);
         }
 
         /// <summary>

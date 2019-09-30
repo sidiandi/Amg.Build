@@ -139,7 +139,7 @@ namespace Amg.Build
         {
             IEnumerable<int> Max(IEnumerable<int> e0, IEnumerable<int> e1)
             {
-                return e0.ZipOrDefault(e1, Math.Max);
+                return e0.ZipOrDefaultValue(e1, Math.Max);
             }
 
             return GetWritable(w =>
@@ -156,6 +156,9 @@ namespace Amg.Build
                 }
             });
         }
+
+        const char empty = ' ';
+        const char full = '#';
 
         /// <summary>
         /// represents a time interval in a larger time interval as time line.
@@ -180,9 +183,28 @@ namespace Amg.Build
             }
             var beginPos = Pos(begin).Limit(0, width - 1);
             var endPos = Math.Max(Pos(end), beginPos + 1);
-            const char empty = ' ';
-            const char full = '#';
             return new string(empty, beginPos) + new string(full, endPos - beginPos) + new string(empty, width - endPos);
+        }
+
+        /// <summary>
+        /// represents a time interval in a larger time interval as time line.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="rangeBegin"></param>
+        /// <param name="rangeEnd"></param>
+        /// <param name="begin"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime? begin, DateTime? end)
+        {
+            if (begin != null && end != null)
+            {
+                return TimeBar(width, rangeBegin, rangeEnd, begin.Value, end.Value);
+            }
+            else
+            {
+                return new string(empty, width);
+            }
         }
 
         /// <summary>
@@ -194,6 +216,15 @@ namespace Amg.Build
         {
             return new Writable(w);
         }
+
+        public static IWritable Indent(this IWritable writable, string prefix) => GetWritable(o =>
+        {
+            var lines = writable.ToString().SplitLines().Select(_ => prefix + _);
+            foreach (var line in lines)
+            {
+                o.WriteLine(line);
+            }
+        });
 
         /// <summary>
         /// Skip lines in the middle if text exceed maxLines lines.

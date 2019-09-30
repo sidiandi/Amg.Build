@@ -9,11 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="template\fast-dotnet-run.cmd" />
-    <EmbeddedResource Include="template\name_cs" />
-    <EmbeddedResource Include="template\Amg.Build.props" />
-    <EmbeddedResource Include="template\name.cmd" />
-    <EmbeddedResource Include="template\name.csproj" />
+    <Compile Remove="template/name/name.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="template/name/.gitignore" />
+    <EmbeddedResource Include="template/name.cmd" />
+    <EmbeddedResource Include="template/name/name.cs" />
+    <EmbeddedResource Include="template/name/Directory.Build.props" />
+    <EmbeddedResource Include="template/name/name.csproj" />
   </ItemGroup>
 
   <ItemGroup>

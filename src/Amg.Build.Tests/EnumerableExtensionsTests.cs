@@ -25,5 +25,24 @@ namespace Amg.Build
                     return _;
                 }).ToList();
         }
+
+        [Test]
+        public void NotNull()
+        {
+            var e = new[] { "a", "b", "c", null };
+            var nne = e.NotNull();
+            Assert.That(nne.SequenceEqual(new string[] { "a", "b", "c" }));
+        }
+
+        [Test]
+        public void Pad()
+        {
+            var originalCount = 3;
+            var e = Enumerable.Range(0, originalCount).Select(_ => _.ToString());
+            var padCount = 10;
+            var padded = e.Pad(padCount).ToList();
+            Assert.That(padded.Count, Is.EqualTo(padCount));
+            Assert.That(padded.NotNull().SequenceEqual(e));
+        }
     }
 }

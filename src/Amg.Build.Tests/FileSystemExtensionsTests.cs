@@ -11,7 +11,7 @@ namespace Amg.Build
     [TestFixture]
     public class FileSystemExtensionsTests : TestBase
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         [Test]
         public async Task EnsureDirectoryIsEmpty()
@@ -54,7 +54,7 @@ namespace Amg.Build
             Console.WriteLine(".".Glob().LastWriteTimeUtc());
         }
 
-        static string GetThisSourceFile([CallerFilePath] string path = null) => path;
+        static string GetThisSourceFile([CallerFilePath] string? path = null) => path!;
 
         [Test]
         public void OutOfDate()
