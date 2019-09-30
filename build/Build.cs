@@ -160,7 +160,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             .WithWorkingDirectory(testDir)
             .WithArguments(Root.Combine("src", "amgbuild", "bin", Configuration, TargetFramework, "amgbuild.dll"));
 
-        await amgbuild.Run("init", name);
+        await amgbuild.Run("new", name);
 
         var script = testDir.Combine($"{name}.cmd");
 
