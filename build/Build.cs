@@ -35,7 +35,7 @@ public partial class BuildTargets
     protected virtual Dotnet Dotnet => Once.Create<Dotnet>();
 
     [Once]
-    protected virtual Git Git { get { var git = Once.Create<Git>(); git.RootDirectory = Runner.RootDirectory(); return git; } }
+    protected virtual Git Git => Git.Create(Runner.RootDirectory());
 
     [Once]
     protected virtual async Task PrepareBuild()
@@ -310,7 +310,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     public virtual async Task Release()
     {
         await Git.EnsureNoPendingChanges();
-        var git = Once.Create<Git>(this.Root);
+        var git = Git.Create(this.Root);
         var v = await git.GetVersion();
         Logger.Information("Tagging with {version}", v.MajorMinorPatch);
         var gitTool = Git.GitTool;
