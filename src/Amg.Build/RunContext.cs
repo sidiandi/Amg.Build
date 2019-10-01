@@ -54,7 +54,7 @@ namespace Amg.Build
         {
             try
             {
-                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Warning);
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
 
