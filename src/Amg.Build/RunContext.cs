@@ -112,7 +112,10 @@ namespace Amg.Build
 
                 invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
 
-                Logger.Information(Summary.PrintTimeline(invocations));
+                if (options.Summary)
+                {
+                    Logger.Information(Summary.PrintTimeline(invocations));
+                }
 
                 return invocations.Failed()
                     ? ExitCode.TargetFailed
