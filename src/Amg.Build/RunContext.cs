@@ -23,6 +23,7 @@ namespace Amg.Build
         private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         private Type targetsType;
+        private readonly string sourceFile;
         private string[] commandLineArguments;
 
         public enum ExitCode
@@ -42,6 +43,7 @@ namespace Amg.Build
             )
         {
             this.targetsType = targetsType;
+            this.sourceFile = sourceFile;
             this.commandLineArguments = commandLineArguments;
         }
 
