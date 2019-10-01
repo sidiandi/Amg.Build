@@ -66,7 +66,7 @@ $@"// Generated. Changes will be lost.
 [assembly: System.Reflection.AssemblyVersion({v.AssemblySemVer.Quote()})]
 [assembly: System.Reflection.AssemblyFileVersion({v.AssemblySemFileVer.Quote()})]
 [assembly: System.Reflection.AssemblyInformationalVersion({v.InformationalVersion.Quote()})]
-[assembly: System.Reflection.AssemblyMetadata({nameof(v.NuGetVersionV2)}, {v.NuGetVersionV2.Quote()})]
+[assembly: System.Reflection.AssemblyMetadata({nameof(v.NuGetVersionV2).Quote()}, {v.NuGetVersionV2.Quote()})]
 ");
     }
 
