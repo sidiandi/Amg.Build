@@ -15,14 +15,14 @@ public partial class Program
 	[Once, Description("example action")]
 	public virtual async Task ExampleAction()
 	{
-		Console.WriteLine("ExampleAction");
+		Console.WriteLine($"ExampleAction. ExampleOption: {ExampleOption}.");
 		await Task.CompletedTask;
 	}
 	
 	[Once, Default, Description("Example default action")]
 	public virtual async Task Default()
 	{
-		Console.WriteLine("Default");
+		Console.WriteLine("Hello, World!");
 		await Task.CompletedTask;
 	}
 }
