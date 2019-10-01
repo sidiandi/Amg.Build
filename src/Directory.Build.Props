@@ -8,9 +8,18 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <NoWarn>CS0618</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../LICENSE" Pack="true" Visible="false" PackagePath="" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />
   </ItemGroup>
+  
   <PropertyGroup>
     <!-- SolutionDir is not defined when building projects explicitly -->
     <SolutionDir Condition=" '$(SolutionDir)' == '' ">$(MSBuildThisFileDirectory)</SolutionDir>

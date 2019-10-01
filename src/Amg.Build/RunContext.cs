@@ -57,6 +57,8 @@ namespace Amg.Build
         {
             try
             {
+                RecordStartupTime();
+
                 var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
@@ -99,8 +101,7 @@ namespace Amg.Build
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
-                var startup = GetStartupInvocation();
-                IEnumerable<InvocationInfo> invocations = new[] { startup };
+                IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
 
                 try
                 {
@@ -143,13 +144,38 @@ Details:
             }
         }
 
-        private static InvocationInfo GetStartupInvocation()
-        {
-            var startupFile = BuildScriptDll + ".startup";
-            var begin = startupFile.IsFile()
-                ? startupFile.LastWriteTimeUtc()
-                : Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        string StartupFile => BuildScriptDll + ".startup";
 
+        void RecordStartupTime()
+        {
+            if (!StartupFile.IsFile())
+            {
+                Json.Write(StartupFile, DateTime.UtcNow);
+            }
+        }
+
+        DateTime GetStartupTime()
+        {
+            if (StartupFile.IsFile())
+            {
+                try
+                {
+                    return Json.Read<DateTime>(StartupFile);
+                }
+                catch
+                {
+                }
+                finally
+                {
+                    StartupFile.EnsureFileNotExists();
+                }
+            }
+            return Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        }
+
+        InvocationInfo GetStartupInvocation()
+        {
+            var begin = GetStartupTime();
             var end = DateTime.UtcNow;
             var startupDuration = end - begin;
             Logger.Information("Startup duration: {startupDuration}", startupDuration);
@@ -157,7 +183,7 @@ Details:
             return startupInvocation;
         }
 
-        static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
+        string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
         /// <summary>
         /// Detects if the buildDll itself needs to be re-built.

@@ -5,10 +5,6 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-  </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="template/name/name.cs" />
   </ItemGroup>
@@ -19,10 +15,6 @@
     <EmbeddedResource Include="template/name/name.cs" />
     <EmbeddedResource Include="template/name/Directory.Build.props" />
     <EmbeddedResource Include="template/name/name.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="../../LICENSE" Pack="true" Visible="false" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
