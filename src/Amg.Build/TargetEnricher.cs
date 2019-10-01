@@ -29,7 +29,7 @@ namespace Amg.Build
 
         private LogEventProperty GetProperty(ILogEventPropertyFactory propertyFactory)
         {
-            return propertyFactory.CreateProperty("Target", null);
+            return propertyFactory.CreateProperty("Command", null);
         }
     }
 }

@@ -3,7 +3,7 @@ using System;
 using Amg.Build;
 using System.ComponentModel;
 
-public class Build
+public partial class Program
 {
     private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 	
@@ -15,14 +15,14 @@ public class Build
 	[Once, Description("example action")]
 	public virtual async Task ExampleAction()
 	{
-		Console.WriteLine("ExampleAction");
+		Console.WriteLine($"ExampleAction. ExampleOption: {ExampleOption}.");
 		await Task.CompletedTask;
 	}
 	
 	[Once, Default, Description("Example default action")]
 	public virtual async Task Default()
 	{
-		Console.WriteLine("Default");
+		Console.WriteLine("Hello, World!");
 		await Task.CompletedTask;
 	}
 }

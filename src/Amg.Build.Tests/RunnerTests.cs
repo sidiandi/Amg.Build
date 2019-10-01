@@ -7,7 +7,7 @@ using System;
 namespace Amg.Build
 {
     [TestFixture]
-    public class RunnerTests : TestBase
+    public class RunnerTests
     {
         [Test]
         public void Run()

@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 rem Do not modify below this line
 rem Bootstrapper script of https://github.com/sidiandi/Amg.Build
 setlocal

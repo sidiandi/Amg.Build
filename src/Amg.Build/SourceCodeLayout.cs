@@ -36,6 +36,11 @@ namespace Amg.Build
         static async Task Create(string path, string templateName)
         {
             var text = ReadTemplate(templateName);
+            await CreateFromText(path, text);
+        }
+
+        static async Task CreateFromText(string path, string text)
+        {
             if (path.Exists())
             {
                 throw new Exception($"File {path} exists");
@@ -57,7 +62,7 @@ namespace Amg.Build
             await Create(s.CmdFile, "name.cmd");
             await Create(s.CsprojFile, "name.name.csproj");
             await Create(s.SourceFile, "name.name.cs");
-            await Create(s.PropsFile, "name.Directory.Build.props");
+            await CreateFromText(s.PropsFile, s.PropsText);
             return s;
         }
 
@@ -97,7 +102,12 @@ namespace Amg.Build
             }
         }
 
-        public string PropsText => ReadTemplate("name.Directory.Build.props");
+        string NugetVersion => Assembly.GetExecutingAssembly()
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .Single(_ => _.Key.Equals("NuGetVersionV2")).Value;
+
+        public string PropsText => ReadTemplate("name.Directory.Build.props")
+            .Replace("{AmgBuildVersion}", NugetVersion);
 
         public string BuildCmdText => ReadTemplate("name.cmd");
 

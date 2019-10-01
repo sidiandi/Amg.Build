@@ -15,7 +15,7 @@ namespace Amg.Build
         static TestBase()
         {
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
+                .WriteTo.Console(standardErrorFromLevel: Serilog.Events.LogEventLevel.Error)
                 .CreateLogger();
         }
 

@@ -78,12 +78,13 @@ namespace Amg.Build
 
         public static void Print(TextWriter @out, Options options)
         {
-            @out.WriteLine(@"Usage: build [options] <target> [target parameters]...
+            var name = Assembly.GetEntryAssembly().GetName().Name;
+            @out.WriteLine($@"Usage: {name} [options] <command> [command parameters]...
 ");
             var targets = PublicTargets(options.Targets.GetType());
             if (targets.Any())
             {
-                @out.WriteLine(@"Targets:");
+                @out.WriteLine(@"Commands:");
                 PrintTargetsList(@out, options.Targets);
                 @out.WriteLine();
             }

@@ -1,7 +1,9 @@
 ﻿using Amg.CommandLine;
 using Castle.DynamicProxy;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,6 +23,7 @@ namespace Amg.Build
         private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         private Type targetsType;
+        private readonly string sourceFile;
         private string[] commandLineArguments;
 
         public enum ExitCode
@@ -35,10 +38,12 @@ namespace Amg.Build
 
         public RunContext(
             Type targetsType,
+            string sourceFile,
             string[] commandLineArguments
             )
         {
             this.targetsType = targetsType;
+            this.sourceFile = sourceFile;
             this.commandLineArguments = commandLineArguments;
         }
 
@@ -52,20 +57,34 @@ namespace Amg.Build
         {
             try
             {
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
-                    .CreateLogger();
+                RecordStartupTime();
+
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
+
+                bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
+
+                if (needConfigureLogger)
+                {
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .MinimumLevel.ControlledBy(levelSwitch)
+                        .WriteTo.Console(LogEventLevel.Verbose,
+                        standardErrorFromLevel: LogEventLevel.Error,
+                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}"
+                        )
+                        .CreateLogger();
+                }
+
+                RebuildMyself.BuildIfOutOfDate(
+                    this.targetsType.Assembly,
+                    sourceFile,
+                    commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
 
                 var options = new Options(onceProxy);
                 GetOptParser.Parse(commandLineArguments, options);
 
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                    .CreateLogger();
-
+                levelSwitch.MinimumLevel = SerilogLogEventLevel(options.Verbosity);
                 if (options.Verbosity == Verbosity.Quiet)
                 {
                     Tools.Default = Tools.Default.Silent();
@@ -82,8 +101,7 @@ namespace Amg.Build
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
 
-                var startup = GetStartupInvocation();
-                IEnumerable<InvocationInfo> invocations = new[] { startup };
+                IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
 
                 try
                 {
@@ -97,10 +115,9 @@ namespace Amg.Build
 
                 if (options.Summary)
                 {
-                    Console.WriteLine(Summary.PrintTimeline(invocations));
+                    Logger.Information(Summary.PrintTimeline(invocations));
                 }
 
-                Summary.PrintSummary(invocations);
                 return invocations.Failed()
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
@@ -127,13 +144,38 @@ Details:
             }
         }
 
-        private static InvocationInfo GetStartupInvocation()
-        {
-            var startupFile = BuildScriptDll + ".startup";
-            var begin = startupFile.IsFile()
-                ? startupFile.LastWriteTimeUtc()
-                : Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        string StartupFile => BuildScriptDll + ".startup";
 
+        void RecordStartupTime()
+        {
+            if (!StartupFile.IsFile())
+            {
+                Json.Write(StartupFile, DateTime.UtcNow);
+            }
+        }
+
+        DateTime GetStartupTime()
+        {
+            if (StartupFile.IsFile())
+            {
+                try
+                {
+                    return Json.Read<DateTime>(StartupFile);
+                }
+                catch
+                {
+                }
+                finally
+                {
+                    StartupFile.EnsureFileNotExists();
+                }
+            }
+            return Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        }
+
+        InvocationInfo GetStartupInvocation()
+        {
+            var begin = GetStartupTime();
             var end = DateTime.UtcNow;
             var startupDuration = end - begin;
             Logger.Information("Startup duration: {startupDuration}", startupDuration);
@@ -141,7 +183,7 @@ Details:
             return startupInvocation;
         }
 
-        static string BuildScriptDll => Assembly.GetEntryAssembly().Location;
+        string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
         /// <summary>
         /// Detects if the buildDll itself needs to be re-built.
@@ -266,7 +308,7 @@ Details:
                 case Verbosity.Minimal:
                     return LogEventLevel.Error;
                 case Verbosity.Quiet:
-                    return LogEventLevel.Fatal + 1;
+                    return LogEventLevel.Fatal;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

@@ -4,32 +4,19 @@ Lean, C# based build automation framework. Alternative to [Cake](https://cakebui
 
 ## Getting Started
 
-See example $/examples/hello
+Download the `amgbuild` tool 
+Create a new program `build` 
+Run the `build` program 
 
+````[cmd]
+dotnet tool install -g amgbuild
+amgbuild new build
+build
 ````
-public class BuildTargets
-{
-	static int Main(string[] args) => Runner.Run<BuildTargets>(args);
 
-	[Once]
-	public virtual async Task Greet(string name)
-	{
-		await Task.Delay(TimeSpan.FromSeconds(1));
-		Console.WriteLine($"Hello, {name}");
-	}
-	
-	[Once]
-	public virtual async Task GreetAll()
-	{
-		await Task.WhenAll(Enumerable.Range(0,10).Select(_ => Greet($"Alice {_}")));
-	}
-	
-	[Once]
-	public virtual async Task Default()
-	{
-		await GreetAll();
-	}
-}
+Edit the build program 
+````
+$ build\build.csproj
 ````
 
 ## Features
@@ -42,22 +29,9 @@ public class BuildTargets
 
 ### Once
 
-All virtual methods decorated with [Once] are only executed once and the results are cached in memory.
+All virtual methods decorated with `[Once]` are only executed once and the results are cached in memory.
 
-This helps you to build up acyclic dependency trees of your build activities.
-
-### Subtargets
-
-You can add classes with subtargets to your target container like so:
-
-````
-[Once]
-protected virtual Git Git => new Git();
-````
-
-The targets in the `Git` instance can then called as normal function. 
-
-If `Git` contains `[Once]` attributes, these methods will also be only executed once.
+This helps you to build up and acyclic graph of your build dependencies.
 
 ### Build Properties
 
