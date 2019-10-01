@@ -209,6 +209,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         }
 
         {
+            var outdated = DateTime.UtcNow.AddDays(-1);
+            var sourceFile = testDir.Combine(name, name + ".cs");
+            new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
+            var result = await build.Run();
+            AssertExitCode(result, 0);
+            AssertRebuild(result);
+        }
+
+        {
             var result = await build.Run();
             AssertExitCode(result, 0);
             if (!String.IsNullOrEmpty(result.Error))
@@ -220,15 +229,6 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         {
             var result = await build.Run("--help");
             AssertExitCode(result, 3);
-        }
-
-        {
-            var outdated = DateTime.UtcNow.AddDays(-1);
-            var sourceFile = testDir.Combine(name, name + ".cs");
-            new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
-            var result = await build.Run();
-            AssertExitCode(result, 0);
-            AssertRebuild(result);
         }
     }
 

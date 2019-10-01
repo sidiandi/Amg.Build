@@ -63,14 +63,7 @@ namespace Amg.Build
 
         static int Run(Type type, string[] commandLineArguments, string sourceFile)
         {
-            RebuildMyself.BuildIfOutOfDate(
-                type.Assembly,
-                sourceFile,
-                commandLineArguments).Wait();
-
-            StackFrame frame = new StackFrame(1);
-            var method = frame.GetMethod();
-            var runner = new RunContext(type, commandLineArguments);
+            var runner = new RunContext(type, sourceFile, commandLineArguments);
             return (int)runner.Run().Result;
         }
 

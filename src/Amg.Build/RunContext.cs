@@ -37,6 +37,7 @@ namespace Amg.Build
 
         public RunContext(
             Type targetsType,
+            string sourceFile,
             string[] commandLineArguments
             )
         {
@@ -68,6 +69,11 @@ namespace Amg.Build
                         )
                         .CreateLogger();
                 }
+
+                RebuildMyself.BuildIfOutOfDate(
+                    this.targetsType.Assembly,
+                    sourceFile,
+                    commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
 
