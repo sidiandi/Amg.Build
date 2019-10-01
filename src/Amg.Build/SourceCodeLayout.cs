@@ -36,7 +36,7 @@ namespace Amg.Build
         static async Task Create(string path, string templateName)
         {
             var text = ReadTemplate(templateName);
-            return await CreateFromText(path, text);
+            await CreateFromText(path, text);
         }
 
         static async Task CreateFromText(string path, string text)
