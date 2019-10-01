@@ -87,9 +87,7 @@ namespace Amg.Build
         {
             End = DateTime.UtcNow;
             this.Exception = exception;
-            Logger.Fatal(@"{target} failed.
-{exception}", this, Summary.ErrorDetails(this));
-            Console.Error.WriteLine($"{this} failed.");
+            Logger.Fatal(@"{target} failed. Reason: {exception}", this, Summary.ErrorDetails(this));
             var invocationFailed = new InvocationFailed(this);
             Tool.KillAll();
             Once.Instance.CancelAll();

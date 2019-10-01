@@ -1,7 +1,9 @@
 ﻿using Amg.CommandLine;
 using Castle.DynamicProxy;
 using Serilog;
+using Serilog.Core;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,20 +54,27 @@ namespace Amg.Build
         {
             try
             {
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(Verbosity.Detailed))
-                    .CreateLogger();
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Warning);
+
+                bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
+
+                if (needConfigureLogger)
+                {
+                    Logger = Log.Logger = new LoggerConfiguration()
+                        .MinimumLevel.ControlledBy(levelSwitch)
+                        .WriteTo.Console(LogEventLevel.Verbose,
+                        standardErrorFromLevel: LogEventLevel.Error,
+                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}"
+                        )
+                        .CreateLogger();
+                }
 
                 var onceProxy = Once.Create(targetsType);
 
                 var options = new Options(onceProxy);
                 GetOptParser.Parse(commandLineArguments, options);
 
-                Logger = Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(SerilogLogEventLevel(options.Verbosity),
-                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}")
-                    .CreateLogger();
-
+                levelSwitch.MinimumLevel = SerilogLogEventLevel(options.Verbosity);
                 if (options.Verbosity == Verbosity.Quiet)
                 {
                     Tools.Default = Tools.Default.Silent();
@@ -95,12 +104,8 @@ namespace Amg.Build
 
                 invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
 
-                if (options.Summary)
-                {
-                    Console.WriteLine(Summary.PrintTimeline(invocations));
-                }
+                Logger.Information(Summary.PrintTimeline(invocations));
 
-                Summary.PrintSummary(invocations);
                 return invocations.Failed()
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
@@ -266,7 +271,7 @@ Details:
                 case Verbosity.Minimal:
                     return LogEventLevel.Error;
                 case Verbosity.Quiet:
-                    return LogEventLevel.Fatal + 1;
+                    return LogEventLevel.Fatal;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

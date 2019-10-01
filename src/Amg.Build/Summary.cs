@@ -20,7 +20,7 @@ namespace Amg.Build
 
             var success = invocations.All(_ => !_.Failed);
 
-            @out.WriteLine();
+            @out.WriteLine("Summary");
             new
             {
                 success,
@@ -80,11 +80,10 @@ namespace Amg.Build
             {
                 if (ex is InvocationFailed)
                 {
-                    o.WriteLine(ex.Message);
+                    o.Write(ex.Message);
                 }
                 else
                 {
-                    o.WriteLine();
                     o.WriteLine($"{ex.GetType()}: {ex.Message}");
                     o.Write(ex.StackTrace.SplitLines()
                         .Where(_ => !Regex.IsMatch(_, @"(at System.Threading.|--- End of stack trace from previous location where exception was thrown ---|Amg.Build.InvocationInfo.TaskHandler.GetReturnValue)"))

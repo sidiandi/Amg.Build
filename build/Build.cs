@@ -85,8 +85,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 ");
     }
 
-    [Once]
-    [Description("run unit tests")]
+    [Once, Description("run unit tests")]
     public virtual async Task Test()
     {
         await Build();
@@ -97,8 +96,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             );
     }
 
-    [Once]
-    [Description("measure code coverage")]
+    [Once, Description("measure code coverage")]
     public virtual async Task CodeCoverage()
     {
         await Build();
@@ -108,13 +106,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
     }
 
     [Once]
-    [Description("pack nuget package")]
-    public virtual async Task<string> Pack()
+    protected virtual ITool DotnetTool => Dotnet.Tool().Result;
+
+    [Once, Description("pack nuget package")]
+    public virtual async Task<IEnumerable<string>> Pack()
     {
         var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
-        await (await Dotnet.Tool()).Run("pack",
-            LibDir,
+        await DotnetTool.Run("pack", "--nologo",
+            SlnFile,
             "--configuration", Configuration,
             "--no-build",
             "--include-source",
@@ -122,11 +122,15 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
             "--output", PackagesDir.EnsureDirectoryExists()
             );
 
-        return PackagesDir.Combine($"{name}.{version}.nupkg");
+        return new[]
+        {
+            "Amg.Build",
+            amgbuild
+        }
+        .Select(name => PackagesDir.Combine($"{name}.{version}.nupkg"));
     }
 
-    [Once]
-    [Description("Commit pending changes and run end to end test")]
+    [Once, Description("Commit pending changes and run end to end test")]
     public virtual async Task CommitAndRunEndToEndTest(string message)
     {
         await Git.GitTool
@@ -246,8 +250,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 </configuration>");
     }
 
-    [Once]
-    [Description("push nuget package")]
+    [Once, Description("push all nuget packages")]
     protected virtual async Task Push()
     {
         await Push(nugetPushSource);
@@ -255,25 +258,26 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
     ITool Nuget => Tools.Default.WithFileName("nuget.exe");
 
-    [Once]
-    [Description("push nuget package")]
+    [Once, Description("push nuget package")]
     protected virtual async Task Push(string nugetPushSource)
     {
         await Git.EnsureNoPendingChanges();
         await Task.WhenAll(Test(), Pack(), EndToEndTest());
-        var nupkgFile = await Pack();
-        var push = Nuget
-            .WithArguments("push");
+        var nupkgFiles = await Pack();
+        var push = Nuget.WithArguments("push");
+
         if (nugetPushSource != null)
         {
             push = push.WithArguments("-Source", nugetPushSource);
         }
 
-        await push.Run(nupkgFile);
+        foreach (var nupkgFile in nupkgFiles)
+        {
+            await push.Run(nupkgFile);
+        }
     }
 
-    [Once]
-    [Description("Open in Visual Studio")]
+    [Once, Description("Open in Visual Studio")]
     public virtual async Task OpenInVisualStudio()
     {
         foreach (var configuration in new[] { ConfigurationRelease, ConfigurationDebug })
@@ -290,9 +294,24 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         });
     }
 
-    [Once]
-    [Description("Test")]
-    [Default]
+    const string amgbuild = "amgbuild";
+
+    [Once, Description("install amgbuild tool")]
+    public virtual async Task Install()
+    {
+        var version = (await Git.GetVersion()).NuGetVersionV2;
+        var nupkgs = await Pack();
+        var amgbuildPackage = nupkgs.Single(_ => _.FileNameWithoutExtension().StartsWith(amgbuild));
+
+        await DotnetTool.Run(
+            "tool", "update",
+            "--add-source", this.PackagesDir,
+            "--global",
+            "--version", version,
+            amgbuild);
+    }
+
+    [Once, Default, Description("Test")]
     public virtual async Task Default()
     {
         await Test();

@@ -63,10 +63,6 @@ namespace Amg.Build
 
         static int Run(Type type, string[] commandLineArguments, string sourceFile)
         {
-            Logger = Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
-                .CreateLogger();
-
             RebuildMyself.BuildIfOutOfDate(
                 type.Assembly,
                 sourceFile,
