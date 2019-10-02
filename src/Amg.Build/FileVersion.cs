@@ -18,6 +18,21 @@ namespace Amg.Build
             Childs = new FileVersion[] { };
         }
 
+        public override string ToString() => Dump().ToString();
+
+        public IWritable Dump(string? indent = null) => TextFormatExtensions.GetWritable(w =>
+        {
+            if (indent == null) indent = String.Empty;
+
+            w.Write(indent);
+            w.WriteLine(new object[] { Name, LastWriteTimeUtc, Length }.Join("|"));
+            indent = indent + "  ";
+            foreach (var i in Childs)
+            {
+                i.Dump(indent).Write(w);
+            }
+        });
+
         public static async Task<FileVersion?> Get(string path)
         {
             if (path.IsFile())

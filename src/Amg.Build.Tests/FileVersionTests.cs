@@ -22,6 +22,8 @@ namespace Amg.Build
             }
             Assert.That((await FileVersion.Get(dll))!.IsNewer(sourceDirVersion));
 
+            sourceDirVersion.Dump().Write(Console.Out);
+
             var testDir = CreateEmptyTestDirectory();
             var jsonFile = testDir.Combine("version.json");
             await Json.Write<FileVersion>(jsonFile, sourceDirVersion);
