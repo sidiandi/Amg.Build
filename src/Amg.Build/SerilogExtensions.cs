@@ -21,7 +21,7 @@ namespace Amg.Build
         {
             if (logger.IsEnabled(Serilog.Events.LogEventLevel.Information))
             {
-                logger.Information("{ToString}", x.ToString());
+                logger.Information("{@ToString}", x.ToString());
             }
         }
 
@@ -29,7 +29,7 @@ namespace Amg.Build
         {
             if (logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
             {
-                logger.Information("{ToString}", x.ToString());
+                logger.Debug("{@ToString}", x.ToString());
             }
         }
     }
