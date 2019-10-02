@@ -203,5 +203,12 @@ namespace Amg.Build
             info = dest.HardlinkInfo();
             Assert.That(info.HardLinks.SequenceEqual(new[] { dest }));
         }
+
+        [Test]
+        public void SplitAndCombine()
+        {
+            var p = @"C:\temp\some\long\path\with\directories\hello.txt";
+            Assert.AreEqual(p, p.SplitDirectories().CombineDirectories());
+        }
     }
 }

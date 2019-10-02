@@ -74,10 +74,7 @@ namespace Amg.Build
                         .CreateLogger();
                 }
 
-                RebuildMyself.BuildIfOutOfDate(
-                    this.targetsType.Assembly,
-                    sourceFile,
-                    commandLineArguments).Wait();
+                RebuildMyself.BuildIfSourcesChanged(commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
 
@@ -160,7 +157,7 @@ Details:
             {
                 try
                 {
-                    return Json.Read<DateTime>(StartupFile);
+                    return Json.Read<DateTime>(StartupFile).Result;
                 }
                 catch
                 {

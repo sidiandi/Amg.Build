@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -17,7 +18,7 @@ namespace Amg.Build
             Childs = new FileVersion[] { };
         }
 
-        public static FileVersion? Get(string path)
+        public static async Task<FileVersion?> Get(string path)
         {
             if (path.IsFile())
             {
@@ -38,9 +39,10 @@ namespace Amg.Build
                     Name = path.FileName(),
                     LastWriteTimeUtc = info.LastWriteTimeUtc,
                     Length = 0,
-                    Childs = path.EnumerateFileSystemEntries()
+                    Childs = (await path.EnumerateFileSystemEntries()
                     .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
-                    .Select(Get)
+                    .Select(async _ => await Get(_))
+                    .Result())
                     .NotNull()
                     .ToArray()
                 };

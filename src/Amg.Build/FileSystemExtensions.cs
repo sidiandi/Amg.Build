@@ -424,6 +424,16 @@ are more recent.
         }
 
         /// <summary>
+        /// Combine directory parts into path
+        /// </summary>
+        /// <param name="parts"></param>
+        /// <returns></returns>
+        public static string CombineDirectories(this IEnumerable<string> parts)
+        {
+            return Path.Combine(parts.ToArray());
+        }
+
+        /// <summary>
         /// Start a glob
         /// </summary>
         /// <param name="path"></param>

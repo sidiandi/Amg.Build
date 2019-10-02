@@ -31,7 +31,9 @@ namespace Amg.Build
         public string SourceFile => SourceDir.Combine(Name + ".cs");
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
         public string PropsFile => SourceDir.Combine("Directory.Build.props");
-        public string DllFile => SourceDir.Parent().Parent().Combine("out", "Debug", "bin", Name + ".dll");
+        public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
+        public string Configuration => "Debug";
+        public string TargetFramework => "netcoreapp3.0";
 
         static async Task Create(string path, string templateName)
         {

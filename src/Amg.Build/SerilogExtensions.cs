@@ -24,5 +24,13 @@ namespace Amg.Build
                 logger.Information("{ToString}", x.ToString());
             }
         }
+
+        public static void Debug(this ILogger logger, object x)
+        {
+            if (logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                logger.Information("{ToString}", x.ToString());
+            }
+        }
     }
 }
