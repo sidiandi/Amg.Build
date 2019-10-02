@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -54,7 +51,7 @@ namespace Amg.Build
                 _ => Logger.Error(templateString, _));
                 if (!gitVersionExecuteCore.TryGetVersion(RootDirectory, out var versionVariables, true, null))
                 {
-                    throw new System.Exception("Cannot read version");
+                    throw new System.InvalidOperationException("Cannot read version");
                 }
                 Logger.Information("GitVersion: {InformationalVersion}", versionVariables.InformationalVersion);
                 return versionVariables;
@@ -71,7 +68,7 @@ namespace Amg.Build
             var r = await GitTool.Run("ls-files", "--modified", "--others", "--exclude-standard");
             if (!String.IsNullOrEmpty(r.Output))
             {
-                throw new Exception($@"The build requires that all git has no uncommitted changes.
+                throw new InvalidOperationException($@"The build requires that all git has no uncommitted changes.
 Commit following files:
 
 {r.Output}

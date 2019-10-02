@@ -7,8 +7,8 @@ namespace Amg.Build
     {
         class TaskHandler : IReturnValueSource
         {
-            private InvocationInfo invocationInfo;
-            private Task task;
+            private readonly InvocationInfo invocationInfo;
+            private readonly Task task;
 
             public TaskHandler(InvocationInfo invocationInfo, Task task)
             {

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
@@ -24,27 +22,6 @@ namespace Amg.Build
             invocation = null;
             interceptor = null;
             Exception = null;
-        }
-
-        interface IReturnValueSource
-        {
-            object ReturnValue { get; }
-        }
-
-        internal static bool TryGetResultType(Task task, out Type resultType)
-        {
-            var taskType = task.GetType();
-            if (taskType.IsGenericType)
-            {
-                if (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult"))
-                {
-                    resultType = taskType.GenericTypeArguments[0];
-                    return true;
-                }
-            }
-
-            resultType = null!;
-            return false;
         }
 
         public InvocationInfo(OnceInterceptor interceptor, string id, IInvocation invocation)
@@ -77,18 +54,39 @@ namespace Amg.Build
             }
         }
 
+        interface IReturnValueSource
+        {
+            object ReturnValue { get; }
+        }
+
+        internal static bool TryGetResultType(Task task, out Type resultType)
+        {
+            var taskType = task.GetType();
+            if (taskType.IsGenericType)
+            {
+                if (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult"))
+                {
+                    resultType = taskType.GenericTypeArguments[0];
+                    return true;
+                }
+            }
+
+            resultType = null!;
+            return false;
+        }
+
         void Complete()
         {
             End = DateTime.UtcNow;
             Logger.Information("{target} succeeded", this);
         }
 
-        private InvocationFailed Fail(Exception exception)
+        private InvocationFailedException Fail(Exception exception)
         {
             End = DateTime.UtcNow;
             this.Exception = exception;
             Logger.Fatal(@"{target} failed. Reason: {exception}", this, Summary.ErrorDetails(this));
-            var invocationFailed = new InvocationFailed(this);
+            var invocationFailed = new InvocationFailedException(this);
             Tool.KillAll();
             Once.Instance.CancelAll();
             return invocationFailed;

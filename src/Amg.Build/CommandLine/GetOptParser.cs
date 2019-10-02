@@ -6,7 +6,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using Amg.Build;
-using Serilog;
 
 namespace Amg.CommandLine
 {
@@ -14,10 +13,10 @@ namespace Amg.CommandLine
     /// GetOpt compatible command line option parser
     /// </summary>
     /// Follows the conventions in [Program Argument Syntax Conventions](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html):
-    internal static partial class GetOptParser
+    internal static class GetOptParser
     {
-        private const string LongPrefix = "--";
-        private const string ShortPrefix = "-";
+        internal const string LongPrefix = "--";
+        internal const string ShortPrefix = "-";
 
         internal static void PrintOptions(object options)
         {
@@ -134,18 +133,18 @@ namespace Amg.CommandLine
                     option = getOption.ToString();
                 }
 
-                throw new Exception($"Option {option} is required.");
+                throw new InvalidOperationException($"Option {option} is required.");
             }
 
             return v;
         }
 
-        private static string Usage(Type type)
+        internal static string Usage(Type type)
         {
             return GetLongOptionNameForMember(type.Name);
         }
 
-        private static string ValueSyntax(Type type)
+        internal static string ValueSyntax(Type type)
         {
             return type.IsEnum
                 ? $"{GetLongOptionNameForMember(type.Name)}={string.Join("|", Enum.GetNames(type).Select(GetLongOptionNameForMember))}"
@@ -177,7 +176,7 @@ namespace Amg.CommandLine
                     }
                     catch (Exception ex)
                     {
-                        throw new ParseException(args, e, ex);
+                        throw new CommandLineArgumentException(args, e, ex);
                     }
                 }
             }
@@ -302,7 +301,7 @@ namespace Amg.CommandLine
                 var o = FindShortOption(getOptContext.Options, optionName);
                 if (o == null)
                 {
-                    throw new Exception($"{ShortPrefix}{optionName} is not an option.");
+                    throw new ($"{ShortPrefix}{optionName} is not an option.");
                 }
 
                 if (o.IsFlag)
@@ -344,7 +343,7 @@ namespace Amg.CommandLine
             var o = FindLongOption(getOptContext.Options, optionName);
             if (o == null)
             {
-                throw new Exception($"{LongPrefix}{optionName} is not an option.");
+                throw new InvalidOperationException($"{LongPrefix}{optionName} is not an option.");
             }
 
             if (o.IsFlag)
@@ -390,6 +389,26 @@ namespace Amg.CommandLine
         {
             var d = m.GetCustomAttribute<DescriptionAttribute>();
             return d == null ? string.Empty : d.Description;
+        }
+
+        /// <summary>
+        /// Invokes method of instance using arguments as parameters
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="method"></param>
+        /// <param name="arguments"></param>
+        /// <returns></returns>
+        public static object Invoke(object instance, MethodInfo method, string[] arguments)
+        {
+            var parameters = ParseParameters(method, arguments);
+            return method.Invoke(instance, parameters);
+        }
+
+        private static object[] ParseParameters(MethodInfo method, string[] arguments)
+        {
+            return method.GetParameters()
+                .ZipOrDefault(arguments, (p, v) => GetOptOption.Parse(p.ParameterType, v))
+                .ToArray();
         }
     }
 }

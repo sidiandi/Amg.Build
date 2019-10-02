@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Reflection;
 using Serilog.Events;
 
 namespace Amg.CommandLine

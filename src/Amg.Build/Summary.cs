@@ -45,7 +45,7 @@ namespace Amg.Build
 
         public static Exception GetRootCause(Exception e)
         {
-            if (e is InvocationFailed)
+            if (e is InvocationFailedException)
             {
                 return e;
             }
@@ -65,7 +65,7 @@ namespace Amg.Build
             {
                 var exception = failedTarget.Exception!;
                 var r = GetRootCause(exception);
-                if (!(r is InvocationFailed))
+                if (!(r is InvocationFailedException))
                 {
                     @out.WriteLine($"{r.FileAndLine()}: target {failedTarget} failed. Reason: {r.Message}");
                 }
@@ -78,7 +78,7 @@ namespace Amg.Build
             var ex = failed.Exception;
             if (ex != null)
             {
-                if (ex is InvocationFailed)
+                if (ex is InvocationFailedException)
                 {
                     o.Write(ex.Message);
                 }
@@ -114,14 +114,12 @@ namespace Amg.Build
                     ErrorMessage(fail).Write(Console.Error);
                 }
                 /*
-                Console.Error.WriteLine(@"			
-         )
-        (
-          ,
-       ___)\
-      (_____)
-     (_______)
-");
+                             )
+                            (
+                              ,
+                           ___)\
+                          (_____)
+                         (_______)
                 */
             }
             else

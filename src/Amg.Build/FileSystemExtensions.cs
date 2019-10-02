@@ -287,11 +287,9 @@ Output files:
             var outputModified = outputFiles.LastWriteTimeUtc();
             var inputModified = inputFiles.Except(outputFiles).LastWriteTimeUtc();
             var isOutOfDate = outputModified < inputModified;
-            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Information))
+            if (Logger.IsEnabled(Serilog.Events.LogEventLevel.Information) && isOutOfDate)
             {
-                if (isOutOfDate)
-                {
-                    Logger.Information(@"Output files 
+                Logger.Information(@"Output files 
 
 {@outputFiles}
 
@@ -301,12 +299,11 @@ are out of date because input files
 
 are more recent.
 ",
-                    isOutOfDate,
-                    outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
-                    inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() })
-                        .Where(_ => _.Changed > outputModified).Take(20)
-                    );
-                }
+                isOutOfDate,
+                outputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() }),
+                inputFiles.Select(_ => new { Path = _, Changed = _.LastWriteTimeUtc() })
+                    .Where(_ => _.Changed > outputModified).Take(20)
+                );
             }
             return isOutOfDate;
         }
@@ -424,6 +421,16 @@ are more recent.
         }
 
         /// <summary>
+        /// Combine directory parts into path
+        /// </summary>
+        /// <param name="parts"></param>
+        /// <returns></returns>
+        public static string CombineDirectories(this IEnumerable<string> parts)
+        {
+            return Path.Combine(parts.ToArray());
+        }
+
+        /// <summary>
         /// Start a glob
         /// </summary>
         /// <param name="path"></param>
@@ -434,7 +441,7 @@ are more recent.
             var g = new Glob(path);
             if (pattern != null)
             {
-                g = g.Include((string)pattern);
+                g = g.Include(pattern);
             }
             return g;
         }
@@ -473,7 +480,7 @@ are more recent.
         /// <returns></returns>
         public static bool IsValidFileName(this string x)
         {
-            return !(x.IndexOfAny(invalidCharacters) >= 0) && x.Length <= maxFileNameLength;
+            return (x.IndexOfAny(invalidCharacters) < 0) && (x.Length <= maxFileNameLength);
         }
 
         /// <summary>
@@ -655,7 +662,7 @@ are more recent.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IHardLinkInfo HardlinkInfo(this string  path)
+        public static IHardLinkInfo HardlinkInfo(this string path)
         {
             return FileSystem.GetHardLinkInfo(path);
         }
@@ -697,7 +704,7 @@ are more recent.
         public static string GetProgramDataDirectory(this System.Type type)
         {
             var assembly = type.Assembly;
-            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new []
+            return Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData).Combine(new[]
             {
                 assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Map(_ => _.Company),
                 assembly.GetCustomAttribute<AssemblyProductAttribute>().Map(_ => _.Product),
@@ -762,7 +769,7 @@ are more recent.
         /// <param name="path"></param>
         public static void MoveToRecycleBin(this string path)
         {
-            FileOperationAPIWrapper.MoveToRecycleBin(path);
+            FileOperationApiWrapper.MoveToRecycleBin(path);
         }
 
         /// <summary>
@@ -850,7 +857,7 @@ are more recent.
             var buffer0 = new byte[bufferSize];
             var buffer1 = new byte[bufferSize];
 
-            for (; ;)
+            while(true)
             {
                 var read0 = await stream0.ReadAsync(buffer0, 0, buffer0.Length);
                 var read1 = await stream1.ReadAsync(buffer1, 0, buffer1.Length);

@@ -23,6 +23,7 @@ namespace Amg.Build
         {
             if (value == '\r')
             {
+                // do nothing
             }
             else if (value == '\n')
             {
@@ -39,14 +40,14 @@ namespace Amg.Build
         }
 
         /// <summary />
-        public override void WriteLine(string line)
+        public override void WriteLine(string value)
         {
             if (startedLine != null)
             {
-                line = startedLine.ToString() + line;
+                value = startedLine.ToString() + value;
                 startedLine = null;
             }
-            output(line);
+            output(value);
         }
 
         /// <summary />

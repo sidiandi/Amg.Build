@@ -4,27 +4,23 @@ using System.Runtime.Serialization;
 namespace Amg.Build
 {
     [Serializable]
-    internal class InvocationFailed : Exception
+    internal class InvocationFailedException : Exception
     {
-        private InvocationInfo? invocationInfo;
+        public InvocationInfo Invocation { get; }
 
-        public InvocationFailed()
-        {
-        }
-
-        public InvocationFailed(InvocationInfo invocationInfo)
+        public InvocationFailedException(InvocationInfo invocationInfo)
            : base($"{invocationInfo} failed.", invocationInfo.Exception)
         {
-            this.invocationInfo = invocationInfo;
+            this.Invocation = invocationInfo;
         }
 
-        protected InvocationFailed(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected InvocationFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 
         public static IWritable ShortMessage(Exception ex) => TextFormatExtensions.GetWritable(w =>
         {
-            if (ex is InvocationFailed i)
+            if (ex is InvocationFailedException i)
             {
                 w.Write(i.Message);
             }

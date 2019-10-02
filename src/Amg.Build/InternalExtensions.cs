@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +11,7 @@ namespace Amg.Build
         internal static string FileAndLine(this Exception exception)
         {
             var files = FileAndLineFromStackTrace(exception.StackTrace);
-            if (exception is InvocationFailed)
+            if (exception is InvocationFailedException)
             {
                 files = files.Skip(1);
             }

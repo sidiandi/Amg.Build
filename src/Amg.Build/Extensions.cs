@@ -4,7 +4,6 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -85,10 +84,7 @@ namespace Amg.Build
         {
             lock (dictionary)
             {
-                if (dictionary.TryGetValue(key, out Value value))
-                {
-                }
-                else
+                if (!dictionary.TryGetValue(key, out Value value))
                 {
                     Monitor.Exit(dictionary);
                     try
@@ -146,7 +142,7 @@ namespace Amg.Build
         /// <param name="x"></param>
         /// <param name="mapper"></param>
         /// <returns></returns>
-        public static Y? Map<Y, X>(this X? x, Func<X, Y> mapper) where X: class where Y: class
+        public static Y? Map<Y, X>(this X? x, Func<X, Y?> mapper) where X: class where Y: class
         {
             if (x == null)
             {
@@ -155,6 +151,34 @@ namespace Amg.Build
             else
             {
                 return mapper(x);
+            }
+        }
+
+        /// <summary>
+        /// Executes an action when x is not null.
+        /// </summary>
+        /// <typeparam name="Y"></typeparam>
+        /// <typeparam name="X"></typeparam>
+        /// <param name="x"></param>
+        /// <param name="mapper"></param>
+        /// <returns></returns>
+        public static X? Map<X>(this X? x, Action<X>? onNotNull, Action? onNull = null) where X : class
+        {
+            if (x == null)
+            {
+                if (onNull != null)
+                {
+                    onNull();
+                }
+                return x;
+            }
+            else
+            {
+                if (onNotNull != null)
+                {
+                    onNotNull(x);
+                }
+                return x;
             }
         }
 
@@ -175,11 +199,21 @@ namespace Amg.Build
         /// </summary>
         public static int Limit(this int x, int a, int b)
         {
-            return x < a
-                ? a
-                : x > b
-                    ? b
-                    : x;
+            if (x < a)
+            {
+                return a;
+            }
+            else
+            {
+                if (x > b)
+                {
+                    return b;
+                }
+                else
+                {
+                    return x;
+                }
+            }
         }
 
         /// <summary>

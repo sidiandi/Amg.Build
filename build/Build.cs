@@ -178,7 +178,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var build = Tools.Default.WithFileName(script).DoNotCheckExitCode()
             .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
-            .WithArguments("--summary")
+            .WithArguments("--summary", "-vd")
             ;
 
         void AssertRebuild(IToolResult result)
@@ -305,10 +305,17 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
         var nupkgs = await Pack();
         var amgbuildPackage = nupkgs.Single(_ => _.FileNameWithoutExtension().StartsWith(amgbuild));
 
+        await DotnetTool
+            .DoNotCheckExitCode().Run(
+            "tool", "uninstall",
+            "--global",
+            amgbuild);
+
         await DotnetTool.Run(
-            "tool", "update",
+            "tool", "install",
             "--add-source", this.PackagesDir,
             "--global",
+            "--no-cache",
             "--version", version,
             amgbuild);
     }

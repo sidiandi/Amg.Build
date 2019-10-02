@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -17,7 +18,22 @@ namespace Amg.Build
             Childs = new FileVersion[] { };
         }
 
-        public static FileVersion? Get(string path)
+        public override string ToString() => Dump().ToString();
+
+        public IWritable Dump(string? indent = null) => TextFormatExtensions.GetWritable(w =>
+        {
+            if (indent == null) indent = String.Empty;
+
+            w.Write(indent);
+            w.WriteLine(new object[] { Name, LastWriteTimeUtc, Length }.Join("|"));
+            indent = indent + "  ";
+            foreach (var i in Childs)
+            {
+                i.Dump(indent).Write(w);
+            }
+        });
+
+        public static async Task<FileVersion?> Get(string path)
         {
             if (path.IsFile())
             {
@@ -38,9 +54,10 @@ namespace Amg.Build
                     Name = path.FileName(),
                     LastWriteTimeUtc = info.LastWriteTimeUtc,
                     Length = 0,
-                    Childs = path.EnumerateFileSystemEntries()
+                    Childs = (await path.EnumerateFileSystemEntries()
                     .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
-                    .Select(Get)
+                    .Select(async _ => await Get(_))
+                    .Result())
                     .NotNull()
                     .ToArray()
                 };

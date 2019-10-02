@@ -59,7 +59,7 @@ namespace Amg.Build
             {
                 RecordStartupTime();
 
-                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Debug);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
 
@@ -74,10 +74,7 @@ namespace Amg.Build
                         .CreateLogger();
                 }
 
-                RebuildMyself.BuildIfOutOfDate(
-                    this.targetsType.Assembly,
-                    sourceFile,
-                    commandLineArguments).Wait();
+                RebuildMyself.BuildIfSourcesChanged(commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
 
@@ -107,7 +104,7 @@ namespace Amg.Build
                 {
                     await RunTarget(options.Targets, target, targetArguments);
                 }
-                catch (InvocationFailed)
+                catch (InvocationFailedException)
                 {
                 }
 
@@ -122,7 +119,7 @@ namespace Amg.Build
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
             }
-            catch (ParseException ex)
+            catch (CommandLineArgumentException ex)
             {
                 Console.Error.WriteLine(ex.Message);
                 Console.Error.WriteLine();
@@ -160,7 +157,7 @@ Details:
             {
                 try
                 {
-                    return Json.Read<DateTime>(StartupFile);
+                    return Json.Read<DateTime>(StartupFile).Result;
                 }
                 catch
                 {
@@ -238,7 +235,7 @@ Details:
                 }
                 catch (Exception e)
                 {
-                    throw new ParseException(arguments, -1, e);
+                    throw new CommandLineArgumentException(arguments, -1, e);
                 }
             }
 
@@ -257,7 +254,7 @@ Details:
             }
             catch (ArgumentOutOfRangeException e)
             {
-                throw new ParseException(arguments, Array.IndexOf(arguments, targetName), e);
+                throw new CommandLineArgumentException(arguments, Array.IndexOf(arguments, targetName), e);
             }
         }
 

@@ -15,18 +15,20 @@ namespace Amg.Build
         {
             var dll = Assembly.GetExecutingAssembly().Location;
             var sourceDir = dll.Parent().Parent().Parent().Parent();
-            var sourceDirVersion = FileVersion.Get(sourceDir);
+            var sourceDirVersion = await FileVersion.Get(sourceDir);
             if (sourceDirVersion == null)
             {
                 throw new Exception();
             }
-            Assert.That(FileVersion.Get(dll)!.IsNewer(sourceDirVersion));
+            Assert.That((await FileVersion.Get(dll))!.IsNewer(sourceDirVersion));
+
+            sourceDirVersion.Dump().Write(Console.Out);
 
             var testDir = CreateEmptyTestDirectory();
             var jsonFile = testDir.Combine("version.json");
-            Json.Write<FileVersion>(jsonFile, sourceDirVersion);
+            await Json.Write<FileVersion>(jsonFile, sourceDirVersion);
             Console.WriteLine(await jsonFile.ReadAllTextAsync());
-            var restored = Json.Read<FileVersion>(jsonFile);
+            var restored = await Json.Read<FileVersion>(jsonFile);
             Assert.That(restored, Is.EqualTo(sourceDirVersion));
         }
     }

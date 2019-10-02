@@ -5,12 +5,12 @@ using System.Linq;
 
 namespace Amg.CommandLine
 {
-    internal class ParseException : Exception
+    internal class CommandLineArgumentException : Exception
     {
         private readonly IEnumerable<string> _args;
         private readonly int _markedPosition;
 
-        public ParseException(IEnumerable<string> args, IEnumerator<string> currentPosition, Exception exception)
+        public CommandLineArgumentException(IEnumerable<string> args, IEnumerator<string> currentPosition, Exception exception)
             : base("Error in command line arguments", exception)
         {
             _args = args;
@@ -22,7 +22,7 @@ namespace Amg.CommandLine
                 : p.i;
         }
 
-        public ParseException(
+        public CommandLineArgumentException(
             IEnumerable<string> args, 
             int markedPosition, 
             Exception exception)

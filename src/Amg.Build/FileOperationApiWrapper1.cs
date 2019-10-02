@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Amg.Build
 {
-    internal class FileOperationAPIWrapper
+    internal class FileOperationApiWrapper
     {
         /// <summary>
         /// Possible flags for the SHFileOperation method.

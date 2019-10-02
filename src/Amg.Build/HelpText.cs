@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace Amg.Build
 {
-    internal class HelpText
+    internal static class HelpText
     {
         private static void PrintOptionsList(TextWriter @out, Options options)
         {
@@ -20,7 +20,7 @@ namespace Amg.Build
                 .Write(@out);
         }
 
-        static bool IncludeInHelp(GetOptParser.GetOptOption option)
+        static bool IncludeInHelp(GetOptOption option)
         {
             return !option.Long.Equals("ignore-clean");
         }

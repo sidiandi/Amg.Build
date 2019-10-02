@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -456,7 +456,18 @@ namespace Amg.Build
 
         public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> e) where T : class
         {
+            // cast required from T? to T
             return e.Where(_ => _ != null).Cast<T>();
+        }
+
+        public static async Task<IEnumerable<T>> Result<T>(this IEnumerable<Task<T>> e)
+        {
+            var results = new List<T>();
+            foreach (var i in e)
+            {
+                results.Add(await i);
+            }
+            return results;
         }
     }
 }

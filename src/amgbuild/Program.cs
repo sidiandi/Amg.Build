@@ -1,6 +1,7 @@
 ﻿using Amg.Build;
 using System;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -44,8 +45,7 @@ namespace amgbuild
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
         }
 
-        [Once]
-        [Description("Fix an Amg.Build script")]
+        [Once, Description("Fix an Amg.Build script")]
         public virtual async Task Fix(string cmdFile)
         {
             if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
@@ -60,6 +60,16 @@ namespace amgbuild
 
             var sourceLayout = new SourceCodeLayout(cmdFile);
             await sourceLayout.Fix();
+        }
+
+        [Once, Description("Print version")]
+        public virtual async Task Version()
+        {
+            Assembly.GetEntryAssembly()
+                .Map(_ => _.GetCustomAttribute<AssemblyInformationalVersionAttribute>())
+                .Map(_ => _.InformationalVersion)
+                .Map(_ => Console.WriteLine(_));
+            await Task.CompletedTask;
         }
     }
 }
