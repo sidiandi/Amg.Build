@@ -59,7 +59,7 @@ namespace Amg.Build
             {
                 RecordStartupTime();
 
-                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Debug);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
 
