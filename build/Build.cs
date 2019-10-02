@@ -178,7 +178,7 @@ $@"<?xml version=""1.0"" encoding=""utf-8""?>
 
         var build = Tools.Default.WithFileName(script).DoNotCheckExitCode()
             .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
-            .WithArguments("--summary")
+            .WithArguments("--summary", "-vd")
             ;
 
         void AssertRebuild(IToolResult result)
