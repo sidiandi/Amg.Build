@@ -23,19 +23,19 @@ namespace Amg.Build
                 string targetFramework
                 )
             {
-                AssemblyPath = assemblyPath;
+                AssemblyFile = assemblyPath;
                 SourceDir = sourceDir;
                 CsprojFile = csprojFile;
                 Configuration = configuration;
                 TargetFramework = targetFramework;
             }
 
-            public string AssemblyPath { get; }
+            public string AssemblyFile { get; }
             public string SourceDir { get; }
             public string CsprojFile { get; }
             public string Configuration { get; }
             public string TargetFramework { get; }
-            public string SourceFileVersionFile => AssemblyPath + ".source";
+            public string SourceFileVersionFile => AssemblyFile + ".source";
         }
 
         const string CsprojExt = ".csproj";
@@ -80,7 +80,7 @@ namespace Amg.Build
 
         static void MoveAwayExistingAssembly(SourceInfo sourceInfo)
         {
-            var a = sourceInfo.AssemblyPath;
+            var a = sourceInfo.AssemblyFile;
             if (a.IsFile())
             {
                 var old = a + ".old";
@@ -115,6 +115,7 @@ namespace Amg.Build
 
                 if (await SourcesChanged(sourceInfo, currentSourceVersion))
                 {
+                    Logger.Information("Rebuilding {assemblyFile} from {csprojFile}", sourceInfo.AssemblyFile, sourceInfo.CsprojFile);
                     // move away current file
                     MoveAwayExistingAssembly(sourceInfo);
 
@@ -137,7 +138,7 @@ namespace Amg.Build
                     var result = await dotnet
                         .Passthrough()
                         .DoNotCheckExitCode()
-                        .WithArguments(sourceInfo.AssemblyPath)
+                        .WithArguments(sourceInfo.AssemblyFile)
                         .Run(commandLineArguments);
 
                     Environment.Exit(result.ExitCode);
@@ -182,7 +183,7 @@ namespace Amg.Build
             else
             {
                 await Json.Write(sourceInfo.SourceFileVersionFile, sourceVersion);
-                var assemblyFileVersion = await FileVersion.Get(sourceInfo.AssemblyPath);
+                var assemblyFileVersion = await FileVersion.Get(sourceInfo.AssemblyFile);
                 Logger.Debug(new { assemblyFileVersion, sourceVersion });
                 if (assemblyFileVersion == null || sourceVersion == null)
                 {
