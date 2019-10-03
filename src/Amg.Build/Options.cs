@@ -52,6 +52,10 @@ namespace Amg.Build
 
         [Description("visualize build result")]
         public bool AsciiArt { get; set; }
+
+        /// <summary />
+        [Short('w'), Description("Watch for changes in the file system.")]
+        public bool Watch { get; set; }
     }
 
     class CombinedOptions

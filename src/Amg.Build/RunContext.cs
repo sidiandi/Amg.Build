@@ -5,6 +5,7 @@ using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -87,6 +88,15 @@ namespace Amg.Build
                     return ExitCode.HelpDisplayed;
                 }
 
+                if (combinedOptions.Options.Watch)
+                {
+                    var wasWatching = await Watch();
+                    if (wasWatching)
+                    {
+                        return ExitCode.Success;
+                    }
+                }
+
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
 
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
@@ -147,6 +157,35 @@ Details:
                 return ExitCode.UnknownError;
             }
         }
+
+        private async Task<bool> Watch()
+        {
+            var rootDir = Assembly.GetEntryAssembly().Location
+                .Parent()
+                .Parent()
+                .Parent()
+                .Parent();
+
+            if (rootDir != null)
+            {
+                var watcher = new Watcher(
+                    Assembly.GetEntryAssembly(),
+                    commandLineArguments,
+                    rootDir);
+                
+                if (watcher.IsWatching())
+                {
+                    return false;
+                }
+
+                await watcher.Watch();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+       }
 
         string StartupFile => BuildScriptDll + ".startup";
 
