@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Amg.Build
@@ -330,6 +331,29 @@ namespace Amg.Build
             else
             {
                 return false;
+            }
+        }
+
+        public static string ToCsharpIdentifier(this string text)
+        {
+            const string underscore = "_";
+            var parts = Regex.Split(text, "[^0-9A-Za-z_]");
+            if (!Regex.IsMatch(parts[0], "^[a-zA-Z]"))
+            {
+                parts = new[] { underscore }.Concat(parts).ToArray();
+            }
+            return parts.Select(Word).Join(String.Empty);
+        }
+
+        static string Word(string x)
+        {
+            if (x.Length == 0)
+            {
+                return x;
+            }
+            else
+            {
+                return x.Substring(0, 1).ToUpper() + x.Substring(1).ToLower();
             }
         }
     }

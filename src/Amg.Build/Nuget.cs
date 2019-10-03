@@ -148,10 +148,17 @@ Files:
         }
 
         /// <summary />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Blocker Code Smell", "S3427:Method overloads with default parameter values should not overlap ", Justification = "<Pending>")]
         protected Nuget(ITool? nuget = null, string? source = null)
         {
             tool = nuget;
             this.source = source;
+        }
+
+        /// <summary />
+        protected Nuget()
+        {
+            // parameterless constructor is required for Castle.DynamicProxy
         }
 
         ITool? tool;

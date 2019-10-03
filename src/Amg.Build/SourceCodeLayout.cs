@@ -26,6 +26,7 @@ namespace Amg.Build
         public string CmdFile {get;}
         public string RootDir => CmdFile.Parent();
         public string Name => CmdFile.FileNameWithoutExtension();
+        public string Namespace => Name.ToCsharpIdentifier();
         public string SourceDir => CmdFile.Parent().Combine(Name);
         public string ProgramCs => SourceDir.Combine("Program.cs");
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
@@ -62,7 +63,7 @@ namespace Amg.Build
             }
             await Create(s.CmdFile, "name.cmd");
             await Create(s.CsprojFile, "name.name.csproj");
-            await Create(s.ProgramCs, "name.name.cs");
+            await CreateFromText(s.ProgramCs, s.ProgramCsText);
             await CreateFromText(s.PropsFile, s.PropsText);
             return s;
         }
@@ -109,6 +110,9 @@ namespace Amg.Build
 
         public string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);
+
+        public string ProgramCsText => ReadTemplate("name.Program.cs")
+            .Replace("ReplaceWithName", Namespace);
 
         public string BuildCmdText => ReadTemplate("name.cmd");
 

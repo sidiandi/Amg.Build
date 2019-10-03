@@ -63,5 +63,16 @@ H     1234234
             Assert.IsTrue("w".IsAbbreviation("word"));
             Assert.IsTrue("amb".IsAbbreviation("Alice Martha Bob"));
         }
+
+        [Test]
+        public void Identifier()
+        {
+            Assert.AreEqual("Hello", "hello".ToCsharpIdentifier());
+            Assert.AreEqual("AliceBob", "alice-bob".ToCsharpIdentifier());
+            Assert.AreEqual("Shouting", "SHOUTING".ToCsharpIdentifier());
+            Assert.AreEqual("Build", "build".ToCsharpIdentifier());
+            Assert.AreEqual("Word123", "word123".ToCsharpIdentifier());
+            Assert.AreEqual("_123", "123".ToCsharpIdentifier());
+        }
     }
 }

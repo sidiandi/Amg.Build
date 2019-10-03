@@ -138,10 +138,9 @@ namespace Build
         [Once, Description("Commit pending changes and run end to end test")]
         public virtual async Task CommitAndRunEndToEndTest(string message)
         {
-            await Git.GitTool
-                .DoNotCheckExitCode()
-                .Run("commit", "-m", message, "-a");
-
+            var git = Git.GitTool.DoNotCheckExitCode();
+            await git.Run("add", ".");
+            await git.Run("commit", "-m", message, "-a");
             await EndToEndTest();
         }
 
