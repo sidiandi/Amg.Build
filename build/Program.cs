@@ -136,12 +136,13 @@ namespace Build
         }
 
         [Once, Description("Commit pending changes and run end to end test")]
-        public virtual async Task CommitAndRunEndToEndTest(string message)
+        public virtual async Task<string> CommitAndRunEndToEndTest(string message)
         {
             var git = Git.GitTool.DoNotCheckExitCode();
             await git.Run("add", ".");
             await git.Run("commit", "-m", message, "-a");
             await EndToEndTest();
+            return (await this.Git.GetVersion()).NuGetVersionV2;
         }
 
         string TargetFramework => "netcoreapp3.0";
