@@ -18,13 +18,8 @@ namespace Amg.Build
         Detailed
     };
 
-    class OptionsWithSource : Options
+    class SourceOptions
     {
-        public OptionsWithSource(object targets)
-            : base(targets)
-        {
-        }
-
         /// <summary />
         [Short('e'), Description("Edit the build script in Visual Studio.")]
         public bool Edit { get; set; }
@@ -32,14 +27,6 @@ namespace Amg.Build
         /// <summary />
         [Description("Force a rebuild of the build script")]
         public bool Clean { get; set; }
-
-        /// <summary />
-        [Description("Ignore --clean (internal use only)")]
-        public bool IgnoreClean { get; set; }
-
-        /// <summary />
-        [Description("Fix .cmd and .csproj files.")]
-        public bool Fix { get; set; }
     }
 
     /// <summary>
@@ -65,5 +52,16 @@ namespace Amg.Build
 
         [Description("visualize build result")]
         public bool AsciiArt { get; set; }
+    }
+
+    class CombinedOptions
+    {
+        public CombinedOptions(object onceProxy)
+        {
+            OnceProxy = onceProxy;
+        }
+        public object OnceProxy { get; }
+        public Options Options { get; } = new Options();
+        public SourceOptions? SourceOptions { get; set; }
     }
 }

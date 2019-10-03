@@ -53,14 +53,14 @@ namespace Amg.Build
             {
                 RecordStartupTime();
 
-                var options = new Options();
-                GetOptParser.Parse(commandLineArguments, options);
+                var minimalOptions = new Options();
+                GetOptParser.Parse(commandLineArguments, minimalOptions);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
                 if (needConfigureLogger)
                 {
-                    var levelSwitch = new LoggingLevelSwitch(SerilogLogEventLevel(options.Verbosity));
-                    if (options.Verbosity == Verbosity.Quiet)
+                    var levelSwitch = new LoggingLevelSwitch(SerilogLogEventLevel(minimalOptions.Verbosity));
+                    if (minimalOptions.Verbosity == Verbosity.Quiet)
                     {
                         Tools.Default = Tools.Default.Silent();
                     }
@@ -77,15 +77,17 @@ namespace Amg.Build
                 RebuildMyself.BuildIfSourcesChanged(commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
-                GetOptParser.Parse(commandLineArguments, new { onceProxy, options });
+                var combinedOptions = new CombinedOptions(onceProxy);
 
-                if (options.Help)
+                GetOptParser.Parse(commandLineArguments, combinedOptions);
+
+                if (combinedOptions.Options.Help)
                 {
-                    HelpText.Print(Console.Out, options);
+                    HelpText.Print(Console.Out, combinedOptions);
                     return ExitCode.HelpDisplayed;
                 }
 
-                var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, options);
+                var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
 
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
@@ -105,12 +107,12 @@ namespace Amg.Build
 
                 invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
 
-                if (options.Summary)
+                if (combinedOptions.Options.Summary)
                 {
                     Logger.Information(Summary.PrintTimeline(invocations));
                 }
 
-                if (options.AsciiArt)
+                if (combinedOptions.Options.AsciiArt)
                 {
                     Summary.PrintAsciiArt(invocations);
                 }
@@ -220,10 +222,10 @@ Details:
         /// <param name="arguments">all command line arguments (required for error display)</param>
         /// <param name="options">parsed options</param>
         /// <returns></returns>
-        static (MethodInfo target, string[] arguments) ParseCommandLineTarget(string[] arguments, Options options)
+        static (MethodInfo target, string[] arguments) ParseCommandLineTarget(string[] arguments, CombinedOptions options)
         {
-            var targetAndArguments = options.TargetAndArguments;
-            var targets = options.Targets;
+            var targetAndArguments = options.Options!.TargetAndArguments;
+            var targets = options.OnceProxy;
             if (targetAndArguments.Length == 0)
             {
                 try

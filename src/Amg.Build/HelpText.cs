@@ -10,7 +10,7 @@ namespace Amg.Build
 {
     internal static class HelpText
     {
-        private static void PrintOptionsList(TextWriter @out, Options options)
+        private static void PrintOptionsList(TextWriter @out, object options)
         {
             GetOptParser.GetOptions(options)
                 .Where(_ => !_.IsOperands)
@@ -76,16 +76,16 @@ namespace Amg.Build
                 .Write(@out);
         }
 
-        public static void Print(TextWriter @out, Options options)
+        public static void Print(TextWriter @out, CombinedOptions options)
         {
             var name = Assembly.GetEntryAssembly().GetName().Name;
             @out.WriteLine($@"Usage: {name} [options] <command> [command parameters]...
 ");
-            var targets = PublicTargets(options.Targets.GetType());
+            var targets = PublicTargets(options.OnceProxy.GetType());
             if (targets.Any())
             {
                 @out.WriteLine(@"Commands:");
-                PrintTargetsList(@out, options.Targets);
+                PrintTargetsList(@out, options.OnceProxy);
                 @out.WriteLine();
             }
             @out.WriteLine(@"Options:");
