@@ -217,7 +217,7 @@ namespace Build
             async Task WhenSourceFileTimestampIsChangedScriptRebuilds()
             {
                 var outdated = DateTime.UtcNow.AddDays(-1);
-                var sourceFile = testDir.Combine(name, name + ".cs");
+                var sourceFile = testDir.Combine(name, "Program.cs");
                 new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
                 var result = await build.Run();
                 AssertExitCode(result, 0);
