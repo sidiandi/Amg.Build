@@ -84,10 +84,7 @@ namespace Amg.Build
         static void MoveAwayExistingAssembly(SourceInfo sourceInfo)
         {
             var a = sourceInfo.AssemblyFile;
-            if (a.IsFile())
-            {
-                a.MoveToBackup();
-            }
+            a.Parent().MoveToBackup();
         }
 
         /// <summary>
