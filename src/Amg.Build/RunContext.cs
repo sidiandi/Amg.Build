@@ -53,12 +53,18 @@ namespace Amg.Build
             {
                 RecordStartupTime();
 
-                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
+                var options = new Options();
+                GetOptParser.Parse(commandLineArguments, options);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
-
                 if (needConfigureLogger)
                 {
+                    var levelSwitch = new LoggingLevelSwitch(SerilogLogEventLevel(options.Verbosity));
+                    if (options.Verbosity == Verbosity.Quiet)
+                    {
+                        Tools.Default = Tools.Default.Silent();
+                    }
+
                     Log.Logger = new LoggerConfiguration()
                         .MinimumLevel.ControlledBy(levelSwitch)
                         .WriteTo.Console(LogEventLevel.Verbose,
@@ -71,15 +77,7 @@ namespace Amg.Build
                 RebuildMyself.BuildIfSourcesChanged(commandLineArguments).Wait();
 
                 var onceProxy = Once.Create(targetsType);
-
-                var options = new Options(onceProxy);
-                GetOptParser.Parse(commandLineArguments, options);
-
-                levelSwitch.MinimumLevel = SerilogLogEventLevel(options.Verbosity);
-                if (options.Verbosity == Verbosity.Quiet)
-                {
-                    Tools.Default = Tools.Default.Silent();
-                }
+                GetOptParser.Parse(commandLineArguments, new { onceProxy, options });
 
                 if (options.Help)
                 {
@@ -98,7 +96,7 @@ namespace Amg.Build
                 
                 try
                 {
-                    result = await RunTarget(options.Targets, target, targetArguments);
+                    result = await RunTarget(onceProxy, target, targetArguments);
                 }
                 catch (InvocationFailedException)
                 {

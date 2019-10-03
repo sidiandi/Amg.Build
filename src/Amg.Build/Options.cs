@@ -47,17 +47,6 @@ namespace Amg.Build
     /// </summary>
     class Options
     {
-        /// <summary>
-        /// Class with the targets methods
-        /// </summary>
-        public object Targets { get; private set; }
-
-        /// <summary />
-        public Options(object targets)
-        {
-            this.Targets = targets;
-        }
-
         /// <summary />
         [Operands]
         [Description("Target name and arguments")]
