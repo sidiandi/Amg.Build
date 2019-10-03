@@ -47,6 +47,15 @@ namespace Amg.Build
             {
                 w.WriteLine(x.ToString());
             }
+            else if (x is System.Collections.IEnumerable enumerable)
+            {
+                foreach (var i in enumerable.Cast<object?>()
+                    .Select((item, index) => new {index, item}))
+                { 
+                    w.Write($"[{i.index}] ");
+                    w.Dump(i.item);
+                }
+            }
             else
             {
                 foreach (var p in type.GetProperties())

@@ -45,11 +45,12 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* Print return value of Commands
+* file system watch
 * Adapter to use Cake extensions
 
 ## Done
 
+* Print return value of Commands
 * Prepend class name to once methods in log
 * Terminate on the first failed [Once] call.
 * show result as acii art.

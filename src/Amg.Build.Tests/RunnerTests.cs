@@ -93,5 +93,12 @@ namespace Amg.Build
             await once.All();
             Assert.That(once.result, Is.EqualTo("TestCompileLinkPack"));
         }
+
+        [Test]
+        public void PrintReturnValue()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "get-info" });
+            Assert.That(exitCode, Is.EqualTo(0));
+        }
     }
 }

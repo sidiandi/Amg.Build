@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Linq;
 
 namespace Amg.Build
 {
@@ -28,6 +29,15 @@ C: 3
 ", o.Dump().ToString());
         }
 
+        [Test]
+        public void DumpEnumerable()
+        {
+            var o = Enumerable.Range(0, 3);
+            Assert.AreEqual(@"[0] 0
+[1] 1
+[2] 2
+", o.Dump().ToString());
+        }
         [Test]
         public void PrintTable()
         {

@@ -94,9 +94,11 @@ namespace Amg.Build
 
                 IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
 
+                object? result = null;
+                
                 try
                 {
-                    await RunTarget(options.Targets, target, targetArguments);
+                    result = await RunTarget(options.Targets, target, targetArguments);
                 }
                 catch (InvocationFailedException)
                 {
@@ -113,6 +115,11 @@ namespace Amg.Build
                 if (options.AsciiArt)
                 {
                     Summary.PrintAsciiArt(invocations);
+                }
+
+                if (result != null)
+                {
+                    result.Dump().Write(Console.Out);
                 }
 
                 return invocations.Failed()
@@ -259,10 +266,10 @@ Details:
             }
         }
 
-        private static async Task RunTarget(object targets, MethodInfo target, string[] arguments)
+        private static async Task<object?> RunTarget(object targets, MethodInfo target, string[] arguments)
         {
             Logger.Information("Run {target}({arguments})", target.Name, arguments.Join(", "));
-            await AsTask(GetOptParser.Invoke(targets, target, arguments));
+            return await AsTask(GetOptParser.Invoke(targets, target, arguments));
         }
 
         private static MethodInfo? GetDefaultTarget(object targets)
@@ -283,15 +290,30 @@ Details:
         /// </summary>
         /// <param name="returnValue"></param>
         /// <returns></returns>
-        static Task AsTask(object returnValue)
+        static Task<object?> AsTask(object returnValue)
         {
             if (returnValue is Task task)
             {
-                return task;
+                var type = returnValue.GetType();
+                var resultProperty = type.GetProperty("Result");
+                return task.ContinueWith((_) =>
+                {
+                    try
+                    {
+                        var result = resultProperty == null
+                            ? null
+                            : resultProperty.GetValue(task);
+                        return result;
+                    }
+                    catch (TargetInvocationException targetInvocationException)
+                    {
+                        throw targetInvocationException.InnerException.InnerException;
+                    }
+                });
             }
             else
             {
-                return Task.FromResult(returnValue);
+                return Task.FromResult<object?>(returnValue);
             }
         }
 

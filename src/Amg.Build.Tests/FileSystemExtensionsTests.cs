@@ -52,7 +52,7 @@ namespace Amg.Build
         public void LastModified()
         {
             var dir = ".";
-            var t = dir.Glob().LastWriteTimeUtc();
+            var t = dir.Glob("**/*").LastWriteTimeUtc();
             Assert.That(t, Is.Not.EqualTo(default(DateTime)));
         }
 

@@ -119,5 +119,11 @@ namespace Amg.Build
         {
             await WhatCouldGoWrong();
         }
+
+        [Once, Description("Get information")]
+        public virtual async Task<object> GetInfo()
+        {
+            return await Task.FromResult(System.Environment.GetLogicalDrives());
+        }
     }
 }
