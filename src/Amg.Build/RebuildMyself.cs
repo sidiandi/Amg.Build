@@ -86,12 +86,7 @@ namespace Amg.Build
             var a = sourceInfo.AssemblyFile;
             if (a.IsFile())
             {
-                var old = a + ".old";
-                if (old.IsFile())
-                {
-                    old.EnsureFileNotExists();
-                }
-                a.Move(old);
+                a.MoveToBackup();
             }
         }
 
