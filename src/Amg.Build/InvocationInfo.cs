@@ -91,7 +91,7 @@ namespace Amg.Build
 
         public virtual DateTime? Begin { get; set; }
         public virtual DateTime? End { get; set; }
-        public string Id { get; set; }
+        public string Id { get; }
         public virtual TimeSpan Duration
         {
             get
@@ -107,7 +107,7 @@ namespace Amg.Build
             return x;
         }
 
-        public override string ToString() => $"Command {Id.OneLine().Truncate(32)}";
+        public override string ToString() => $"{Id.OneLine().Truncate(32)}";
 
         public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 

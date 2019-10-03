@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
@@ -28,21 +29,25 @@ namespace Amg.Build
 
         public void Intercept(IInvocation invocation)
         {
-            var cacheKey = GenerateCacheKey(invocation.Method.Name, invocation.Arguments);
+            var cacheKey = GenerateCacheKey(invocation.Method, invocation.Arguments);
             invocation.ReturnValue = _cache.GetOrAdd(cacheKey, () => new InvocationInfo(this, cacheKey, invocation))
                 .ReturnValue;
         }
 
         readonly string? prefix;
 
-        string GenerateCacheKey(string name, object[] arguments)
+        string GenerateCacheKey(MethodInfo method, object[] arguments)
         {
             string Key()
             {
-                if (arguments == null || arguments.Length == 0)
-                    return name;
-                return $"{name}({arguments.Join(",")})";
+                var id = $"{method.DeclaringType.Name}.{method.Name}";
+                if (arguments.Length > 0)
+                {
+                    id = $"{id}({arguments.Join(",")})";
+                }
+                return id;
             }
+
             return prefix == null
                 ? Key()
                 : prefix + "." + Key();
