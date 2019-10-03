@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("amgbuild")]
@@ -45,7 +44,7 @@ namespace Amg.Build
         {
             if (path.Exists())
             {
-                throw new Exception($"File {path} exists");
+                throw new System.IO.IOException($"File {path} exists");
             }
             Logger.Information("Write {path}", path);
             await path
@@ -59,7 +58,7 @@ namespace Amg.Build
             var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
             if (existing.Any())
             {
-                throw new Exception($"Already exists: {existing.Join(", ")}");
+                throw new System.IO.IOException($"Already exists: {existing.Join(", ")}");
             }
             await Create(s.CmdFile, "name.cmd");
             await Create(s.CsprojFile, "name.name.csproj");
@@ -153,7 +152,7 @@ namespace Amg.Build
             var actualText = await file.ReadAllTextAsync();
             if (!object.Equals(expected, actualText))
             {
-                var backup = file.MoveToBackup();
+                file.MoveToBackup();
                 Logger.Information("Writing {file}", file);
                 await file
                     .EnsureParentDirectoryExists()

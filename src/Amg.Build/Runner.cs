@@ -1,10 +1,5 @@
-﻿using Castle.DynamicProxy;
-using Serilog;
-using Serilog.Core;
-using System;
+﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Amg.Build
@@ -12,35 +7,9 @@ namespace Amg.Build
     /// <summary>
     /// Runs classes with [Once] 
     /// </summary>
-    public class Runner
+    public static class Runner
     {
         private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
-
-        /// <summary>
-        /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
-        /// </summary>
-        /// Call this method directly from your Main()
-        /// <typeparam name="TargetsDerivedClass"></typeparam>
-        /// <param name="commandLineArguments"></param>
-        /// <param name="callerFilePath"></param>
-        /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run<TargetsDerivedClass>(
-            string[] commandLineArguments, 
-            [CallerFilePath] string? callerFilePath = null)
-            where TargetsDerivedClass : class
-        {
-            return Run(typeof(TargetsDerivedClass), commandLineArguments, callerFilePath!);
-        }
-
-        /// <summary>
-        /// Returns the directory where build.cmd resides.
-        /// </summary>
-        /// <param name="callerFilePath"></param>
-        /// <returns></returns>
-        public static string RootDirectory([CallerFilePath] string callerFilePath = null!)
-        {
-            return callerFilePath.Parent().Parent();
-        }
 
         /// <summary>
         /// Treats the caller's type as container of [Once] methods and runs it.
@@ -53,17 +22,42 @@ namespace Amg.Build
         /// <param name="commandLineArguments"></param>
         /// <param name="sourceFile"></param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run(string[] commandLineArguments, [CallerFilePath] string? sourceFile = null)
+        public static int Run(string[] commandLineArguments)
         {
             StackFrame frame = new StackFrame(1);
             var method = frame.GetMethod();
             var type = method.DeclaringType;
-            return Run(type, commandLineArguments, sourceFile!);
+            return Run(type, commandLineArguments);
         }
 
-        static int Run(Type type, string[] commandLineArguments, string sourceFile)
+        /// <summary>
+        /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
+        /// </summary>
+        /// Call this method directly from your Main()
+        /// <typeparam name="TargetsDerivedClass"></typeparam>
+        /// <param name="commandLineArguments"></param>
+        /// <param name="callerFilePath"></param>
+        /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
+        public static int Run<TargetsDerivedClass>(
+            string[] commandLineArguments)
+            where TargetsDerivedClass : class
         {
-            var runner = new RunContext(type, sourceFile, commandLineArguments);
+            return Run(typeof(TargetsDerivedClass), commandLineArguments);
+        }
+
+        /// <summary>
+        /// Returns the directory where build.cmd resides.
+        /// </summary>
+        /// <param name="callerFilePath"></param>
+        /// <returns></returns>
+        public static string RootDirectory([CallerFilePath] string callerFilePath = null!)
+        {
+            return callerFilePath.Parent().Parent();
+        }
+
+        static int Run(Type type, string[] commandLineArguments)
+        {
+            var runner = new RunContext(type, commandLineArguments);
             return (int)runner.Run().Result;
         }
 

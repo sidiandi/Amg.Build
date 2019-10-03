@@ -34,6 +34,12 @@ namespace Amg.Build
         }
 
         /// <summary />
+        public ITool WithArguments(IEnumerable<string> args)
+        {
+            return this;
+        }
+
+        /// <summary />
         public ITool WithWorkingDirectory(string workingDirectory)
         {
             throw new System.NotImplementedException();
@@ -53,12 +59,6 @@ namespace Amg.Build
 
         /// <summary />
         public ITool WithEnvironment(IDictionary<string, string> environmentVariables)
-        {
-            return this;
-        }
-
-        /// <summary />
-        public ITool WithArguments(IEnumerable<string> args)
         {
             return this;
         }

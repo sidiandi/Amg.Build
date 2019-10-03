@@ -62,13 +62,10 @@ namespace Amg.Build
         internal static bool TryGetResultType(Task task, out Type resultType)
         {
             var taskType = task.GetType();
-            if (taskType.IsGenericType)
+            if (taskType.IsGenericType && (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult")))
             {
-                if (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult"))
-                {
-                    resultType = taskType.GenericTypeArguments[0];
-                    return true;
-                }
+                resultType = taskType.GenericTypeArguments[0];
+                return true;
             }
 
             resultType = null!;

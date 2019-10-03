@@ -122,12 +122,18 @@ namespace Amg.Build
             var p = predicates.ToArray();
             for (int i=0; i<=v.Length-p.Length;++i)
             {
-                for (int pi=0; pi<p.Length;++pi)
+                int pi = 0;
+                for (; pi<p.Length;++pi)
                 {
-                    if (!p[pi](v[i+pi])) goto noMatch;
+                    if (!p[pi](v[i + pi]))
+                    {
+                        break;
+                    }
                 }
-                return true;
-            noMatch:;
+                if (pi == p.Length)
+                {
+                    return true;
+                }
             }
             return false;
         }

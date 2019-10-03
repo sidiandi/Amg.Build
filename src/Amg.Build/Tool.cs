@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -80,7 +79,7 @@ namespace Amg.Build
 
         internal static void KillAll()
         {
-            for (; ; )
+            while(true)
             {
                 IRunning? i = null;
                 lock (RunningProcesses)
@@ -195,7 +194,7 @@ namespace Amg.Build
                     {
                         if ((uint)e.HResult == 0x80004005)
                         {
-                            throw new ToolStartFailed(e.Message, startInfo);
+                            throw new ToolStartException(e.Message, startInfo);
                         }
                         throw;
                     }
@@ -227,14 +226,11 @@ namespace Amg.Build
                     output: output.Result,
                     error: error.Result);
 
-                if (expectedExitCode != null)
+                if (expectedExitCode != null && p.ExitCode != expectedExitCode.Value)
                 {
-                    if (p.ExitCode != expectedExitCode.Value)
-                    {
-                        throw new ToolException(
-                            $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.",
-                            result, startInfo);
-                    }
+                    throw new ToolException(
+                        $"process exited with {p.ExitCode}, but {expectedExitCode.Value} was expected.",
+                        result, startInfo);
                 }
 
                 return result;

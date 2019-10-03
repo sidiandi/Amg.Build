@@ -66,7 +66,10 @@ namespace Amg.Build
                             w.WriteLine($"{p.Name}: {stringRepresentation}");
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                        // errors during output formatting can be ignored
+                    }
                 }
             }
             return w;
@@ -171,9 +174,9 @@ namespace Amg.Build
         /// <returns></returns>
         public static string TimeBar(int width, DateTime rangeBegin, DateTime rangeEnd, DateTime begin, DateTime end)
         {
-            if (!(rangeBegin < rangeEnd))
+            if (rangeBegin >= rangeEnd)
             {
-                throw new ArgumentOutOfRangeException($"(rangeBegin < rangeEnd) {rangeBegin} {rangeEnd}");
+                throw new ArgumentOutOfRangeException($"must be: rangeBegin < rangeEnd {rangeBegin} {rangeEnd}");
             }
 
             int Pos(DateTime t)
@@ -254,7 +257,7 @@ namespace Amg.Build
             var part1MaxLines = skipAt;
             var part2MaxLines = maxLines - skipAt;
 
-            for (; e.MoveNext();)
+            while(e.MoveNext())
             {
                 part1.Add(e.Current);
                 if (part1.Count >= part1MaxLines)
@@ -265,7 +268,7 @@ namespace Amg.Build
 
             int skipped = 0;
 
-            for (; e.MoveNext();)
+            while(e.MoveNext())
             {
                 part2.Add(e.Current);
                 if (part2.Count >= part2MaxLines)
@@ -341,7 +344,6 @@ namespace Amg.Build
 
         static string MetricImpl(this double x, string[] prefixes, int digits = 3)
         {
-            var e = Math.Log10(Math.Abs(x));
             var i = (int)(4 - (Math.Log10(Math.Abs(x))-2) / 3);
             if (i >= prefixes.Length && i < prefixes.Length + 2)
             {

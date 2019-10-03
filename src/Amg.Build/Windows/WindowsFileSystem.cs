@@ -1,12 +1,5 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Amg.Build.Windows
 {
@@ -54,7 +47,7 @@ namespace Amg.Build.Windows
             string existingFileName,
             string newFileName,
             IProgress<CopyFileProgress>? progress = null,
-            CancellationToken ct = new CancellationToken(),
+            CancellationToken cancellationToken = new CancellationToken(),
             CopyFileOptions? options = null)
         {
             Int32 pbCancel = 0;
@@ -88,7 +81,7 @@ namespace Amg.Build.Windows
                         StreamBytesTransferred,
                         (int) dwStreamNumber));
 
-                    if (ct.IsCancellationRequested)
+                    if (cancellationToken.IsCancellationRequested)
                     {
                         return NativeMethods.CopyProgressResult.PROGRESS_CANCEL;
                     }

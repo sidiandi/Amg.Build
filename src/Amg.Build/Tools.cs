@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -36,12 +34,13 @@ namespace Amg.Build
             return Runner.Once<Tools>();
         }
 
+        [Once] protected virtual Nuget NugetHelper => Once.Create<Nuget>();
+
         /// <summary>
         /// nuget.exe
         /// </summary>
-        /// Downloads nuget.exe if not found.
         [Once]
-        public virtual Task<ITool> Nuget => Get(new Uri(@"https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"));
+        protected virtual Task<ITool> NugetTool => NugetHelper.Tool;
 
         /// <summary>
         /// Download a tool

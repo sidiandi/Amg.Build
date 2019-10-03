@@ -187,11 +187,21 @@ namespace Amg.Build
         /// </summary>
         public static DateTime Limit(this DateTime x, DateTime a, DateTime b)
         {
-            return x < a
-                ? a
-                : x > b
-                    ? b
-                    : x;
+            if (x < a)
+            {
+                return a;
+            }
+            else
+            {
+                if (x > b)
+                {
+                    return b;
+                }
+                else
+                {
+                    return x;
+                }
+            }
         }
 
         /// <summary>

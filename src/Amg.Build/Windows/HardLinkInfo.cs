@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Amg.Build.Windows
 {
@@ -35,9 +33,7 @@ namespace Amg.Build.Windows
                     throw new Win32Exception(path);
                 }
 
-                var fileInfo = new NativeMethods.BY_HANDLE_FILE_INFORMATION();
-                NativeMethods.GetFileInformationByHandle(handle, out fileInfo)
-                    .CheckApiCall(path);
+                NativeMethods.GetFileInformationByHandle(handle, out var fileInfo).CheckApiCall(path);
                 return fileInfo;
             }
         }
@@ -59,7 +55,7 @@ namespace Amg.Build.Windows
             }
         }
 
-        static string[]? GetFileSiblingHardLinks(string filepath)
+        static string[] GetFileSiblingHardLinks(string filepath)
         {
             List<string> result = new List<string>();
             uint stringLength = 256;
@@ -80,15 +76,9 @@ namespace Amg.Build.Windows
                 NativeMethods.FindClose(findHandle);
                 return result.ToArray();
             }
-            return null;
+            return new string[] { };
         }
 
-        public IEnumerable<string> HardLinks
-        {
-            get
-            {
-                return GetFileSiblingHardLinks(path).ToList();
-            }
-        }
+        public IEnumerable<string> HardLinks => GetFileSiblingHardLinks(path);
     }
 }

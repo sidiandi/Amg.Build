@@ -3,12 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace Amg.Build
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "<Pending>")]
     internal class FileOperationApiWrapper
     {
         /// <summary>
         /// Possible flags for the SHFileOperation method.
         /// </summary>
         [Flags]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2344:Enumeration type names should not have \"Flags\" or \"Enum\" suffixes", Justification = "<Pending>")]
         public enum FileOperationFlags : ushort
         {
             /// <summary>

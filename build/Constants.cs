@@ -1,8 +1,14 @@
-public partial class BuildTargets
+namespace Build
 {
-    string name => "Amg.Build";
-    string company => "Amg";
-    // string nugetPushSource => @"C:\src\local-nuget-repository";
-	string nugetPushSource => @"default";
-    string nugetPushSymbolSource => nugetPushSource;
+    public partial class Program
+    {
+        string Name => "Amg.Build";
+        string Company => "Amg";
+        string[] NugetPushSource => new[]
+        {
+            null,
+            "https://api.nuget.org/v3/index.json"
+        };
+        string[] NugetPushSymbolSource => NugetPushSource;
+    }
 }

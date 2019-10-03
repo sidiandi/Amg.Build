@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
@@ -14,14 +13,14 @@ namespace Amg.Build
             _cache = new Dictionary<string, InvocationInfo>();
         }
 
-        public Task _waitUntilCancelled { get; }
-
         public OnceInterceptor(Task waitUntilCancelled, OnceInterceptor parent, string prefix)
         : this(waitUntilCancelled)
         {
             this.prefix = prefix;
             _cache = parent._cache;
         }
+
+        public Task _waitUntilCancelled { get; }
 
         readonly IDictionary<string, InvocationInfo> _cache;
 

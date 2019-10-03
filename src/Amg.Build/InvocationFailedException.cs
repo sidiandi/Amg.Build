@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 namespace Amg.Build
 {
     [Serializable]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
     internal class InvocationFailedException : Exception
     {
         public InvocationInfo Invocation { get; }
@@ -16,6 +17,7 @@ namespace Amg.Build
 
         protected InvocationFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
+            Invocation = null!;
         }
 
         public static IWritable ShortMessage(Exception ex) => TextFormatExtensions.GetWritable(w =>

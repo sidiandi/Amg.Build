@@ -11,8 +11,8 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private StringBuilder sb = new StringBuilder();
-        private List<string> invocations = new List<string>();
+        private readonly StringBuilder sb = new StringBuilder();
+        private readonly List<string> invocations = new List<string>();
 
         public bool Proceed = true;
 

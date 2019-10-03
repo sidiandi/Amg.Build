@@ -4,8 +4,8 @@ namespace Amg.Build
 {
     internal class TeeStream : TextReader
     {
-        private TextReader input;
-        private TextWriter output;
+        readonly private TextReader input;
+        readonly private TextWriter output;
 
         public TeeStream(TextReader input, TextWriter output)
         {

@@ -689,10 +689,6 @@ are more recent.
                 }
                 Directory.Delete(path);
             }
-            else
-            {
-
-            }
             return path;
         }
 
@@ -889,7 +885,7 @@ are more recent.
                 var backup = path + $".backup{i}";
                 if (!backup.Exists())
                 {
-                    Logger.Information("Backup of {path} at {backup}.", path, backup);
+                    Logger.Information("Creating backup of {path} at {backup}.", path, backup);
                     return path.Move(backup);
                 }
             }

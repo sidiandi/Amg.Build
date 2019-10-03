@@ -183,14 +183,13 @@ namespace Amg.Build
                 Y maxValue = default(Y);
                 bool found = false;
 
-                for (; i.MoveNext();)
+                if (i.MoveNext())
                 {
                     max = i.Current;
                     maxValue = selector(i.Current);
                     found = true;
-                    break;
                 }
-                for (; i.MoveNext();)
+                while (i.MoveNext())
                 {
                     var value = selector(i.Current);
                     if (value.CompareTo(maxValue) == 1)
@@ -337,6 +336,48 @@ namespace Amg.Build
                 );
         }
 
+        public static IEnumerable<T> Progress<T>(this IEnumerable<T> e,
+            IProgress<ProgressUpdate<T>> progress,
+            Func<T, double>? metric = null,
+            TimeSpan updateInterval = default(TimeSpan)
+            )
+        {
+            if (metric == null)
+            {
+                metric = (item) => 1.0;
+            }
+            if (updateInterval == default(TimeSpan))
+            {
+                updateInterval = TimeSpan.FromSeconds(2);
+            }
+            double total = 0.0;
+            TimeSpan nextUpdate = TimeSpan.FromTicks(updateInterval.Ticks * 5);
+            var stopwatch = Stopwatch.StartNew();
+            var speedWindow = TimeSpan.FromTicks(updateInterval.Ticks * 5);
+            double delta = 0.0;
+            double speed = 0.0;
+            TimeSpan lastUpdate = TimeSpan.Zero;
+
+            return e.Select(_ =>
+            {
+                delta += metric(_);
+                var elapsed = stopwatch.Elapsed;
+                if (elapsed > nextUpdate)
+                {
+                    var deltaT = elapsed - lastUpdate;
+                    total += delta;
+                    speed = (speed * speedWindow.TotalSeconds + delta / deltaT.TotalSeconds) / (speedWindow.TotalSeconds + deltaT.TotalSeconds);
+                    progress.Report(new ProgressUpdate<T>(_, elapsed, total, speed));
+
+                    nextUpdate = stopwatch.Elapsed + updateInterval;
+                    delta = 0.0;
+                    lastUpdate = elapsed;
+                }
+
+                return _;
+            });
+        }
+
         /// <summary>
         /// Progress when iterating an IEnumerable T
         /// </summary>
@@ -381,50 +422,6 @@ namespace Amg.Build
         /// <param name="metric"></param>
         /// <param name="updateInterval"></param>
         /// <returns></returns>
-        public static IEnumerable<T> Progress<T>(this IEnumerable<T> e,
-            IProgress<ProgressUpdate<T>> progress,
-            Func<T, double>? metric = null,
-            TimeSpan updateInterval = default(TimeSpan)
-            )
-        {
-            if (metric == null)
-            {
-                metric = (item) => 1.0;
-            }
-            if (updateInterval == default(TimeSpan))
-            {
-                updateInterval = TimeSpan.FromSeconds(2);
-            }
-            Func<double, string> format = (double x) => x.MetricShort();
-
-            double total = 0.0;
-            TimeSpan nextUpdate = TimeSpan.FromTicks(updateInterval.Ticks * 5);
-            var stopwatch = Stopwatch.StartNew();
-            var speedWindow = TimeSpan.FromTicks(updateInterval.Ticks * 5);
-            double delta = 0.0;
-            double speed = 0.0;
-            TimeSpan lastUpdate = TimeSpan.Zero;
-
-            return e.Select(_ =>
-            {
-                delta += metric(_);
-                var elapsed = stopwatch.Elapsed;
-                if (elapsed > nextUpdate)
-                {
-                    var deltaT = elapsed - lastUpdate;
-                    total += delta;
-                    speed = (speed * speedWindow.TotalSeconds + delta / deltaT.TotalSeconds) / (speedWindow.TotalSeconds + deltaT.TotalSeconds);
-                    progress.Report(new ProgressUpdate<T>(_, elapsed, total, speed));
-
-                    nextUpdate = stopwatch.Elapsed + updateInterval;
-                    delta = 0.0;
-                    lastUpdate = elapsed;
-                }
-
-                return _;
-            });
-        }
-
         /// <summary>
         /// Splits a string and returns the re-combined components
         /// </summary>
@@ -456,8 +453,10 @@ namespace Amg.Build
 
         public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> e) where T : class
         {
+#pragma warning disable S1905 // Redundant casts should not be used
             // cast required from T? to T
             return e.Where(_ => _ != null).Cast<T>();
+#pragma warning restore S1905 // Redundant casts should not be used
         }
 
         public static async Task<IEnumerable<T>> Result<T>(this IEnumerable<Task<T>> e)

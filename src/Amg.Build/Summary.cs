@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Amg.Build
 {
-    internal class Summary
+    static class Summary
     {
         internal static IWritable PrintTimeline(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
@@ -121,9 +121,6 @@ namespace Amg.Build
                           (_____)
                          (_______)
                 */
-            }
-            else
-            {
             }
         }
 

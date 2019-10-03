@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -82,16 +81,6 @@ namespace Amg.Build
 
         static ProxyGenerator generator = new ProxyGenerator(new DefaultProxyBuilder());
 
-        /// <summary>
-        /// Get an instance of T that executes methods marked with [Once] only once and caches the result.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static T Create<T>(params object?[] ctorArguments) where T : class
-        {
-            return (T)Create(typeof(T), ctorArguments);
-        }
-
         class InvocationSource : IInvocationSource
         {
             public InvocationSource(IEnumerable<InvocationInfo> invocations)
@@ -109,6 +98,16 @@ namespace Amg.Build
         public static object Create(Type type, params object?[] ctorArguments)
         {
             return Instance.Get(type, ctorArguments);
+        }
+
+        /// <summary>
+        /// Get an instance of T that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T Create<T>(params object?[] ctorArguments) where T : class
+        {
+            return (T)Create(typeof(T), ctorArguments);
         }
 
         readonly IDictionary<string, object> _cache = new Dictionary<string, object>();
@@ -150,7 +149,7 @@ namespace Amg.Build
             cancelAll.Cancel();
         }
 
-        CancellationTokenSource cancelAll = new CancellationTokenSource();
-        Task waitUntilCancelled;
+        readonly CancellationTokenSource cancelAll = new CancellationTokenSource();
+        readonly Task waitUntilCancelled;
     }
 }

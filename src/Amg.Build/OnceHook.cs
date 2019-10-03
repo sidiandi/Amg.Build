@@ -10,13 +10,14 @@ namespace Amg.Build
 
         public void MethodsInspected()
         {
+            // nothing needs to be don at the end of the inspection
         }
 
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
         {
             if (Once.Has(memberInfo))
             {
-                throw new Exception($"{memberInfo} must be virtual because it has the [Once] attribute.");
+                throw new InvalidOperationException($"{memberInfo} must be virtual because it has the [Once] attribute.");
             }
         }
 

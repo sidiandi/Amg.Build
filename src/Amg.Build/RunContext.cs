@@ -1,15 +1,12 @@
 ﻿using Amg.CommandLine;
-using Castle.DynamicProxy;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -20,11 +17,10 @@ namespace Amg.Build
     /// </summary>
     internal class RunContext
     {
-        private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+        private static Serilog.ILogger Logger => Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private Type targetsType;
-        private readonly string sourceFile;
-        private string[] commandLineArguments;
+        private readonly Type targetsType;
+        private readonly string[] commandLineArguments;
 
         public enum ExitCode
         {
@@ -38,12 +34,10 @@ namespace Amg.Build
 
         public RunContext(
             Type targetsType,
-            string sourceFile,
             string[] commandLineArguments
             )
         {
             this.targetsType = targetsType;
-            this.sourceFile = sourceFile;
             this.commandLineArguments = commandLineArguments;
         }
 
@@ -65,7 +59,7 @@ namespace Amg.Build
 
                 if (needConfigureLogger)
                 {
-                    Logger = Log.Logger = new LoggerConfiguration()
+                    Log.Logger = new LoggerConfiguration()
                         .MinimumLevel.ControlledBy(levelSwitch)
                         .WriteTo.Console(LogEventLevel.Verbose,
                         standardErrorFromLevel: LogEventLevel.Error,
@@ -106,6 +100,7 @@ namespace Amg.Build
                 }
                 catch (InvocationFailedException)
                 {
+                    // can be ignored here, because failures are recorded in invocations
                 }
 
                 invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
@@ -161,6 +156,7 @@ Details:
                 }
                 catch
                 {
+                    // ignore read errors
                 }
                 finally
                 {
@@ -286,7 +282,7 @@ Details:
         {
             if (returnValue is Task task)
             {
-                return (Task)task;
+                return task;
             }
             else
             {
@@ -307,7 +303,7 @@ Details:
                 case Verbosity.Quiet:
                     return LogEventLevel.Fatal;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new ArgumentOutOfRangeException(nameof(verbosity), verbosity, "no enum value");
             }
         }
     }

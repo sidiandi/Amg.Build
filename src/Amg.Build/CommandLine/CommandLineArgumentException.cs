@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace Amg.CommandLine
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
     internal class CommandLineArgumentException : Exception
     {
         private readonly IEnumerable<string> _args;
@@ -41,10 +42,10 @@ namespace Amg.CommandLine
 
         private static string ArgList(IEnumerable<string> args, int markedPosition)
         {
-            return args.Select((_,i) => $"{Marker(i, _, markedPosition)}{_}").Join();
+            return args.Select((_,i) => $"{Marker(i, markedPosition)}{_}").Join();
         }
 
-        private static string Marker(int index, string s, int markedPosition)
+        private static string Marker(int index, int markedPosition)
         {
             return index == markedPosition
                 ? "here => "

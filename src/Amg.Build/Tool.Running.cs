@@ -6,7 +6,7 @@ namespace Amg.Build
     {
         class Running : IRunning
         {
-            private Process process;
+            readonly private Process process;
 
             public Running(Process p)
             {

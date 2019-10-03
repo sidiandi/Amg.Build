@@ -16,8 +16,6 @@
 // along with sidi-util. If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
@@ -25,6 +23,7 @@ using System.ComponentModel;
 
 namespace Amg.Build.Windows
 {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "<Pending>")]
     internal static class NativeMethods
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
@@ -32,9 +31,9 @@ namespace Amg.Build.Windows
         [DllImport("msvcrt.dll")]
         internal static extern int memcmp(byte[] b1, byte[] b2, long count);
 
-        internal static IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+        internal readonly static IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
-        internal static int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+        internal readonly static int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
 
         public const int MAX_PATH = 260;
         public const int MAX_ALTERNATE = 14;
@@ -203,6 +202,16 @@ namespace Amg.Build.Windows
             [MarshalAs(UnmanagedType.U4)] System.IO.FileAttributes dwFlagsAndAttributes,
             IntPtr hTemplateFile);
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern IntPtr CreateFile(
+            string lpFileName,
+            EFileAccess dwDesiredAccess,
+            EFileShare dwShareMode,
+            IntPtr lpSecurityAttributes,
+            ECreationDisposition dwCreationDisposition,
+            EFileAttributes dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool CloseHandle(SafeHandle hObject);
@@ -260,6 +269,7 @@ namespace Amg.Build.Windows
         }
 
         [Flags]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2344:Enumeration type names should not have \"Flags\" or \"Enum\" suffixes", Justification = "<Pending>")]
         public enum CopyFileFlags : uint
         {
             COPY_FILE_ALLOW_DECRYPTED_DESTINATION = 0x00000008, // An attempt to copy an encrypted file will succeed even if the destination copy cannot be encrypted.
@@ -411,16 +421,5 @@ namespace Amg.Build.Windows
             IntPtr InBuffer, int nInBufferSize,
             IntPtr OutBuffer, int nOutBufferSize,
             out int pBytesReturned, IntPtr lpOverlapped);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern IntPtr CreateFile(
-            string lpFileName,
-            EFileAccess dwDesiredAccess,
-            EFileShare dwShareMode,
-            IntPtr lpSecurityAttributes,
-            ECreationDisposition dwCreationDisposition,
-            EFileAttributes dwFlagsAndAttributes,
-            IntPtr hTemplateFile);
-
     }
 }

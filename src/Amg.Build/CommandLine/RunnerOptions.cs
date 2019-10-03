@@ -22,11 +22,18 @@ namespace Amg.CommandLine
         {
             set
             {
-                var v = Verbosity - 1;
-                if (System.Enum.IsDefined(typeof(LogEventLevel), v))
+                if (value)
                 {
-                    Verbosity = v;
+                    var v = Verbosity - 1;
+                    if (System.Enum.IsDefined(typeof(LogEventLevel), v))
+                    {
+                        Verbosity = v;
+                    }
                 }
+            }
+            get
+            {
+                return Verbosity < LogEventLevel.Fatal;
             }
         }
 

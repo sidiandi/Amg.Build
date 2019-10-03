@@ -203,6 +203,8 @@ namespace Amg.CommandLine
             {
                 return;
             }
+
+            throw new ParserException("Cannot read option");
         }
 
         internal static string GetLongOptionNameForMember(string memberName)
@@ -301,7 +303,7 @@ namespace Amg.CommandLine
                 var o = FindShortOption(getOptContext.Options, optionName);
                 if (o == null)
                 {
-                    throw new ($"{ShortPrefix}{optionName} is not an option.");
+                    throw new ParserException($"{ShortPrefix}{optionName} is not an option.");
                 }
 
                 if (o.IsFlag)

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -14,7 +12,7 @@ namespace Amg.Build
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        string? source = null;
+        readonly string? source = null;
 
         /// <summary>
         /// ITool wrapper for nuget.exe
@@ -22,11 +20,14 @@ namespace Amg.Build
         [Once]
         public virtual Task<ITool> Tool => ProvideNugetTool();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "<Pending>")]
+        Uri DownloadUri => new Uri(@"https://dist.nuget.org/win-x86-commandline/latest/nuget.exe");
+
         async Task<ITool> ProvideNugetTool()
         {
             if (tool == null)
             {
-                tool = await Runner.Once<Tools>().Get(new Uri("https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"));
+                tool = await Runner.Once<Tools>().Get(DownloadUri);
             }
             return tool;
         }
@@ -100,7 +101,6 @@ namespace Amg.Build
             var r = await install.Run(packageId);
 
             var m = Regex.Match(r.Output, @"Installing package '([^']+)' to '([^']+)'.");
-            var actualPackageId = m.Groups[1].Value;
             var dir = m.Groups[2].Value;
 
             string GetActualVersion()
@@ -118,7 +118,7 @@ namespace Amg.Build
                         return m.Groups[1].Value;
                     }
                 }
-                throw new Exception($"Cannot determine version from\r\n{r.Output}");
+                throw new InvalidOperationException($"Cannot determine version from\r\n{r.Output}");
             }
 
             var actualVersion = GetActualVersion();
@@ -140,7 +140,7 @@ namespace Amg.Build
             }
             catch (Exception e)
             {
-                throw new Exception($@"Cannot determine default executable in {nugetPackageInstallDir}.
+                throw new System.IO.FileNotFoundException($@"Cannot determine default executable in {nugetPackageInstallDir}.
 
 Files:
 {nugetPackageInstallDir.Glob("**").Join()}", e);
@@ -152,10 +152,6 @@ Files:
         {
             tool = nuget;
             this.source = source;
-        }
-
-        protected Nuget()
-        {
         }
 
         ITool? tool;

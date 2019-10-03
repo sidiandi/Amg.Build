@@ -4,7 +4,7 @@ namespace Amg.Build
 {
     internal class ProgressAction<T> : IProgress<T>
     {
-        private Action<T> onProgress;
+        readonly private Action<T> onProgress;
 
         public ProgressAction(Action<T> onProgress)
         {

@@ -52,7 +52,7 @@ namespace Amg.Build
             var e = Assert.Throws<AggregateException>(() => echo.Run("Hello").Wait());
             var ie = e.InnerException!;
             Console.WriteLine(ie);
-            Assert.That(ie is ToolStartFailed);
+            Assert.That(ie is ToolStartException);
             Assert.That(ie.Message.Contains(programThatDoesNotExist));
             await Task.CompletedTask;
         }

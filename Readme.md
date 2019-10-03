@@ -22,7 +22,7 @@ $ build\build.csproj
 ## Features
 
 * Pure C#. Write your build tasks as you write any other C# class. 
-* Supports async tasks and achieves maximum possible parallelization of build tasks
+* Supports async tasks and automatically achieves maximum possible parallelization of build tasks
 * Fluent interface for the handling of file system paths.
 
 ## Concepts
@@ -33,7 +33,11 @@ All virtual methods decorated with `[Once]` are only executed once and the resul
 
 This helps you to build up and acyclic graph of your build dependencies.
 
-### Build Properties
+### Automatic Command Line Interface
+
+Properties of the Targets container are available as build commands on the command line if
+* they are public
+* they have a System.Component.Description attribute
 
 Properties of the Targets container are available as build properties on the command line if
 * they have a public setter
@@ -42,6 +46,8 @@ Properties of the Targets container are available as build properties on the com
 ## Todo
 
 * Terminate on the first failed [Once] call.
+* clear all Sonar Analyzer findings
+* Prepend class name to once methods in log
 * Adapter to use Cake extensions
 
 ## Done
