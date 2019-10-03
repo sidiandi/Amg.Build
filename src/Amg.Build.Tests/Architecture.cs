@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Amg.Build
 {
@@ -15,6 +13,7 @@ namespace Amg.Build
         {
             var assembly = typeof(Runner).Assembly;
             Console.WriteLine(PublicApi(assembly));
+            Assert.That(true);
         }
 
         IWritable PublicApi(Assembly a) => TextFormatExtensions.GetWritable(w =>

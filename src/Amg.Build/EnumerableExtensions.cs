@@ -293,7 +293,8 @@ namespace Amg.Build
             Func<T, double>? metric = null, 
             TimeSpan updateInterval = default(TimeSpan),
             string? metricUnit = null,
-            string? description = null
+            string? description = null,
+            Serilog.ILogger? logger = null
             )
         {
             if (description == null)
@@ -304,25 +305,34 @@ namespace Amg.Build
             {
                 description = description + " ";
             }
+
             if (metric == null)
             {
                 metric = (item) => 1.0;
             }
+
             if (updateInterval == default(TimeSpan))
             {
                 updateInterval = TimeSpan.FromSeconds(2);
             }
+
             if (metricUnit == null)
             {
                 metricUnit = String.Empty;
             }
+
+            if (logger == null)
+            {
+                logger = Logger;
+            }
+
             Func<double, string> format = (double x) => x.MetricShort();
 
             var speedUnit = $"{metricUnit}/s";
 
             var progress = ToProgress((ProgressUpdate<T> p) =>
             {
-                Logger.Information("{description}{total}{unit} complete, {speed}{speedUnit}: {item}",
+                logger.Information("{description}{total}{unit} complete, {speed}{speedUnit}: {item}",
                     description,
                     format(p.Total),
                     metricUnit,

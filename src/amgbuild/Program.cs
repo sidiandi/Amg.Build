@@ -38,15 +38,15 @@ namespace amgbuild
 
         [Once]
         [Description("Create an Amg.Build script")]
-        public virtual async Task New(string name)
+        public virtual async Task<SourceCodeLayout> New(string name)
         {
             var path = PathFromName(name);
-
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
+            return sourceLayout;
         }
 
         [Once, Description("Fix an Amg.Build script")]
-        public virtual async Task Fix(string cmdFile)
+        public virtual Task Fix(string cmdFile)
         {
             if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
             {
@@ -58,18 +58,22 @@ namespace amgbuild
                 throw new ArgumentOutOfRangeException(nameof(cmdFile), cmdFile, "File not found.");
             }
 
+            return FixInternal(cmdFile);
+        }
+
+        async Task FixInternal(string cmdFile)
+        { 
             var sourceLayout = new SourceCodeLayout(cmdFile);
             await sourceLayout.Fix();
         }
 
         [Once, Description("Print version")]
-        public virtual async Task Version()
+        public virtual async Task<string> Version()
         {
-            Assembly.GetEntryAssembly()
+            var version = Assembly.GetEntryAssembly()
                 .Map(_ => _.GetCustomAttribute<AssemblyInformationalVersionAttribute>())
-                .Map(_ => _.InformationalVersion)
-                .Map(_ => Console.WriteLine(_));
-            await Task.CompletedTask;
+                .Map(_ => _.InformationalVersion);
+            return await Task.FromResult(version);
         }
     }
 }

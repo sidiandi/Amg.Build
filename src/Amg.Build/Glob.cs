@@ -242,9 +242,10 @@ namespace Amg.Build
             var excludeFunc = new Func<FileSystemInfo, bool>((FileSystemInfo i) =>
                 exclude.Any(_ => _(i)));
 
-            return root.GetFileSystemInfo().SelectMany(r =>
-                include.SelectMany(i =>
-                    Find(r, i.SplitDirectories(), excludeFunc)));
+            var rootInfo = root.Info();
+            return rootInfo == null
+                ? Enumerable.Empty<FileSystemInfo>()
+                : include.SelectMany(i => Find(rootInfo, i.SplitDirectories(), excludeFunc));
         }
     }
 }

@@ -1,8 +1,6 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -38,10 +36,13 @@ namespace Amg.Build
         }
 
         [Test]
-        public async Task Run()
+        public void Run()
         {
             var echo = Tools.Cmd.WithArguments("echo");
-            await echo.Run("Hello");
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await echo.Run("Hello");
+            });
         }
 
         [Test]

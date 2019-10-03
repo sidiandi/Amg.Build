@@ -51,7 +51,9 @@ namespace Amg.Build
         [Test]
         public void LastModified()
         {
-            Console.WriteLine(".".Glob().LastWriteTimeUtc());
+            var dir = ".";
+            var t = dir.Glob().LastWriteTimeUtc();
+            Assert.That(t, Is.EqualTo(dir.Info()!.LastWriteTimeUtc));
         }
 
         static string GetThisSourceFile([CallerFilePath] string? path = null) => path!;
@@ -98,7 +100,7 @@ namespace Amg.Build
         {
             var e = Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
-                var c = @"C:\temp".Combine("a", "b", new string('c', 1024));
+                @"C:\temp".Combine("a", "b", new string('c', 1024));
             });
             Logger.Information("{exception}", e);
         }

@@ -24,7 +24,8 @@ namespace Amg.Build
                 "7-Zip.CommandLine",
                 version: "18.1.0",
                 executable: "tools/x64/7za.exe");
-            await sevenZip.Run();
+            var r = await sevenZip.Run();
+            Assert.That(!string.IsNullOrEmpty(r.Output));
         }
 
         [Test]
@@ -32,7 +33,8 @@ namespace Amg.Build
         {
             var nuget = Nuget.Create();
             var sevenZip = await nuget.GetTool("7-Zip.CommandLine");
-            await sevenZip.Run();
+            var r = await sevenZip.Run();
+            Assert.That(!string.IsNullOrEmpty(r.Output));
         }
 
         [Test]
@@ -40,7 +42,8 @@ namespace Amg.Build
         {
             var choco = Nuget.Create().Chocolatey;
             var busyBox = await choco.GetTool("busybox");
-            await busyBox.Run();
+            var r = await busyBox.Run();
+            Assert.That(!string.IsNullOrEmpty(r.Output));
         }
     }
 }

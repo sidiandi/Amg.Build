@@ -1,7 +1,4 @@
 ﻿using NUnit.Framework;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -18,7 +15,7 @@ namespace Amg.Build
         public void Md5Checksum()
         {
             var c = "hello".Md5Checksum();
-            Assert.AreEqual(c, "5d41402abc4b2a76b9719d911017c592");
+            Assert.That(c, Is.EqualTo("5d41402abc4b2a76b9719d911017c592"));
         }
 
         [Test]

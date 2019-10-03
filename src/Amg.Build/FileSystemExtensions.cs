@@ -447,23 +447,23 @@ are more recent.
         }
 
         /// <summary>
-        /// Gets a FileInfo or DirectoryInfo or empty if file system object does not exist.
+        /// Gets a FileInfo or DirectoryInfo or null if file system object does not exist.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static IEnumerable<FileSystemInfo> GetFileSystemInfo(this string path)
+        public static FileSystemInfo? Info(this string path)
         {
             if (path.IsFile())
             {
-                return new FileSystemInfo[] { new FileInfo(path) };
+                return new FileInfo(path);
             }
             else if (path.IsDirectory())
             {
-                return new FileSystemInfo[] { new DirectoryInfo(path) };
+                return new DirectoryInfo(path);
             }
             else
             {
-                return Enumerable.Empty<FileSystemInfo>();
+                return null;
             }
         }
 
@@ -577,12 +577,9 @@ are more recent.
         static async Task<string> CopyFile(this FileInfo source, string dest, bool overwrite)
         {
             // do we need to copy at all?
-            foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
+            if (dest.Info() is FileInfo fileInfo && CanSkip(source, fileInfo))
             {
-                if (CanSkip(source, destInfo))
-                {
-                    return dest;
-                }
+                return dest;
             }
 
             // parent directory of dest could not exist. Retry once.
@@ -602,12 +599,9 @@ are more recent.
         static async Task<string> CopyHardlink(FileInfo source, string dest)
         {
             // do we need to copy at all?
-            foreach (var destInfo in dest.GetFileSystemInfo().OfType<FileInfo>())
+            if (dest.Info() is FileInfo destInfo && CanSkip(source, destInfo))
             {
-                if (CanSkip(source, destInfo))
-                {
-                    return dest;
-                }
+                return dest;
             }
 
             // parent directory of dest could not exist. Retry once.

@@ -1,6 +1,4 @@
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Reflection;
 using NUnit.Framework;
 using System;
 
@@ -63,22 +61,6 @@ namespace Amg.Build
                 var exitCode = Runner.Run<MyBuild>(new[] { "--help" });
                 Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
             });
-            /*
-            Assert.AreEqual(@"Usage: build <targets> [options]
-
-Targets:
-  Link     Link object files      
-  SayHello Say hello              
-  Pack     Pack nuget package     
-  Default  Compile, link, and pack
-
-Options:
-  --configuration=<string>                Release or Debug                                                
-  -h | --help                             Show help and exit                                              
-  -v<verbosity> | --verbosity=<verbosity> Set the verbosity level. verbosity=quiet|minimal|normal|detailed
-", o.Out);
-
-            */
             Assert.AreEqual(String.Empty, o.Error);
             Assert.That(o.Out, Does.Not.Contain("--ignore-clean"));
         }

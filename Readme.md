@@ -45,13 +45,14 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
+* Print return value of Commands
 * Terminate on the first failed [Once] call.
-* clear all Sonar Analyzer findings
 * Prepend class name to once methods in log
 * Adapter to use Cake extensions
 
 ## Done
 
+* clear all Sonar Analyzer findings
 * creator tool "amgbuild.exe" creates and fixes Amg.Build scripts
 * nullable references
 * netcoreapp3.0

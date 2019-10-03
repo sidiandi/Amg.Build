@@ -27,7 +27,7 @@ namespace Amg.Build
         public string RootDir => CmdFile.Parent();
         public string Name => CmdFile.FileNameWithoutExtension();
         public string SourceDir => CmdFile.Parent().Combine(Name);
-        public string SourceFile => SourceDir.Combine(Name + ".cs");
+        public string ProgramCs => SourceDir.Combine("Program.cs");
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
         public string PropsFile => SourceDir.Combine("Directory.Build.props");
         public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
@@ -62,7 +62,7 @@ namespace Amg.Build
             }
             await Create(s.CmdFile, "name.cmd");
             await Create(s.CsprojFile, "name.name.csproj");
-            await Create(s.SourceFile, "name.name.cs");
+            await Create(s.ProgramCs, "name.name.cs");
             await CreateFromText(s.PropsFile, s.PropsText);
             return s;
         }

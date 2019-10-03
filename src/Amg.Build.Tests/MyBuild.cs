@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -21,7 +20,7 @@ namespace Amg.Build
         [Description("Release or Debug")]
         public string Configuration { get; set; } = "Release";
 
-        public virtual string result { get; set; } = String.Empty;
+        public virtual string result { get; set; }
 
         [Once]
         protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());

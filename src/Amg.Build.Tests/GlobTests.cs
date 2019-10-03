@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -148,7 +147,7 @@ namespace Amg.Build
         public void RegexFromWildcard()
         {
             var re = Amg.Build.Glob.RegexFromWildcard("he*");
-            Assert.AreEqual(re.ToString(), "^he.*$");
+            Assert.That(re.ToString(), Is.EqualTo("^he.*$"));
             Assert.That(re.IsMatch("hello"));
             Assert.That(re.IsMatch("sayhello"), Is.Not.True);
 
