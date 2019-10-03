@@ -124,6 +124,36 @@ namespace Amg.Build
             }
         }
 
+        internal static void PrintAsciiArt(IEnumerable<InvocationInfo> invocations)
+        {
+            if (invocations.Failed())
+            {
+                Console.Error.WriteLine(@"
+
+      )
+     (
+       ,
+    ___)\
+   (_____)
+  (_______)
+");
+            }
+            else
+            {
+                Console.Out.WriteLine(@"
+
+           /(|
+          (  :
+         __\  \  _____
+       (____)  `|
+      (____)|   |
+       (____).__|
+        (___)__.|_____
+");
+            }
+
+        }
+
         private static string RootCause(InvocationInfo i)
         {
             throw new NotImplementedException();

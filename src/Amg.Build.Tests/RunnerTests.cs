@@ -15,6 +15,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void Ascii()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "--ascii-art" });
+            Assert.That(exitCode, Is.EqualTo(0));
+        }
+
+        [Test]
         public void SayHello()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-hello", "World" });
@@ -24,7 +31,7 @@ namespace Amg.Build
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii"});
             Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
         }
 

@@ -73,5 +73,8 @@ namespace Amg.Build
 
         [Description("show summary")]
         public bool Summary { get; set; }
+
+        [Description("visualize build result")]
+        public bool AsciiArt { get; set; }
     }
 }

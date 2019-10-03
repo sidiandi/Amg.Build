@@ -110,6 +110,11 @@ namespace Amg.Build
                     Logger.Information(Summary.PrintTimeline(invocations));
                 }
 
+                if (options.AsciiArt)
+                {
+                    Summary.PrintAsciiArt(invocations);
+                }
+
                 return invocations.Failed()
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
