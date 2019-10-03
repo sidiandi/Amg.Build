@@ -108,13 +108,13 @@ namespace Amg.Build
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .Single(_ => _.Key.Equals("NuGetVersionV2")).Value;
 
-        public string PropsText => ReadTemplate("name.Directory.Build.props")
+        string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);
 
-        public string ProgramCsText => ReadTemplate("name.Program.cs")
+        string ProgramCsText => ReadTemplate("name.Program.cs")
             .Replace("ReplaceWithName", Namespace);
 
-        public string BuildCmdText => ReadTemplate("name.cmd");
+        string BuildCmdText => ReadTemplate("name.cmd");
 
         static string ReadTemplate(string templateName)
         {
