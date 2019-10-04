@@ -88,15 +88,6 @@ namespace Amg.Build
                     return ExitCode.HelpDisplayed;
                 }
 
-                if (combinedOptions.Options.Watch)
-                {
-                    var wasWatching = await Watch();
-                    if (wasWatching)
-                    {
-                        return ExitCode.Success;
-                    }
-                }
-
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
 
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
