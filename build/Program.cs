@@ -187,7 +187,7 @@ namespace Build
 
             void AssertRebuild(IToolResult result)
             {
-                if (!result.Output.Contains("Rebuilding"))
+                if (!result.Output.Contains("INF|Rebuild"))
                 {
                     throw new InvalidOperationException("Script was not rebuild.");
                 }
