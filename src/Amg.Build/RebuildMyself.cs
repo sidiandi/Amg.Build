@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -32,6 +34,7 @@ namespace Amg.Build
             public string Configuration { get; }
             public string TargetFramework { get; }
             public string SourceFileVersionFile => AssemblyFile + ".source";
+            public string TempAssemblyFile => SourceDir.Combine("obj", "temp", Configuration, TargetFramework, AssemblyFile.FileName());
         }
 
         const string CsprojExt = ".csproj";
@@ -87,6 +90,49 @@ namespace Amg.Build
             a.Parent().MoveToBackup();
         }
 
+        static async Task HandleMoveTo()
+        {
+            var args = GetMoveToArgs();
+            if (args == null) return;
+            await HandleMoveToInternal(args);
+            Environment.Exit(0);
+        }
+
+        static async Task HandleMoveToInternal(MoveTo move)
+        {
+            var old = move.dest!.MoveToBackup();
+            if (old != null)
+            {
+                _ = old.EnsureNotExists();
+            }
+            await move.source!.CopyTree(move.dest!, useHardlinks: true);
+        }
+
+        internal static MoveTo? GetMoveToArgs()
+        {
+            var argsJson = System.Environment.GetEnvironmentVariable(MoveToKey);
+            if (String.IsNullOrEmpty(argsJson))
+            {
+                return null;
+            }
+
+            var args = JsonConvert.DeserializeObject<MoveTo>(argsJson);
+            return args;
+        }
+
+        internal static void SetMoveToArgs(MoveTo move, ProcessStartInfo processStartInfo)
+        {
+            var json = JsonConvert.SerializeObject(move);
+            processStartInfo.EnvironmentVariables.Add(MoveToKey, json);
+        }
+
+        internal static string MoveToKey => "key8ce0a148334b44e58b2cd832fdf935ea";
+        internal class MoveTo
+        {
+            public string? source;
+            public string? dest;
+        }
+
         /// <summary>
         /// Rebuilds and restarts the entry assembly if the source files have changed since the last time this method was called.
         /// </summary>
@@ -98,6 +144,8 @@ namespace Amg.Build
         {
             try
             {
+                await HandleMoveTo();
+                
                 var entryAssembly = Assembly.GetEntryAssembly();
                 var sourceInfo = GetSourceInfo(entryAssembly);
                 if (sourceInfo == null)
@@ -109,31 +157,39 @@ namespace Amg.Build
 
                 if (await SourcesChanged(sourceInfo, currentSourceVersion))
                 {
-                    Logger.Information("Rebuilding {assemblyFile} from {csprojFile}", sourceInfo.AssemblyFile, sourceInfo.CsprojFile);
-                    // move away current file
-                    MoveAwayExistingAssembly(sourceInfo);
+                    Logger.Information("Rebuild {csprojFile}", sourceInfo.AssemblyFile, sourceInfo.CsprojFile);
 
                     await Build(
-                        sourceInfo.CsprojFile,
-                        sourceInfo.Configuration,
-                        sourceInfo.TargetFramework
-                        );
-
-                    try
-                    {
-                        await WriteSourceVersion(sourceInfo, currentSourceVersion!);
-                    }
-                    catch
-                    {
-                        Logger.Warning("Cannot write source version.");
-                    }
+                        csprojFile: sourceInfo.CsprojFile,
+                        sourceFileVersion: currentSourceVersion,
+                        configuration: sourceInfo.Configuration,
+                        targetFramework: sourceInfo.TargetFramework,
+                        outputDirectory: sourceInfo.TempAssemblyFile.Parent().EnsureDirectoryIsEmpty());
 
                     var dotnet = await Once.Create<Dotnet>().Tool();
+                    
                     var result = await dotnet
                         .Passthrough()
                         .DoNotCheckExitCode()
-                        .WithArguments(sourceInfo.AssemblyFile)
+                        .WithArguments(sourceInfo.TempAssemblyFile)
                         .Run(commandLineArguments);
+
+                    // before exiting, start a process that moves TempAssemblyFile to AssemblyFile
+                    var si = new ProcessStartInfo
+                    {
+                        FileName = sourceInfo.TempAssemblyFile.WithExtension(".exe"),
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+
+                    var move = new MoveTo
+                    {
+                        source = sourceInfo.TempAssemblyFile.Parent(),
+                        dest = sourceInfo.AssemblyFile.Parent()
+                    };
+
+                    SetMoveToArgs(move, si);
+                    Process.Start(si);
 
                     Environment.Exit(result.ExitCode);
                 }
@@ -144,22 +200,59 @@ namespace Amg.Build
             }
         }
 
-        internal static async Task WriteSourceVersion(SourceInfo sourceInfo, FileVersion currentSourceVersion)
+        internal static async Task WriteSourceVersion(
+            string outputDirectory, 
+            FileVersion sourceVersion)
         {
-            await Json.Write(sourceInfo.SourceFileVersionFile, currentSourceVersion);
+            var sourceVersionFile = SourceVersionFile(outputDirectory);
+
+            try
+            {
+                await Json.Write(sourceVersionFile, sourceVersion);
+            }
+            catch (Exception e)
+            {
+                Logger.Warning(e, "Cannot write {sourceVersionFile}", sourceVersionFile);
+            }
         }
 
+        internal static async Task<FileVersion?> ReadSourceVersion(
+            string outputDirectory)
+        {
+            var f = SourceVersionFile(outputDirectory);
+            try
+            {
+                if (f.IsFile())
+                {
+                    return await Json.Read<FileVersion>(f);
+                }
+            }
+            catch
+            {
+                // ignore and fall through
+            }
+
+            return null;
+        }
+
+        static string SourceVersionFile(string dir) => dir.Combine("source.json");
+
         internal static async Task Build(
-            string csprojFile, 
-            string configuration, 
-            string targetFramework)
+            string csprojFile,
+            FileVersion sourceFileVersion,
+            string configuration,
+            string targetFramework,
+            string outputDirectory)
         {
             var dotnet = await Once.Create<Dotnet>().Tool();
 
             await dotnet
                 .WithEnvironment("Configuration", configuration)
                 .WithEnvironment("TargetFramework", targetFramework)
-                .Run("build", "--force", csprojFile);
+                .Run("build", "--force", csprojFile,
+                "--output", outputDirectory
+                );
+            await WriteSourceVersion(outputDirectory, sourceFileVersion);
         }
 
         internal static async Task<bool> SourcesChanged(SourceInfo sourceInfo, FileVersion sourceVersion)

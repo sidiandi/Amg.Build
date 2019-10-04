@@ -33,6 +33,13 @@ namespace Amg.Build
             }
         });
 
+        static bool Ignore(string  _)
+        {
+            var n = _.FileName();
+            return n.Equals("bin")
+                || n.Equals("obj");
+        }
+
         public static async Task<FileVersion?> Get(string path)
         {
             if (path.IsFile())
@@ -55,7 +62,7 @@ namespace Amg.Build
                     LastWriteTimeUtc = info.LastWriteTimeUtc,
                     Length = 0,
                     Childs = (await path.EnumerateFileSystemEntries()
-                    .Where(_ => !(_.FileName().Equals("bin") || _.FileName().Equals("obj")))
+                    .Where(_ => !Ignore(_))
                     .Select(async _ => await Get(_))
                     .Result())
                     .NotNull()

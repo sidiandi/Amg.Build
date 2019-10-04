@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -13,28 +14,41 @@ namespace Amg.Build
             var testDir = CreateEmptyTestDirectory();
             var cmd = testDir.Combine("hello.cmd");
             var layout = await SourceCodeLayout.Create(cmd);
-            await RebuildMyself.Build(layout.CsprojFile, layout.Configuration, layout.TargetFramework);
+            var s = RebuildMyself.GetSourceInfo(layout.DllFile)!;
 
-            var sourceInfo = RebuildMyself.GetSourceInfo(layout.DllFile);
-            if (sourceInfo == null)
+            var version = (await FileVersion.Get(s.SourceDir))!;
+            Assert.That(!s.TempAssemblyFile.IsFile());
+            await RebuildMyself.Build(
+                s.CsprojFile,
+                version,
+                s.Configuration,
+                s.TargetFramework,
+                s.TempAssemblyFile.Parent()
+                );
+            Console.WriteLine(s.SourceDir.Glob("**/*").EnumerateFiles().Join());
+            Assert.That(s.TempAssemblyFile.IsFile(), () => s.Dump().ToString());
+
+            s.TempAssemblyFile.Parent().Move(s.AssemblyFile.Parent().EnsureParentDirectoryExists());
+            Assert.That(s.AssemblyFile.IsFile());
+        }
+
+        [Test]
+        public void MoveToArgs()
+        {
+            var testDir = CreateEmptyTestDirectory();
+
+            var move = new RebuildMyself.MoveTo
             {
-                throw new NullReferenceException();
-            }
-            var sourceVersion = await RebuildMyself.GetCurrentSourceVersion(sourceInfo);
-            if (sourceVersion == null) throw new NullReferenceException();
+                source = testDir.Combine("source"),
+                dest = testDir.Combine("dest")
+            };
 
-            Assert.That(await RebuildMyself.SourcesChanged(sourceInfo, sourceVersion), Is.False);
-            await RebuildMyself.WriteSourceVersion(sourceInfo, sourceVersion);
-            
-            sourceVersion = await RebuildMyself.GetCurrentSourceVersion(sourceInfo);
-            if (sourceVersion == null) throw new NullReferenceException();
-            Assert.That(await RebuildMyself.SourcesChanged(sourceInfo, sourceVersion), Is.False);
-
-            // add a file
-            await sourceInfo.SourceDir.Combine("some.cs").WriteAllTextAsync("class Some{}");
-            sourceVersion = await RebuildMyself.GetCurrentSourceVersion(sourceInfo);
-            if (sourceVersion == null) throw new NullReferenceException();
-            Assert.That(await RebuildMyself.SourcesChanged(sourceInfo, sourceVersion), Is.True);
+            var si = new ProcessStartInfo();
+            RebuildMyself.SetMoveToArgs(move, si);
+            System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, si.Environment[RebuildMyself.MoveToKey]);
+            var move1 = RebuildMyself.GetMoveToArgs()!;
+            Assert.AreEqual(move.source, move1.source);
+            Assert.AreEqual(move.dest, move1.dest);
         }
     }
 }
