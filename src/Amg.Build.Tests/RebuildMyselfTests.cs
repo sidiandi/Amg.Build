@@ -45,10 +45,17 @@ namespace Amg.Build
 
             var si = new ProcessStartInfo();
             RebuildMyself.SetMoveToArgs(move, si);
-            System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, si.Environment[RebuildMyself.MoveToKey]);
-            var move1 = RebuildMyself.GetMoveToArgs()!;
-            Assert.AreEqual(move.source, move1.source);
-            Assert.AreEqual(move.dest, move1.dest);
+            try
+            {
+                System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, si.Environment[RebuildMyself.MoveToKey]);
+                var move1 = RebuildMyself.GetMoveToArgs()!;
+                Assert.AreEqual(move.source, move1.source);
+                Assert.AreEqual(move.dest, move1.dest);
+            }
+            finally
+            {
+                System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, null);
+            }
         }
     }
 }
