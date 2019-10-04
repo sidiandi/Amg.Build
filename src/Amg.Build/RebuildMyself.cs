@@ -7,6 +7,25 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
+    /// <summary>
+    /// Rebuilds own assembly
+    /// </summary>
+    /// Procedure:
+    /// Compare the version of the source files during the last build with the current version of the source files.
+    /// The version of the source files during the last build is stored in source.json in the directory of the entry assembly.
+    /// file name, last modified date, and length are used to determine the version of a file.
+    /// The obj and bin directories are ignored when for determining the source file version.
+    /// 
+    /// When the versions are not identical, the assembly is built new in
+    /// {sourceDir}\obj\temp\Debug\netcoreapp3.0
+    /// The new assembly is executed from within the old assembly and the exit code is passed through
+    /// to the caller.
+    /// As last step before exiting the process of the old assembly, the new assembly is started again
+    /// without waiting for process end. This run of the new assembly will then 
+    /// delete the original assembly directory {sourceDir}\bin\Debug\netcoreapp3.0 and hardlink copy
+    /// the new assembly directory to this location.
+    /// The parameters for this operation are passed in an environment variable MoveToKey.
+    /// 
     class RebuildMyself
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);

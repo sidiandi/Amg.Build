@@ -50,6 +50,10 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+### 0.25
+
+* improved Rebuild
+
 ### 0.24
 
 * Print return value of Commands
