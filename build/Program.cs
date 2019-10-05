@@ -202,34 +202,40 @@ namespace Build
                 }
             }
 
+            IDisposable AssertRuntime()
+            {
+                var s = Stopwatch.StartNew();
+                return OnDispose(new Action(() => Logger.Information("Runtime: {runtime}", s.Elapsed)));
+            }
+
             async Task ScriptRuns()
             {
-                var result = await build.Run();
-                AssertExitCode(result, 0);
-                if (!result.Output.Contains(version.NuGetVersionV2))
+                using (AssertRuntime())
                 {
-                    throw new InvalidOperationException();
-                }
-                if (!String.IsNullOrEmpty(result.Error))
-                {
-                    throw new InvalidOperationException(result.Error);
+                    var result = await build.Run();
+                    AssertExitCode(result, 0);
+                    if (!result.Output.Contains(version.NuGetVersionV2))
+                    {
+                        throw new InvalidOperationException();
+                    }
+                    if (!String.IsNullOrEmpty(result.Error))
+                    {
+                        throw new InvalidOperationException(result.Error);
+                    }
                 }
             }
 
             async Task WhenSourceFileTimestampIsChangedScriptRebuilds()
             {
-                var outdated = DateTime.UtcNow.AddDays(-1);
-                var sourceFile = testDir.Combine(name, "Program.cs");
-                new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
-                var result = await build.Run();
-                AssertExitCode(result, 0);
-                AssertRebuild(result);
-            }
-
-            IDisposable AssertRuntime()
-            {
-                var s = new Stopwatch();
-                return OnDispose(new Action(() => Logger.Information(s.Elapsed)));
+                using (AssertRuntime())
+                {
+                    var outdated = DateTime.UtcNow.AddDays(-1);
+                    var sourceFile = testDir.Combine(name, "Program.cs");
+                    new FileInfo(sourceFile).LastWriteTimeUtc = outdated;
+                    var result = await build.Run();
+                    AssertExitCode(result, 0);
+                    AssertRebuild(result);
+                }
             }
 
             async Task HelpIsDisplayed()
