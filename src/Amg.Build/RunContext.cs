@@ -97,11 +97,12 @@ namespace Amg.Build
                     if (sourceOptions.Edit)
                     {
                         await Tools.Cmd.Run("start", source.CsprojFile);
+                        return ExitCode.Success;
                     }
 
                     if (sourceOptions.Debug)
                     {
-                        // tbd
+                        System.Diagnostics.Debugger.Launch();
                     }
                 }
 

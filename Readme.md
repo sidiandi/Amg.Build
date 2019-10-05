@@ -45,8 +45,6 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* --edit
-* --debug
 * enforce that [Once] class does not have mutable fields
 * file system watch
 * Adapter to use Cake extensions
@@ -55,6 +53,8 @@ Properties of the Targets container are available as build properties on the com
 
 ### 0.25
 
+* --debug
+* --edit
 * improved Rebuild
 
 ### 0.24
