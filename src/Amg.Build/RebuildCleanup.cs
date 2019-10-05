@@ -17,14 +17,21 @@ namespace Amg.Build
             Logger = new LoggerConfiguration()
                 .WriteTo.File("cleanup-log.txt")
                 .CreateLogger();
+            try
+            {
+                Logger.Information("Entering Cleanup handler");
 
-            var args = GetArgs();
-
-            Logger.Information("Entering Cleanup handler");
-
-            var cleanup = new RebuildCleanup();
-            await cleanup.CleanupInternal(args);
-            Environment.Exit(0);
+                var args = GetArgs();
+                Logger.Information(new { args });
+                var cleanup = new RebuildCleanup();
+                await cleanup.CleanupInternal(args);
+                Logger.Information("Cleanup handler success.");
+                Environment.Exit(0);
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e, "cleanup handler");
+            }
         }
 
         async Task CleanupInternal(Args args)
