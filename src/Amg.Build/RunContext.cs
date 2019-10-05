@@ -90,7 +90,7 @@ namespace Amg.Build
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
 
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
-                Logger.Information("Amg.Build: {assembly} {build}", amgBuildAssembly.Location, amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion);
+                Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
 
                 IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
 

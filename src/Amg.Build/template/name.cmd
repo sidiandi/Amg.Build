@@ -1,5 +1,5 @@
 @echo off
-rem Do not modify below this line
+rem Do not modify
 rem Bootstrapper script of https://github.com/sidiandi/Amg.Build
 setlocal
 set AmgBuildTargetFramework=netcoreapp3.0

@@ -104,9 +104,7 @@ namespace Amg.Build
             }
         }
 
-        string NugetVersion => Assembly.GetExecutingAssembly()
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .Single(_ => _.Key.Equals("NuGetVersionV2")).Value;
+        string NugetVersion => Assembly.GetExecutingAssembly().NugetVersion();
 
         string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);

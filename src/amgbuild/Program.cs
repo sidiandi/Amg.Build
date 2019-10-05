@@ -70,9 +70,7 @@ namespace amgbuild
         [Once, Description("Print version")]
         public virtual async Task<string> Version()
         {
-            var version = Assembly.GetEntryAssembly()
-                .Map(_ => _.GetCustomAttribute<AssemblyInformationalVersionAttribute>())
-                .Map(_ => _.InformationalVersion);
+            var version = Assembly.GetEntryAssembly()!.NugetVersion();
             return await Task.FromResult(version);
         }
     }

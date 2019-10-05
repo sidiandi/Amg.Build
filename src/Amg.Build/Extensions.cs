@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -356,5 +357,15 @@ namespace Amg.Build
                 return x.Substring(0, 1).ToUpper() + x.Substring(1).ToLower();
             }
         }
+
+        /// <summary>
+        /// Returns the nuget version of the assembly.
+        /// </summary>
+        /// Expects this information in assembly metadata "NuGetVersionV2"
+        /// <param name="a"></param>
+        /// <returns></returns>
+        public static string NugetVersion(this Assembly a) => a
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .Single(_ => _.Key.Equals("NuGetVersionV2")).Value;
     }
 }
