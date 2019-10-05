@@ -396,7 +396,7 @@ namespace Build
 
         [Once]
         [Description("Build a release version and push to nuget.org")]
-        public virtual async Task Release()
+        public virtual async Task<string> Release()
         {
             await Git.EnsureNoPendingChanges();
             var git = Git.Create(this.Root);
@@ -416,6 +416,7 @@ namespace Build
             }
             await gitTool.Run("push", "--tags");
             await Push();
+            return v.NuGetVersionV2;
         }
     }
 }
