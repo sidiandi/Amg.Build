@@ -142,6 +142,7 @@ namespace Build
             await git.Run("add", ".");
             await git.Run("commit", "-m", message, "-a");
             await EndToEndTest();
+            await Install();
             return (await this.Git.GetVersion()).NuGetVersionV2;
         }
 
