@@ -15,8 +15,9 @@ namespace Amg.Build
             if (!HasArgs()) return;
 
             Logger = new LoggerConfiguration()
-                .WriteTo.File("cleanup-log.txt")
+                .WriteTo.File("cleanup-log.txt", Serilog.Events.LogEventLevel.Debug)
                 .CreateLogger();
+
             try
             {
                 Logger.Information("Entering Cleanup handler");
@@ -41,7 +42,8 @@ namespace Amg.Build
                 var old = args.Dest!.MoveToBackup();
                 if (old != null)
                 {
-                    _ = old.EnsureNotExists();
+                    old = await old.EnsureNotExists();
+                    Logger.Information("Deleted {old}", old);
                 }
                 await args.Source!.CopyTree(args.Dest!, useHardlinks: true);
             }

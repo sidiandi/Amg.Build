@@ -1,1 +1,4 @@
 2019-10-05 07:25:08.181 +02:00 [INF] Entering Cleanup handler
+2019-10-05 07:30:56.800 +02:00 [INF] Entering Cleanup handler
+2019-10-05 07:30:56.959 +02:00 [INF] { args = Amg.Build.RebuildCleanup+Args }
+2019-10-05 07:30:57.264 +02:00 [INF] Cleanup handler success.
