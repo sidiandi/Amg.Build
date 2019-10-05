@@ -12,13 +12,13 @@ namespace Amg.Build
 
         public static async Task Handle()
         {
-            Logger.Information("Check if cleanup handler");
             var args = GetArgs();
             if (args == null) return;
 
             Logger = new LoggerConfiguration()
-                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
+                .WriteTo.File(args.Dest!.Combine($"cleanup-log.txt"))
                 .CreateLogger();
+
             Logger.Information("Entering Cleanup handler");
 
             var cleanup = new RebuildCleanup();

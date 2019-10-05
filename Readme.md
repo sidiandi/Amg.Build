@@ -45,9 +45,10 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* file system watch
 * --edit
 * --debug
+* enforce that [Once] class does not have mutable fields
+* file system watch
 * Adapter to use Cake extensions
 
 ## Done
