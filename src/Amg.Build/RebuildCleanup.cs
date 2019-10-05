@@ -8,12 +8,19 @@ namespace Amg.Build
 {
     class RebuildCleanup
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public static async Task Handle()
         {
+            Logger.Information("Check if cleanup handler");
             var args = GetArgs();
             if (args == null) return;
+
+            Logger = new LoggerConfiguration()
+                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
+                .CreateLogger();
+            Logger.Information("Entering Cleanup handler");
+
             var cleanup = new RebuildCleanup();
             await cleanup.CleanupInternal(args);
             Environment.Exit(0);

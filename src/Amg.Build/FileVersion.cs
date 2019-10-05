@@ -56,11 +56,10 @@ namespace Amg.Build
             }
             else if (path.IsDirectory())
             {
-                var info = new DirectoryInfo(path);
                 return new FileVersion
                 {
                     Name = path.FileName(),
-                    LastWriteTimeUtc = info.LastWriteTimeUtc,
+                    LastWriteTimeUtc = default(DateTime),
                     Length = 0,
                     Childs = (await path.EnumerateFileSystemEntries()
                     .Where(_ => !Ignore(_))
