@@ -205,7 +205,7 @@ namespace Build
             {
                 var result = await build.Run();
                 AssertExitCode(result, 0);
-                if (!result.Output.Contains(version.InformationalVersion))
+                if (!result.Output.Contains(version.NuGetVersionV2))
                 {
                     throw new InvalidOperationException();
                 }
