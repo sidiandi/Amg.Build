@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -30,32 +29,6 @@ namespace Amg.Build
 
             s.TempAssemblyFile.Parent().Move(s.AssemblyFile.Parent().EnsureParentDirectoryExists());
             Assert.That(s.AssemblyFile.IsFile());
-        }
-
-        [Test]
-        public void MoveToArgs()
-        {
-            var testDir = CreateEmptyTestDirectory();
-
-            var move = new RebuildMyself.MoveTo
-            {
-                Source = testDir.Combine("source"),
-                Dest = testDir.Combine("dest")
-            };
-
-            var si = new ProcessStartInfo();
-            RebuildMyself.SetMoveToArgs(move, si);
-            try
-            {
-                System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, si.Environment[RebuildMyself.MoveToKey]);
-                var move1 = RebuildMyself.GetMoveToArgs()!;
-                Assert.AreEqual(move.Source, move1.Source);
-                Assert.AreEqual(move.Dest, move1.Dest);
-            }
-            finally
-            {
-                System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, null);
-            }
         }
     }
 }
