@@ -212,7 +212,7 @@ Details:
             var begin = GetStartupTime();
             var end = DateTime.UtcNow;
             var startupDuration = end - begin;
-            Logger.Information("Startup duration: {startupDuration}", startupDuration);
+            Logger.Debug("Startup duration: {startupDuration}", startupDuration);
             var startupInvocation = new InvocationInfo("startup", begin, end);
             return startupInvocation;
         }

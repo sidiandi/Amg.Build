@@ -184,7 +184,7 @@ namespace Amg.Build
                 var sourceInfo = GetSourceInfo(entryAssembly);
                 if (sourceInfo == null)
                 {
-                    Logger.Information("no source code found for {entryAssembly}. Rebuild not possible.", entryAssembly);
+                    Logger.Debug("no source code found for {entryAssembly}. Rebuild not possible.", entryAssembly);
                     return;
                 }
 
