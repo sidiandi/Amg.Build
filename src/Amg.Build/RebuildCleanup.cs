@@ -84,7 +84,7 @@ namespace Amg.Build
             var si = new ProcessStartInfo
             {
                 FileName = fileName,
-                CreateNoWindow = true,
+                CreateNoWindow = false,
                 UseShellExecute = false
             };
 
