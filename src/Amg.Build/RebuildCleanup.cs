@@ -12,12 +12,13 @@ namespace Amg.Build
 
         public static async Task Handle()
         {
-            var args = GetArgs();
-            if (args == null) return;
+            if (!HasArgs()) return;
 
             Logger = new LoggerConfiguration()
-                .WriteTo.File(args.Dest!.Combine($"cleanup-log.txt"))
+                .WriteTo.File("cleanup-log.txt")
                 .CreateLogger();
+
+            var args = GetArgs();
 
             Logger.Information("Entering Cleanup handler");
 
@@ -43,12 +44,18 @@ namespace Amg.Build
             }
         }
 
-        internal static Args? GetArgs()
+        internal static bool HasArgs()
+        {
+            var argsJson = System.Environment.GetEnvironmentVariable(ArgsKey);
+            return !String.IsNullOrEmpty(argsJson);
+        }
+
+        internal static Args GetArgs()
         {
             var argsJson = System.Environment.GetEnvironmentVariable(ArgsKey);
             if (String.IsNullOrEmpty(argsJson))
             {
-                return null;
+                throw new InvalidOperationException("no args");
             }
 
             var args = JsonConvert.DeserializeObject<Args>(argsJson);
@@ -59,7 +66,7 @@ namespace Amg.Build
         {
             var json = JsonConvert.SerializeObject(move);
             processStartInfo.EnvironmentVariables.Add(ArgsKey, json);
-            Logger.Information($"set {ArgsKey}={json}");
+            Logger.Debug($"set {ArgsKey}={json}");
         }
 
         public static void Start(string fileName, Args move)
