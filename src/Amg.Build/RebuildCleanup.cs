@@ -14,16 +14,11 @@ namespace Amg.Build
         {
             if (!HasArgs()) return;
 
-            Logger = new LoggerConfiguration()
-                .WriteTo.File("cleanup-log.txt", Serilog.Events.LogEventLevel.Debug)
-                .CreateLogger();
-
             try
             {
                 Logger.Information("Entering Cleanup handler");
-
                 var args = GetArgs();
-                Logger.Information(new { args });
+                Logger.Information("{@args}", args);
                 var cleanup = new RebuildCleanup();
                 await cleanup.CleanupInternal(args);
                 Logger.Information("Cleanup handler success.");
