@@ -59,6 +59,7 @@ namespace Amg.Build
         {
             var json = JsonConvert.SerializeObject(move);
             processStartInfo.EnvironmentVariables.Add(ArgsKey, json);
+            Logger.Information($"set {ArgsKey}={json}");
         }
 
         public static void Start(string fileName, Args move)
