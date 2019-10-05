@@ -18,19 +18,12 @@ namespace Amg.Build
         /// ITool wrapper for nuget.exe
         /// </summary>
         [Once]
-        public virtual Task<ITool> Tool => ProvideNugetTool();
+        public virtual async Task<ITool> Tool() => tool == null
+                ? await new Tools().Get(DownloadUri)
+                : tool;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "<Pending>")]
         Uri DownloadUri => new Uri(@"https://dist.nuget.org/win-x86-commandline/latest/nuget.exe");
-
-        async Task<ITool> ProvideNugetTool()
-        {
-            if (tool == null)
-            {
-                tool = await Runner.Once<Tools>().Get(DownloadUri);
-            }
-            return tool;
-        }
 
         /// <summary>
         /// Access the Chocolatey repository
@@ -81,7 +74,7 @@ namespace Amg.Build
             string? version = null
             )
         {
-            var install = (await Tool)
+            var install = (await Tool())
                 .WithArguments(
                     "install",
                     "-ForceEnglishOutput",
@@ -161,7 +154,7 @@ Files:
             // parameterless constructor is required for Castle.DynamicProxy
         }
 
-        ITool? tool;
+        readonly ITool? tool;
 
         /// <summary>
         /// Create an instance where every method marked with [Once] is only executed once and its results are cached.

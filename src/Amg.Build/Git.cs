@@ -79,7 +79,7 @@ Commit following files:
         /// <summary>
         /// Repository root directory
         /// </summary>
-        public string RootDirectory { get; set; }
+        public string RootDirectory { get; }
 
         /// <summary>
         /// Execute buildStep only if commit hash was changed since last execution

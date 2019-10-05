@@ -9,18 +9,18 @@ namespace Amg.Build
     {
         protected MyBuild(string? result)
         {
-            this.result = result ?? String.Empty;
+            if (result != null)
+            {
+                this.result.Enqueue(result);
+            }
         }
 
         protected MyBuild()
         {
-            this.result = String.Empty;
         }
 
         [Description("Release or Debug")]
         public string Configuration { get; set; } = "Release";
-
-        public virtual string result { get; set; }
 
         [Once]
         protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());
@@ -47,14 +47,14 @@ namespace Amg.Build
         {
             await Task.CompletedTask;
             Console.WriteLine("compiling...");
-            result += "Compile";
+            result.Enqueue(nameof(Compile));
         }
 
         [Once][Description("Link object files")]
         public virtual async Task Link()
         {
             await Compile();
-            result += "Link";
+            result.Enqueue(nameof(Link));
         }
 
         [Once] [Description("Say hello")]
@@ -69,7 +69,7 @@ namespace Amg.Build
         {
             await Compile();
             await Link();
-            result += "Pack";
+            result.Enqueue(nameof(Pack));
         }
 
         [Once] [Description("Compile, link, and pack")] [Default]
@@ -98,7 +98,8 @@ namespace Amg.Build
             return await Times2(a) / 4;
         }
 
-        public IList<int> args = new List<int>();
+        readonly IList<int> args = new List<int>();
+        public readonly Queue<string> result = new Queue<string>();
 
         [Once]
         public virtual async Task WhatCouldGoWrong()

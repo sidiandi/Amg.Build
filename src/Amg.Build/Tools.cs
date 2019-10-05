@@ -40,7 +40,7 @@ namespace Amg.Build
         /// nuget.exe
         /// </summary>
         [Once]
-        protected virtual Task<ITool> NugetTool => NugetHelper.Tool;
+        protected virtual Task<ITool> NugetTool => NugetHelper.Tool();
 
         /// <summary>
         /// Download a tool

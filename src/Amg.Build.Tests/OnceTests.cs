@@ -1,6 +1,9 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Amg.Build
 {
@@ -16,8 +19,7 @@ namespace Amg.Build
         [Once]
         public virtual void Greet()
         {
-
-            ++Count;
+            Count.Enqueue(0);
         }
 
         [Once]
@@ -26,8 +28,22 @@ namespace Amg.Build
         [Once]
         public virtual WebClient Web => new WebClient();
 
-        public int Count { get; private set; }
+        public Queue<int> Count { get; } = new Queue<int>();
     }
+
+#pragma warning disable CS0414
+    public class AClassThatHasMutableFields
+    {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S2933:Fields that are only assigned in the constructor should be \"readonly\"", Justification = "<Pending>")]
+        int i = 0;
+
+        [Once]
+        public virtual void Hello()
+        {
+            Console.WriteLine("hello");
+        }
+    }
+#pragma warning restore CS0414
 
     [TestFixture]
     public class OnceTests
@@ -37,7 +53,16 @@ namespace Amg.Build
         {
             var once = Amg.Build.Once.Create<MyBuild>();
             await once.All();
-            Assert.That(once.result, Is.EqualTo("CompileLinkPack"));
+            Assert.That(once.result.SequenceEqual(new[] { "Compile", "Link", "Pack" }));
+        }
+
+        [Test]
+        public void OnceCannotBeAppliedWhenClassHasMutableFields()
+        {
+            Assert.Throws<System.InvalidOperationException>(() =>
+            {
+                Amg.Build.Once.Create<AClassThatHasMutableFields>();
+            });
         }
 
         [Test]
@@ -53,7 +78,7 @@ namespace Amg.Build
             hello2.Greet();
             hello2.Greet();
 
-            Assert.That(hello.Count, Is.EqualTo(1));
+            Assert.That(hello.Count.Count, Is.EqualTo(1));
             Assert.That(hello2.Name, Is.EqualTo(name));
         }
     }

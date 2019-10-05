@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using NUnit.Framework;
 using System;
+using System.Linq;
 
 namespace Amg.Build
 {
@@ -91,7 +92,7 @@ namespace Amg.Build
         {
             var once = Amg.Build.Once.Create<MyBuild>("Test");
             await once.All();
-            Assert.That(once.result, Is.EqualTo("TestCompileLinkPack"));
+            Assert.That(once.result.SequenceEqual(new[] { "Test", "Compile", "Link", "Pack" }));
         }
 
         [Test]

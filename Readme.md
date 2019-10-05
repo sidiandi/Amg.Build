@@ -27,11 +27,13 @@ $ build\build.csproj
 
 ## Concepts
 
-### Once
+### [Once]
 
-All virtual methods decorated with `[Once]` are only executed once and the results are cached in memory.
+`Once.Create` creates proxy types for your classes where all virtual methods decorated with the `[Once]` attribute are only executed once. The results are cached in memory.
 
 This helps you to build up and acyclic graph of your build dependencies.
+
+If you want to use [Once], you must not use mutable fields or properties in your class. Exceptions are command line properties (`[Description]` attribute). See below.
 
 ### Automatic Command Line Interface
 
@@ -45,7 +47,6 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* enforce that [Once] class does not have mutable fields
 * file system watch
 * Adapter to use Cake extensions
 
@@ -53,6 +54,7 @@ Properties of the Targets container are available as build properties on the com
 
 ### 0.25
 
+* enforce that [Once] class does not have mutable fields
 * --debug
 * --edit
 * improved Rebuild

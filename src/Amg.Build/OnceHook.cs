@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Castle.DynamicProxy;
 
 namespace Amg.Build
@@ -11,24 +13,54 @@ namespace Amg.Build
 
         public void MethodsInspected()
         {
-            if (type != null)
+            foreach (var type in types)
             {
                 AssertNoMutableFields(type);
+                AssertNoMutableProperties(type);
             }
         }
 
-        Type? type;
+        readonly HashSet<Type> types = new HashSet<Type>();
 
         static void AssertNoMutableFields(Type type)
         {
             var fields = type.GetFields(
-                BindingFlags.Instance | BindingFlags.Static |
-                BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(f => !f.IsInitOnly);
+                BindingFlags.Instance |
+                BindingFlags.Public | 
+                BindingFlags.NonPublic);
 
-            if (fields.Any())
+            var mutableFields = fields.Where(
+                f => !f.IsInitOnly && 
+                !f.GetCustomAttributes<CompilerGeneratedAttribute>().Any());
+
+            if (mutableFields.Any())
             {
-                throw new InvalidOperationException("all fields must be readonly");
+                throw new InvalidOperationException($@"All fields of {type} must be readonly. 
+Following fields are not readonly:
+{mutableFields.Select(_ => _.Name).Join()}");
+            }
+        }
+
+        static bool IsCommandLineProperty(PropertyInfo p)
+        {
+            return p.GetCustomAttributes<System.ComponentModel.DescriptionAttribute>().Any();
+        }
+
+        static void AssertNoMutableProperties(Type type)
+        {
+            var properties = type.GetProperties(
+                BindingFlags.Instance |
+                BindingFlags.Public | 
+                BindingFlags.NonPublic);
+
+            var writableProperties = properties.Where(
+                f => f.CanWrite && !IsCommandLineProperty(f));
+
+            if (writableProperties.Any())
+            {
+                throw new InvalidOperationException($@"All properties of {type} must be readonly OR have the [Description] attribute.
+Following properties do not fulfill the condition:
+{writableProperties.Select(_ => _.Name).Join()}");
             }
         }
 
@@ -42,9 +74,15 @@ namespace Amg.Build
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
-            this.type = type;
-            var intercept = Once.Has(methodInfo);
-            return intercept;
+            if (Once.Has(methodInfo))
+            {
+                types.Add(methodInfo.DeclaringType);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
