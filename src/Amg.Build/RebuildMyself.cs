@@ -295,7 +295,7 @@ namespace Amg.Build
 
         internal static async Task<bool> SourcesChanged(SourceInfo sourceInfo, FileVersion sourceVersion)
         {
-            if (sourceInfo.SourceFileVersionFile.IsFile())
+            if (sourceInfo.SourceFileVersionFile.IsFile() && sourceInfo.SourceFileVersionFile.LastWriteTimeUtc() >= sourceInfo.AssemblyFile.LastWriteTimeUtc())
             {
                 var lastBuildSourceVersion = await ReadLastBuildSourceVersion(sourceInfo);
                 if (lastBuildSourceVersion == null)

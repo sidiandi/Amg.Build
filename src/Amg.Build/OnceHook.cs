@@ -24,7 +24,6 @@ namespace Amg.Build
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
             var intercept = Once.Has(methodInfo);
-            Logger.Debug("{method}: {intercept}", methodInfo, intercept);
             return intercept;
         }
     }
