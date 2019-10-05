@@ -74,10 +74,14 @@ namespace Amg.Build
                         .CreateLogger();
                 }
 
-                RebuildMyself.BuildIfSourcesChanged(commandLineArguments).Wait();
+                var source = await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
 
                 var onceProxy = Once.Create(targetsType);
                 var combinedOptions = new CombinedOptions(onceProxy);
+                if (source != null)
+                {
+                    combinedOptions.SourceOptions = new SourceOptions();
+                }
 
                 GetOptParser.Parse(commandLineArguments, combinedOptions);
 
@@ -85,6 +89,20 @@ namespace Amg.Build
                 {
                     HelpText.Print(Console.Out, combinedOptions);
                     return ExitCode.HelpDisplayed;
+                }
+
+                if (combinedOptions.SourceOptions != null && source != null)
+                {
+                    var sourceOptions = combinedOptions.SourceOptions;
+                    if (sourceOptions.Edit)
+                    {
+                        await Tools.Cmd.Run("start", source.CsprojFile);
+                    }
+
+                    if (sourceOptions.Debug)
+                    {
+                        // tbd
+                    }
                 }
 
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);

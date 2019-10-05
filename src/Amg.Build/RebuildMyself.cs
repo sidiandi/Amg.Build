@@ -173,7 +173,7 @@ namespace Amg.Build
         /// <param name="sourceFile"></param>
         /// <param name="commandLineArguments"></param>
         /// <returns></returns>
-        public static async Task BuildIfSourcesChanged(string[] commandLineArguments)
+        public static async Task<SourceInfo?> BuildIfSourcesChanged(string[] commandLineArguments)
         {
             try
             {
@@ -185,7 +185,7 @@ namespace Amg.Build
                 if (sourceInfo == null)
                 {
                     Logger.Debug("no source code found for {entryAssembly}. Rebuild not possible.", entryAssembly);
-                    return;
+                    return null;
                 }
 
                 var currentSourceVersion = (await GetCurrentSourceVersion(sourceInfo))!;
@@ -235,6 +235,8 @@ namespace Amg.Build
                 {
                     _ = CleanupOldBuildDirectories(sourceInfo);
                 }
+
+                return sourceInfo;
             }
             catch (Exception ex)
             {

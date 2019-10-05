@@ -21,8 +21,12 @@ namespace Amg.Build
     class SourceOptions
     {
         /// <summary />
-        [Short('e'), Description("Edit the build script in Visual Studio.")]
+        [Short('e'), Description("Edit the script in Visual Studio.")]
         public bool Edit { get; set; }
+
+        /// <summary />
+        [Description("Debug the script in Visual Studio.")]
+        public bool Debug { get; set; }
 
         /// <summary />
         [Description("Force a rebuild of the build script")]
