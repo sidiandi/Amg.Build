@@ -25,7 +25,7 @@ namespace Build
         const string ConfigurationRelease = "Release";
         const string ConfigurationDebug = "Debug";
 
-        string Root { get; set; } = ".".Absolute();
+        string Root => Runner.RootDirectory();
         string OutDir => Root.Combine("out", Configuration.ToString());
         string PackagesDir => OutDir.Combine("packages");
         string SrcDir => Root.Combine("src");
