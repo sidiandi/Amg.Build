@@ -767,9 +767,15 @@ are more recent.
         /// <param name="dir"></param>
         /// <returns></returns>
         public static IEnumerable<string> EnumerateDirectories(this string dir)
-        {
-            return System.IO.Directory.EnumerateDirectories(dir);
-        }
+            => Directory.EnumerateDirectories(dir);
+
+        /// <summary>
+        /// Enumerate the directories in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateDirectories(this string path, string searchPattern)
+            => Directory.EnumerateDirectories(path, searchPattern);
 
         /// <summary>
         /// Enumerate the files in dir
@@ -777,9 +783,15 @@ are more recent.
         /// <param name="dir"></param>
         /// <returns></returns>
         public static IEnumerable<string> EnumerateFiles(this string dir)
-        {
-            return System.IO.Directory.EnumerateFiles(dir);
-        }
+            => Directory.EnumerateFiles(dir);
+
+        /// <summary>
+        /// Enumerate the files in dir
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> EnumerateFiles(this string dir, string searchPattern)
+            => Directory.EnumerateFiles(dir, searchPattern);
 
         /// <summary>
         /// Move path to the Windows Recycle Bin

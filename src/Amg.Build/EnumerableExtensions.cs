@@ -478,5 +478,35 @@ namespace Amg.Build
             }
             return results;
         }
+
+        /// <summary>
+        /// Returns e except the last c elements
+        /// </summary>
+        /// <param name="e"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public static IEnumerable<T> TakeAllBut<T>(this IEnumerable<T> e, int c)
+        {
+            var buffer = new T[c];
+            int bi = 0;
+            using (var i = e.GetEnumerator())
+            {
+                while (i.MoveNext() && bi < c)
+                {
+                    buffer[bi++] = i.Current;
+                }
+                while (i.MoveNext())
+                {
+                    if (bi == c)
+                    {
+                        bi = 0;
+                    }
+                    var o = buffer[bi];
+                    buffer[bi] = i.Current;
+                    ++bi;
+                    yield return o;
+                }
+            }
+        }
     }
 }

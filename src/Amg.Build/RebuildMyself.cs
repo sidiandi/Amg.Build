@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -56,6 +57,13 @@ namespace Amg.Build
             public string SourceFileVersionFile => AssemblyFile + ".source";
             public string TempAssemblyFile => SourceDir.Combine("bin", "r" + time.ToShortFileName(), AssemblyFile.FileName());
 
+            public IEnumerable<string> TemporaryBuildDirectories()
+            {
+                return SourceDir.Combine("bin").EnumerateDirectories("r*")
+                    .OrderBy(_ => _.FileName())
+                    .ToList();
+            }
+
             readonly DateTime time;
         }
 
@@ -63,16 +71,12 @@ namespace Amg.Build
 
         internal static SourceInfo? GetSourceInfo(Assembly assembly)
         {
-            // build\bin\Debug\netcoreapp2.1\build.dll
-            // build
             var assemblyPath = Assembly.GetEntryAssembly().Location;
             return GetSourceInfo(assemblyPath);
         }
 
         internal static SourceInfo? GetSourceInfo(string assemblyFile)
         {
-            // build\bin\Debug\netcoreapp2.1\build.dll
-            // build
             var p = assemblyFile.SplitDirectories();
             if (p.Length < 5 )
             {
@@ -176,9 +180,11 @@ namespace Amg.Build
                 await HandleMoveTo();
                 
                 var entryAssembly = Assembly.GetEntryAssembly();
+                Logger.Debug(new { entryAssembly });
                 var sourceInfo = GetSourceInfo(entryAssembly);
                 if (sourceInfo == null)
                 {
+                    Logger.Information("no source code found for {entryAssembly}. Rebuild not possible.", entryAssembly);
                     return;
                 }
 
@@ -186,14 +192,16 @@ namespace Amg.Build
 
                 if (await SourcesChanged(sourceInfo, currentSourceVersion))
                 {
-                    Logger.Information("Rebuild {csprojFile}", sourceInfo.AssemblyFile, sourceInfo.CsprojFile);
+                    var outputDirectory = sourceInfo.TempAssemblyFile.Parent();
+                    Logger.Information("Rebuild {csprojFile} into output directory {outputDirectory}", 
+                        sourceInfo.CsprojFile, outputDirectory);
 
                     await Build(
                         csprojFile: sourceInfo.CsprojFile,
                         sourceFileVersion: currentSourceVersion,
                         configuration: sourceInfo.Configuration,
                         targetFramework: sourceInfo.TargetFramework,
-                        outputDirectory: sourceInfo.TempAssemblyFile.Parent().EnsureDirectoryIsEmpty());
+                        outputDirectory: outputDirectory.EnsureDirectoryIsEmpty());
 
                     var dotnet = await Once.Create<Dotnet>().Tool();
                     
@@ -218,24 +226,38 @@ namespace Amg.Build
                     };
 
                     SetMoveToArgs(move, si);
+                    Logger.Debug("Starting cleanup process: {@move}", move);
                     Process.Start(si);
 
                     Environment.Exit(result.ExitCode);
                 }
                 else
                 {
-                    _ = CleanupOldBuildDirectories();
+                    _ = CleanupOldBuildDirectories(sourceInfo);
                 }
             }
             catch (Exception ex)
             {
-                Logger.Warning(ex, "Rebuild attempt failed. Executed code might be out of date.");
+                throw new InvalidOperationException("Rebuild attempt failed. Executed code might be out of date.", ex);
             }
         }
 
-        static async Task CleanupOldBuildDirectories()
+        static async Task CleanupOldBuildDirectories(SourceInfo source)
         {
-            await Task.CompletedTask;
+            foreach (var dir in source.TemporaryBuildDirectories().TakeAllBut(1))
+            {
+                try
+                {
+                    Logger.Debug("Delete old build directory {dir}", dir);
+                    var toBeDeleted = dir.Parent().Combine("toBeDeleted-" + dir.FileName());
+                    dir.Move(toBeDeleted);
+                    await toBeDeleted.EnsureNotExists();
+                }
+                catch(Exception ex)
+                {
+                    Logger.Warning(ex, "Cannot delete {dir}", dir);
+                }
+            }
         }
 
         internal static async Task WriteSourceVersion(

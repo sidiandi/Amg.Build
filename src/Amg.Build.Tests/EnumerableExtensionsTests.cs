@@ -54,5 +54,14 @@ namespace Amg.Build
             Assert.That(padded.Count, Is.EqualTo(padCount));
             Assert.That(padded.NotNull().SequenceEqual(e));
         }
+
+        [Test]
+        public void TakeAllBut()
+        {
+            var e = Enumerable.Range(0, 3);
+            Assert.That(e.TakeAllBut(1).SequenceEqual(Enumerable.Range(0, 2)));
+            Assert.That(e.TakeAllBut(0).SequenceEqual(Enumerable.Range(0, 3)));
+            Assert.That(e.TakeAllBut(3).SequenceEqual(Enumerable.Range(0, 0)));
+        }
     }
 }
