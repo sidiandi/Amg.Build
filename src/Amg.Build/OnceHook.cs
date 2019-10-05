@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Castle.DynamicProxy;
 
@@ -10,7 +11,25 @@ namespace Amg.Build
 
         public void MethodsInspected()
         {
-            // nothing needs to be don at the end of the inspection
+            if (type != null)
+            {
+                AssertNoMutableFields(type);
+            }
+        }
+
+        Type? type;
+
+        static void AssertNoMutableFields(Type type)
+        {
+            var fields = type.GetFields(
+                BindingFlags.Instance | BindingFlags.Static |
+                BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(f => !f.IsInitOnly);
+
+            if (fields.Any())
+            {
+                throw new InvalidOperationException("all fields must be readonly");
+            }
         }
 
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
@@ -23,6 +42,7 @@ namespace Amg.Build
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
+            this.type = type;
             var intercept = Once.Has(methodInfo);
             return intercept;
         }

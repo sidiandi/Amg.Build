@@ -487,11 +487,24 @@ namespace Amg.Build
         /// <returns></returns>
         public static IEnumerable<T> TakeAllBut<T>(this IEnumerable<T> e, int c)
         {
+            if (c == 0)
+            {
+                return e;
+            }
+            if (c < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(c), c, "cannot be negative");
+            }
+            return TakeAllButInternal(e, c);
+        }
+
+        static IEnumerable<T> TakeAllButInternal<T>(IEnumerable<T> e, int c)
+        { 
             var buffer = new T[c];
             int bi = 0;
             using (var i = e.GetEnumerator())
             {
-                while (i.MoveNext() && bi < c)
+                while (bi < c && i.MoveNext())
                 {
                     buffer[bi++] = i.Current;
                 }

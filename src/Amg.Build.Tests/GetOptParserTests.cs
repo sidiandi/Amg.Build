@@ -1,7 +1,7 @@
 ﻿using Amg.CommandLine;
 using NUnit.Framework;
 
-namespace Amg.Build.Tests
+namespace Amg.Build
 {
     [TestFixture]
     class GetOptParserTests

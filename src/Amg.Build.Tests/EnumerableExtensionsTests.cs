@@ -59,7 +59,8 @@ namespace Amg.Build
         public void TakeAllBut()
         {
             var e = Enumerable.Range(0, 3);
-            Assert.That(e.TakeAllBut(1).SequenceEqual(Enumerable.Range(0, 2)));
+            var eb1 = e.TakeAllBut(1).ToList();
+            Assert.That(eb1.SequenceEqual(Enumerable.Range(0, 2)));
             Assert.That(e.TakeAllBut(0).SequenceEqual(Enumerable.Range(0, 3)));
             Assert.That(e.TakeAllBut(3).SequenceEqual(Enumerable.Range(0, 0)));
         }

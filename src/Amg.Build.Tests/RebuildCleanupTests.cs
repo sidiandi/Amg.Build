@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Diagnostics;
 
-namespace Amg.Build.Tests
+namespace Amg.Build
 {
     [TestFixture]
     class RebuildCleanupTests : TestBase
