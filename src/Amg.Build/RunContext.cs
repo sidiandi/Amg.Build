@@ -54,7 +54,7 @@ namespace Amg.Build
                 RecordStartupTime();
 
                 var minimalOptions = new Options();
-                GetOptParser.Parse(commandLineArguments, minimalOptions);
+                GetOptParser.Parse(commandLineArguments, minimalOptions, ignoreUnknownOptions: true);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
                 if (needConfigureLogger)

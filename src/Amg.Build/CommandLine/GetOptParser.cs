@@ -151,10 +151,13 @@ namespace Amg.CommandLine
                 : String.Empty;
         }
 
-        internal static TOptions Parse<TOptions>(IEnumerable<string> args)
+        internal static TOptions Parse<TOptions>(
+            IEnumerable<string> args,
+            bool ignoreUnknownOptions = false
+            )
         {
             var options = Activator.CreateInstance(typeof(TOptions));
-            Parse(args, options);
+            Parse(args, options, ignoreUnknownOptions: ignoreUnknownOptions);
             return (TOptions)options;
         }
 
@@ -163,7 +166,10 @@ namespace Amg.CommandLine
         /// </summary>
         /// <param name="args"></param>
         /// <param name="options"></param>
-        public static void Parse(IEnumerable<string> args, object options)
+        public static void Parse(
+            IEnumerable<string> args, 
+            object options,
+            bool ignoreUnknownOptions = false)
         {
             var context = new GetOptContext(options);
             using (var e = args.GetEnumerator())
@@ -176,7 +182,10 @@ namespace Amg.CommandLine
                     }
                     catch (Exception ex)
                     {
-                        throw new CommandLineArgumentException(args, e, ex);
+                        if (!ignoreUnknownOptions)
+                        {
+                            throw new CommandLineArgumentException(args, e, ex);
+                        }
                     }
                 }
             }
