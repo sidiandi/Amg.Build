@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -116,56 +114,6 @@ namespace Amg.Build
             a.Parent().MoveToBackup();
         }
 
-        static async Task HandleMoveTo()
-        {
-            try
-            {
-                var args = GetMoveToArgs();
-                if (args == null) return;
-                await HandleMoveToInternal(args);
-            }
-            catch
-            {
-                // do not complain if things go wrong
-            }
-            Environment.Exit(0);
-        }
-
-        static async Task HandleMoveToInternal(MoveTo move)
-        {
-            var old = move.Dest!.MoveToBackup();
-            if (old != null)
-            {
-                _ = old.EnsureNotExists();
-            }
-            await move.Source!.CopyTree(move.Dest!, useHardlinks: true);
-        }
-
-        internal static MoveTo? GetMoveToArgs()
-        {
-            var argsJson = System.Environment.GetEnvironmentVariable(MoveToKey);
-            if (String.IsNullOrEmpty(argsJson))
-            {
-                return null;
-            }
-
-            var args = JsonConvert.DeserializeObject<MoveTo>(argsJson);
-            return args;
-        }
-
-        internal static void SetMoveToArgs(MoveTo move, ProcessStartInfo processStartInfo)
-        {
-            var json = JsonConvert.SerializeObject(move);
-            processStartInfo.EnvironmentVariables.Add(MoveToKey, json);
-        }
-
-        internal static string MoveToKey => "key8ce0a148334b44e58b2cd832fdf935ea";
-        internal class MoveTo
-        {
-            public string? Source { set; get; }
-            public string? Dest { set; get; }
-        }
-
         /// <summary>
         /// Rebuilds and restarts the entry assembly if the source files have changed since the last time this method was called.
         /// </summary>
@@ -177,7 +125,7 @@ namespace Amg.Build
         {
             try
             {
-                await HandleMoveTo();
+                await RebuildCleanup.Handle();
                 
                 var entryAssembly = Assembly.GetEntryAssembly();
                 Logger.Debug(new { entryAssembly });
@@ -211,23 +159,13 @@ namespace Amg.Build
                         .WithArguments(sourceInfo.TempAssemblyFile)
                         .Run(commandLineArguments);
 
-                    // before exiting, start a process that moves TempAssemblyFile to AssemblyFile
-                    var si = new ProcessStartInfo
-                    {
-                        FileName = sourceInfo.TempAssemblyFile.WithExtension(".exe"),
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-
-                    var move = new MoveTo
-                    {
-                        Source = sourceInfo.TempAssemblyFile.Parent(),
-                        Dest = sourceInfo.AssemblyFile.Parent()
-                    };
-
-                    SetMoveToArgs(move, si);
-                    Logger.Debug("Starting cleanup process: {@move}", move);
-                    Process.Start(si);
+                    RebuildCleanup.Start(
+                        sourceInfo.TempAssemblyFile.WithExtension(".exe"),
+                        new RebuildCleanup.Args
+                        {
+                            Source = sourceInfo.TempAssemblyFile.Parent(),
+                            Dest = sourceInfo.AssemblyFile.Parent()
+                        });
 
                     Environment.Exit(result.ExitCode);
                 }

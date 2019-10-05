@@ -37,7 +37,8 @@ namespace Amg.Build
         {
             var n = _.FileName();
             return n.Equals("bin")
-                || n.Equals("obj");
+                || n.Equals("obj")
+                || n.Equals(".vs");
         }
 
         public static async Task<FileVersion?> Get(string path)
