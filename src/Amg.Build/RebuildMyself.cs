@@ -45,6 +45,7 @@ namespace Amg.Build
                 CsprojFile = csprojFile;
                 Configuration = configuration;
                 TargetFramework = targetFramework;
+                time = DateTime.UtcNow;
             }
 
             public string AssemblyFile { get; }
@@ -53,7 +54,9 @@ namespace Amg.Build
             public string Configuration { get; }
             public string TargetFramework { get; }
             public string SourceFileVersionFile => AssemblyFile + ".source";
-            public string TempAssemblyFile => SourceDir.Combine("obj", "temp", Configuration, TargetFramework, AssemblyFile.FileName());
+            public string TempAssemblyFile => SourceDir.Combine("bin", "r" + time.ToShortFileName(), AssemblyFile.FileName());
+
+            readonly DateTime time;
         }
 
         const string CsprojExt = ".csproj";
@@ -111,9 +114,16 @@ namespace Amg.Build
 
         static async Task HandleMoveTo()
         {
-            var args = GetMoveToArgs();
-            if (args == null) return;
-            await HandleMoveToInternal(args);
+            try
+            {
+                var args = GetMoveToArgs();
+                if (args == null) return;
+                await HandleMoveToInternal(args);
+            }
+            catch
+            {
+                // do not complain if things go wrong
+            }
             Environment.Exit(0);
         }
 
@@ -212,11 +222,20 @@ namespace Amg.Build
 
                     Environment.Exit(result.ExitCode);
                 }
+                else
+                {
+                    _ = CleanupOldBuildDirectories();
+                }
             }
             catch (Exception ex)
             {
                 Logger.Warning(ex, "Rebuild attempt failed. Executed code might be out of date.");
             }
+        }
+
+        static async Task CleanupOldBuildDirectories()
+        {
+            await Task.CompletedTask;
         }
 
         internal static async Task WriteSourceVersion(

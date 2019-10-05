@@ -483,6 +483,34 @@ are more recent.
             return (x.IndexOfAny(invalidCharacters) < 0) && (x.Length <= maxFileNameLength);
         }
 
+        public static string ToFileName(this DateTime time)
+        {
+            return time.ToString("o").MakeValidFileName();
+        }
+
+        public static string ToShortFileName(this DateTime time)
+        {
+            return BaseConvert(symbols09az, time.Ticks);
+        }
+
+        readonly static char[] symbols09az = Enumerable.Range('0', '9' - '0' + 1).Concat(Enumerable.Range('A', 'Z' - 'A' + 1))
+            .Select(_ => (char)_)
+            .ToArray();
+
+        static string BaseConvert(char[] symbols, long x)
+        {
+            var result = new List<char>();
+            var b = symbols.Length;
+            for (int i=0; i<12; ++i)
+            {
+                var x1 = x / b;
+                var r = x - b * x1;
+                x = x1;
+                result.Add(symbols[r]);
+            }
+            return new string(((IEnumerable<char>)result).Reverse().ToArray());
+        }
+
         /// <summary>
         /// Calculates a valid file name from x.
         /// </summary>

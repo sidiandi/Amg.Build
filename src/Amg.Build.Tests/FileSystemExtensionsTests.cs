@@ -212,5 +212,28 @@ namespace Amg.Build
             var p = @"C:\temp\some\long\path\with\directories\hello.txt";
             Assert.AreEqual(p, p.SplitDirectories().CombineDirectories());
         }
+
+        [Test]
+        public void DateTimeToFileName()
+        {
+            var time = new DateTime(2019, 10, 5, 3, 31, 12, 234);
+            var fn = time.ToFileName();
+            Assert.That(fn.IsValidFileName());
+            Assert.AreEqual("2019-10-05T03_31_12.2340000", fn);
+        }
+
+        [Test]
+        public void DateTimeToShortFileName()
+        {
+            var time = new DateTime(2019, 10, 5, 3, 31, 12, 234);
+            var fn = time.ToShortFileName();
+            Assert.That(fn.IsValidFileName());
+            Assert.AreEqual("4U8QD6UITWO0", fn);
+
+            time = DateTime.MaxValue;
+            fn = time.ToShortFileName();
+            Assert.That(fn.IsValidFileName());
+            Assert.AreEqual("NZ14HU5JI7ZZ", fn);
+        }
     }
 }
