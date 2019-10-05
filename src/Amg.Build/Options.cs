@@ -36,7 +36,7 @@ namespace Amg.Build
     {
         /// <summary />
         [Operands]
-        [Description("Target name and arguments")]
+        [Description("command name and arguments")]
         public string[] TargetAndArguments { get; set; } = new string[] { };
 
         /// <summary />

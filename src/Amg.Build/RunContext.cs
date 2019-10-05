@@ -221,32 +221,6 @@ Details:
         string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
         /// <summary>
-        /// Detects if the buildDll itself needs to be re-built.
-        /// </summary>
-        /// <returns></returns>
-        static bool IsOutOfDate(SourceCodeLayout layout)
-        {
-            if (Regex.IsMatch(layout.DllFile.FileName(), "test", RegexOptions.IgnoreCase))
-            {
-                Logger.Warning("test mode detected. Out of date check skipped.");
-                return false;
-            }
-
-            var sourceFiles = layout.SourceDir.Glob("**")
-                .Exclude("bin")
-                .Exclude("obj")
-                .Exclude(".vs");
-
-            var sourceChanged = sourceFiles.LastWriteTimeUtc();
-            var buildDllChanged = layout.DllFile.LastWriteTimeUtc();
-
-            var maximalAge = TimeSpan.FromMinutes(60);
-
-            return (sourceChanged > buildDllChanged)
-                || (DateTime.UtcNow - buildDllChanged) > maximalAge;
-        }
-
-        /// <summary>
         /// Extract the target to be called and its arguments from command line arguments
         /// </summary>
         /// <param name="arguments">all command line arguments (required for error display)</param>
@@ -254,9 +228,9 @@ Details:
         /// <returns></returns>
         static (MethodInfo target, string[] arguments) ParseCommandLineTarget(string[] arguments, CombinedOptions options)
         {
-            var targetAndArguments = options.Options!.TargetAndArguments;
+            var commandAndArguments = options.Options!.TargetAndArguments;
             var targets = options.OnceProxy;
-            if (targetAndArguments.Length == 0)
+            if (commandAndArguments.Length == 0)
             {
                 try
                 {
@@ -277,22 +251,22 @@ Details:
                 }
             }
 
-            var candidates = HelpText.PublicTargets(targets.GetType());
+            var candidates = HelpText.Commands(targets.GetType());
 
-            var targetName = targetAndArguments[0];
-            var targetArguments = targetAndArguments.Skip(1).ToArray();
+            var commandName = commandAndArguments[0];
+            var commandArguments = commandAndArguments.Skip(1).ToArray();
             try
             {
-                var target = candidates.FindByName(
+                var command = candidates.FindByName(
                     _ => GetOptParser.GetLongOptionNameForMember(_.Name),
-                    targetName,
-                    "targets"
+                    commandName,
+                    "commands"
                     );
-                return (target, targetArguments);
+                return (command, commandArguments);
             }
             catch (ArgumentOutOfRangeException e)
             {
-                throw new CommandLineArgumentException(arguments, Array.IndexOf(arguments, targetName), e);
+                throw new CommandLineArgumentException(arguments, Array.IndexOf(arguments, commandName), e);
             }
         }
 

@@ -36,7 +36,7 @@ namespace Amg.Build
                 method.GetCustomAttribute<DescriptionAttribute>() != null;
         }
 
-        public static IEnumerable<MethodInfo> PublicTargets(Type type)
+        public static IEnumerable<MethodInfo> Commands(Type type)
         {
             return type.GetMethods()
                 .Where(IsPublicTarget)
@@ -69,7 +69,7 @@ namespace Amg.Build
 
         private static void PrintTargetsList(TextWriter @out, object targets)
         {
-            var publicTargets = PublicTargets(targets.GetType());
+            var publicTargets = Commands(targets.GetType());
             publicTargets
                 .Select(_ => new { indent, Syntax = Syntax(_), Description = Description(_) })
                 .ToTable(header: false)
@@ -81,7 +81,7 @@ namespace Amg.Build
             var name = Assembly.GetEntryAssembly().GetName().Name;
             @out.WriteLine($@"Usage: {name} [options] <command> [command parameters]...
 ");
-            var targets = PublicTargets(options.OnceProxy.GetType());
+            var targets = Commands(options.OnceProxy.GetType());
             if (targets.Any())
             {
                 @out.WriteLine(@"Commands:");
