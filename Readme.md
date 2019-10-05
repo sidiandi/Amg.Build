@@ -46,6 +46,8 @@ Properties of the Targets container are available as build properties on the com
 ## Todo
 
 * file system watch
+* --edit
+* --debug
 * Adapter to use Cake extensions
 
 ## Done

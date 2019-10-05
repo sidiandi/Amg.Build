@@ -226,16 +226,43 @@ namespace Build
                 AssertRebuild(result);
             }
 
+            IDisposable AssertRuntime()
+            {
+                var s = new Stopwatch();
+                return OnDispose(new Action(() => Logger.Information(s.Elapsed)));
+            }
+
             async Task HelpIsDisplayed()
             {
-                var result = await build.Run("--help");
-                AssertExitCode(result, 3);
+                using (AssertRuntime())
+                {
+                    var result = await build.Run("--help");
+                    AssertExitCode(result, 3);
+                }
             }
 
             await ScriptRuns();
             await WhenSourceFileTimestampIsChangedScriptRebuilds();
             await HelpIsDisplayed();
         }
+
+        static IDisposable OnDispose(Action a) => new OnDisposeAction(a);
+
+        sealed class OnDisposeAction : IDisposable
+        {
+            private readonly Action action;
+
+            public OnDisposeAction(Action action)
+            {
+                this.action = action;
+            }
+            public void Dispose()
+            {
+                action();
+            }
+        }
+
+
 
         private static async Task CreateEmptyNugetConfigFile(string nugetConfigFile)
         {
