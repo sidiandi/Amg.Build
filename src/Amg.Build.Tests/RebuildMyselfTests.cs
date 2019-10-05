@@ -39,8 +39,8 @@ namespace Amg.Build
 
             var move = new RebuildMyself.MoveTo
             {
-                source = testDir.Combine("source"),
-                dest = testDir.Combine("dest")
+                Source = testDir.Combine("source"),
+                Dest = testDir.Combine("dest")
             };
 
             var si = new ProcessStartInfo();
@@ -49,8 +49,8 @@ namespace Amg.Build
             {
                 System.Environment.SetEnvironmentVariable(RebuildMyself.MoveToKey, si.Environment[RebuildMyself.MoveToKey]);
                 var move1 = RebuildMyself.GetMoveToArgs()!;
-                Assert.AreEqual(move.source, move1.source);
-                Assert.AreEqual(move.dest, move1.dest);
+                Assert.AreEqual(move.Source, move1.Source);
+                Assert.AreEqual(move.Dest, move1.Dest);
             }
             finally
             {

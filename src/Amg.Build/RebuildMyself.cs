@@ -133,12 +133,12 @@ namespace Amg.Build
 
         static async Task HandleMoveToInternal(MoveTo move)
         {
-            var old = move.dest!.MoveToBackup();
+            var old = move.Dest!.MoveToBackup();
             if (old != null)
             {
                 _ = old.EnsureNotExists();
             }
-            await move.source!.CopyTree(move.dest!, useHardlinks: true);
+            await move.Source!.CopyTree(move.Dest!, useHardlinks: true);
         }
 
         internal static MoveTo? GetMoveToArgs()
@@ -162,8 +162,8 @@ namespace Amg.Build
         internal static string MoveToKey => "key8ce0a148334b44e58b2cd832fdf935ea";
         internal class MoveTo
         {
-            public string? source;
-            public string? dest;
+            public string? Source { set; get; }
+            public string? Dest { set; get; }
         }
 
         /// <summary>
@@ -221,8 +221,8 @@ namespace Amg.Build
 
                     var move = new MoveTo
                     {
-                        source = sourceInfo.TempAssemblyFile.Parent(),
-                        dest = sourceInfo.AssemblyFile.Parent()
+                        Source = sourceInfo.TempAssemblyFile.Parent(),
+                        Dest = sourceInfo.AssemblyFile.Parent()
                     };
 
                     SetMoveToArgs(move, si);
