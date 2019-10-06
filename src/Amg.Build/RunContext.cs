@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -151,7 +150,7 @@ namespace Amg.Build
                     }
                     catch (Exception ex)
                     {
-                        throw new ApplicationException($"Error in using the [Once] attribute in {type}.", ex);
+                        throw new OnceException($"Error in using the [Once] attribute in {type}.", ex);
                     }
                 }
 
@@ -229,7 +228,7 @@ namespace Amg.Build
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
             }
-            catch (ApplicationException ex)
+            catch (OnceException ex)
             {
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine();

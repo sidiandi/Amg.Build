@@ -8,7 +8,7 @@ namespace Amg.Build.Cake
     /// <summary>
     /// Adapter for Cake (https://cakebuild.net/)
     /// </summary>
-    public class Cake
+    public static class Cake
     {
         /// <summary>
         /// Creates an ICakeContext that can be used to use all Cake addins (https://cakebuild.net/addins/).

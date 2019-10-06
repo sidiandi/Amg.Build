@@ -17,7 +17,7 @@ namespace hello
         public virtual void WorkWithCakeAddins()
         {
             var cake = Amg.Build.Cake.Cake.CreateContext();
-            cake.Zip(@"C:\temp\a", Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
+            cake.Zip(Runner.RootDirectory().Combine("hello"), Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
         }
 
         [Once, Description("Greet someone.")]
@@ -61,5 +61,4 @@ namespace hello
             await Task.WhenAll(FailTool(), RunForever());
         }
     }
-
 }
