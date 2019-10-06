@@ -235,5 +235,37 @@ namespace Amg.Build
             Assert.That(fn.IsValidFileName());
             Assert.AreEqual("NZ14HU5JI7ZZ", fn);
         }
+
+        [Test]
+        public async Task NotExisting()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var a = await testDir.Combine("a").Touch();
+            var a0 = a.GetNotExisting();
+            Assert.That(!a0.Exists());
+            Assert.That(a0.Parent(), Is.EqualTo(a.Parent()));
+            Assert.That(a0.FileName(), Does.StartWith(a.FileName()));
+        }
+
+        [Test]
+        public async Task Touch()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var p = await testDir.Combine("a", "b", "c").Touch();
+            var t = p.Info()!.LastWriteTimeUtc;
+            Assert.That(p.Exists());
+            await Task.Delay(10);
+            await testDir.Combine("a", "b", "c").Touch();
+            Assert.That(p.Exists());
+            Assert.That(p.Info()!.LastAccessTimeUtc, Is.Not.EqualTo(t));
+        }
+
+        [Test]
+        public void RelativeTo()
+        {
+            var d = @"C:\a\b\c";
+            var f = d.Combine("d", "e", "f");
+            Assert.That(d.Combine(f.RelativeTo(d)), Is.EqualTo(f));
+        }
     }
 }

@@ -903,6 +903,56 @@ are more recent.
         }
 
         /// <summary>
+        /// Returns a path in the same directory as p that does not yet exist
+        /// </summary>
+        /// Does this by adding numbers (.0, .1, ...) to p.
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string GetNotExisting(this string path)
+        {
+            if (!path.Exists())
+            {
+                return path;
+            }
+
+            for (var i = 0; ; ++i)
+            {
+                var backup = path + $".{i}";
+                if (!backup.Exists())
+                {
+                    return backup;
+                }
+            }
+        }
+
+        public static string RelativeTo(this string path, string relativeTo)
+        {
+            var p = path.SplitDirectories();
+            var r = relativeTo.SplitDirectories();
+            if (p.StartsWith(r))
+            {
+                return Path.Combine(p.Skip(r.Count()).ToArray());
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(path), path, $"must be a child of {relativeTo}");
+            }
+        }
+
+        public static Task<string> Touch(this string path) => Task.Factory.StartNew(() =>
+        {
+            using (var s = File.Open(
+                path.EnsureParentDirectoryExists(),
+                FileMode.Append, FileAccess.Write))
+            {
+                var length = s.Length;
+                s.Write(new byte[] { 0 }, 0, 1);
+                s.SetLength(length);
+            }
+            return path;
+        });
+
+        /// <summary>
         /// Move path to a numbered backup location if it exists.
         /// </summary>
         /// <param name="path"></param>

@@ -105,6 +105,40 @@ namespace Amg.Build
             }
         }
 
+        /// <summary>
+        /// Zips together two sequences. The shorter sequence is padded with default values.
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <param name="resultSelector"></param>
+        /// <returns></returns>
+        public static IEnumerable<TResult> ZipPadSecond<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
+        {
+            using (var i0 = first.GetEnumerator())
+            using (var i1 = second.GetEnumerator())
+            {
+                while (true)
+                {
+                    var firstHasElement = i0.MoveNext();
+                    var secondHasElement = i1.MoveNext();
+                    if (firstHasElement)
+                    {
+                        yield return resultSelector(
+                            i0.Current,
+                            secondHasElement ? i1.Current : default
+                            );
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
 #nullable disable
         /// <summary>
         /// Zips together two sequences. The shorter sequence is padded with default values.
@@ -520,6 +554,11 @@ namespace Amg.Build
                     yield return o;
                 }
             }
+        }
+
+        public static bool StartsWith<T>(this IEnumerable<T> e, IEnumerable<T> start)
+        {
+            return start.ZipPadSecond(e, (i1, i2) => object.Equals(i1, i2)).All(_ => _);
         }
     }
 }

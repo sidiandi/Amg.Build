@@ -64,5 +64,15 @@ namespace Amg.Build
             Assert.That(e.TakeAllBut(0).SequenceEqual(Enumerable.Range(0, 3)));
             Assert.That(e.TakeAllBut(3).SequenceEqual(Enumerable.Range(0, 0)));
         }
+
+        [Test]
+        public void StartsWith()
+        {
+            var e = Enumerable.Range(0, 100);
+            Assert.That(e.StartsWith(Enumerable.Range(0, 100)));
+            Assert.That(e.StartsWith(Enumerable.Range(0, 1)));
+            Assert.That(e.StartsWith(Enumerable.Range(0, 0)));
+            Assert.That(!e.StartsWith(Enumerable.Range(0, 101)));
+        }
     }
 }
