@@ -13,15 +13,14 @@ namespace hello
 
         static int Main(string[] args) => Runner.Run(args);
 
-        [Once, Description("Demo the Cake adapter")]
-        public virtual void WorkWithCake()
+        [Once, Description("Demo of the Cake adapter")]
+        public virtual void WorkWithCakeAddins()
         {
             var cake = Amg.Build.Cake.Cake.CreateContext();
             cake.Zip(@"C:\temp\a", Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
         }
 
-        [Once]
-        [Description("Greet someone.")]
+        [Once, Description("Greet someone.")]
         public virtual async Task Greet(string name)
         {
             await Task.Delay(TimeSpan.FromSeconds(1));
@@ -30,8 +29,7 @@ namespace hello
             Console.WriteLine($"Hello, {name}");
         }
 
-        [Once]
-        [Description("Greet all.")]
+        [Once, Description("Greet all.")]
         public virtual async Task GreetAll()
         {
             await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => Greet($"Alice {_}")).ToArray());
@@ -44,23 +42,20 @@ namespace hello
             await Greet("Andreas");
         }
 
-        [Once]
-        [Description("Simulate a failing tool")]
+        [Once, Description("Simulate a failing tool")]
         public virtual async Task FailTool()
         {
             await Tools.Cmd.Run("/c", "fasdfasdfasd");
         }
 
-        [Once]
-        [Description("Runs forever")]
+        [Once, Description("Runs forever")]
         public virtual async Task RunForever()
         {
             await Tools.Default.WithFileName("cmd")
                 .Run();
         }
 
-        [Once]
-        [Description("Use failing tool")]
+        [Once, Description("Use failing tool")]
         public virtual async Task UseFailingTool()
         {
             await Task.WhenAll(FailTool(), RunForever());
