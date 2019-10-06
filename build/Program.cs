@@ -329,26 +329,28 @@ namespace Build
                 push = push.WithArguments("-Source", nugetPushSource);
             }
 
-            var pushed = new List<string>();
             try
             {
                 foreach (var nupkgFile in nupkgFiles)
                 {
                     await push.Run(nupkgFile);
-                    pushed.Add(nupkgFile);
                 }
+                return new[] { nugetPushSource };
             }
             catch (Exception e)
             {
-                Logger.Warning(e, "not pushed.");
+                return Enumerable.Empty<string>();
             }
-            return pushed;
         }
 
         [Once, Description("push all nuget packages")]
-        protected virtual async Task Push()
+        protected virtual async Task<IEnumerable<string>> Push()
         {
-            await Task.WhenAll(NugetPushSource.Select(Push));
+            var pushed = (await Task.WhenAll(NugetPushSource.Select(Push)))
+                .SelectMany(_ => _);
+
+            Logger.Information("Pushed to {@pushed}", pushed);
+            return pushed;
         }
 
         [Once, Description("Open in Visual Studio")]
