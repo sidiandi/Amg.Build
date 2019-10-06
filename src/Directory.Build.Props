@@ -20,14 +20,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)..\out\$(Configuration)\CommonAssemblyInfo.cs" />
   </ItemGroup>
 
-  <!--
   <ItemGroup>
     <PackageReference Include="SonarAnalyzer.CSharp" Version="7.17.0.9346">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
-  -->
   
   <PropertyGroup>
     <!-- SolutionDir is not defined when building projects explicitly -->
