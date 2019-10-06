@@ -129,9 +129,10 @@ namespace Build
 
             return new[]
             {
-            "Amg.Build",
-            Amgbuild
-        }
+                "Amg.Build",
+                "Amg.Build.Cake",
+                Amgbuild
+            }
             .Select(name => PackagesDir.Combine($"{name}.{version}.nupkg"));
         }
 

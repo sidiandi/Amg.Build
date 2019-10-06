@@ -6,9 +6,10 @@ namespace Build
         string Company => "Amg";
         string[] NugetPushSource => new[]
         {
-            null,
+            "default",
             "https://api.nuget.org/v3/index.json"
         };
+
         string[] NugetPushSymbolSource => NugetPushSource;
     }
 }

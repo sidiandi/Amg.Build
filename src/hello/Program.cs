@@ -3,6 +3,7 @@ using System;
 using Amg.Build;
 using System.Linq;
 using System.ComponentModel;
+using Cake.Common.IO;
 
 namespace hello
 {
@@ -11,6 +12,13 @@ namespace hello
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         static int Main(string[] args) => Runner.Run(args);
+
+        [Once, Description("Demo the Cake adapter")]
+        public virtual void WorkWithCake()
+        {
+            var cake = Amg.Build.Cake.Cake.CreateContext();
+            cake.Zip(@"C:\temp\a", Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
+        }
 
         [Once]
         [Description("Greet someone.")]

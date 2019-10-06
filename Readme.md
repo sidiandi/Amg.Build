@@ -22,8 +22,9 @@ $ build\build.csproj
 ## Features
 
 * Pure C#. Write your build tasks as you write any other C# class. 
-* Supports async tasks and automatically achieves maximum possible parallelization of build tasks
+* Supports async tasks and automatically achieves maximum possible parallelization of build tasks.
 * Fluent interface for the handling of file system paths.
+* An adapter is available to run [Cake](https://cakebuild.net/) [addins](https://cakebuild.net/addins/).
 
 ## Concepts
 
@@ -47,9 +48,11 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* Adapter to use Cake extensions
-
 ## Done
+
+### 0.27
+
+* Adapter to use Cake extensions
 
 ### 0.26
 

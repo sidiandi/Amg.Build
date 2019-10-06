@@ -143,7 +143,19 @@ namespace Amg.Build
 
                 var source = SourceCodeLayout.Get(targetsType);
 
-                var onceProxy = Once.Create(targetsType);
+                object CreateOnceProxy(Type type)
+                {
+                    try
+                    {
+                        return Once.Create(type);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ApplicationException($"Error in using the [Once] attribute in {type}.", ex);
+                    }
+                }
+
+                var onceProxy = CreateOnceProxy(targetsType);
                 var combinedOptions = new CombinedOptions(onceProxy);
                 if (source != null)
                 {
@@ -216,6 +228,13 @@ namespace Amg.Build
                 return invocations.Failed()
                     ? ExitCode.TargetFailed
                     : ExitCode.Success;
+            }
+            catch (ApplicationException ex)
+            {
+                Console.Error.WriteLine(ex);
+                Console.Error.WriteLine();
+                Console.Error.WriteLine("See https://github.com/sidiandi/Amg.Build/ for instructions.");
+                return ExitCode.TargetFailed;
             }
             catch (CommandLineArgumentException ex)
             {

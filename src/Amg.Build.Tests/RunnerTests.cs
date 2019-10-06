@@ -30,6 +30,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void OnceFail()
+        {
+            var exitCode = Runner.Run<AClassThatHasMutableFields >(new string[] { });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
+        }
+
+        [Test]
         public void Fail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii"});

@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Amg.Build.Cake\Amg.Build.Cake.csproj" />
     <ProjectReference Include="..\Amg.Build\Amg.Build.csproj" />
   </ItemGroup>
 </Project>
