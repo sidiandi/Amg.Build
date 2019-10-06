@@ -976,16 +976,5 @@ are more recent.
                 }
             }
         }
-
-        public static async System.Collections.Generic.IAsyncEnumerable<string[]> Watch(this string path, [EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            var fsw = new FileSystemWatcher
-            {
-                IncludeSubdirectories = true,
-                Path = path
-            };
-
-            yield return await Task.FromResult(new[] { "hello" });
-        }
     }
 }
