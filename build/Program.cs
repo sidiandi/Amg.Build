@@ -419,5 +419,12 @@ namespace Build
             await Push();
             return v.NuGetVersionV2;
         }
+
+        [Once]
+        [Description("Deletes all output files")]
+        public virtual async Task Clean()
+        {
+            await this.OutDir.EnsureNotExists();
+        }
     }
 }
