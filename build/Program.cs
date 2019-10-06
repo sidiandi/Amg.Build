@@ -329,11 +329,20 @@ namespace Build
                 push = push.WithArguments("-Source", nugetPushSource);
             }
 
-            foreach (var nupkgFile in nupkgFiles)
+            var pushed = new List<string>();
+            try
             {
-                await push.Run(nupkgFile);
+                foreach (var nupkgFile in nupkgFiles)
+                {
+                    await push.Run(nupkgFile);
+                    pushed.Add(nupkgFile);
+                }
             }
-            return nupkgFiles;
+            catch (Exception e)
+            {
+                Logger.Warning(e, "not pushed.");
+            }
+            return pushed;
         }
 
         [Once, Description("push all nuget packages")]

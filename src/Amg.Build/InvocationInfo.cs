@@ -84,7 +84,6 @@ namespace Amg.Build
             this.Exception = exception;
             Logger.Fatal(@"{target} failed. Reason: {exception}", this, Summary.ErrorDetails(this));
             var invocationFailed = new InvocationFailedException(this);
-            Tool.KillAll();
             Once.Instance.CancelAll();
             return invocationFailed;
         }
