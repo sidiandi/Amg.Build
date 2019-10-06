@@ -322,7 +322,7 @@ namespace Build
             await Git.EnsureNoPendingChanges();
             await Task.WhenAll(Test(), Pack(), EndToEndTest());
             var nupkgFiles = await Pack();
-            var push = Nuget.WithArguments("push");
+            var push = Nuget.WithArguments("push", "-NonInteractive");
 
             if (nugetPushSource != null)
             {
