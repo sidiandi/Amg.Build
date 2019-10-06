@@ -348,7 +348,7 @@ namespace Build
         [Once, Description("push all nuget packages")]
         protected virtual async Task Push()
         {
-            await WhenAnyIsCompletedSuccessfully(NugetPushSource.Select(Push));
+            await Task.WhenAll(NugetPushSource.Select(Push));
         }
 
         [Once, Description("Open in Visual Studio")]
