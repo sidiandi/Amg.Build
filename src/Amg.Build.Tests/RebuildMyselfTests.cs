@@ -14,21 +14,10 @@ namespace Amg.Build
             var cmd = testDir.Combine("hello.cmd");
             var layout = await SourceCodeLayout.Create(cmd);
             var s = RebuildMyself.GetSourceInfo(layout.DllFile)!;
-
             var version = (await FileVersion.Get(s.SourceDir))!;
-            Assert.That(!s.TempAssemblyFile.IsFile());
-            await RebuildMyself.Build(
-                s.CsprojFile,
-                version,
-                s.Configuration,
-                s.TargetFramework,
-                s.TempAssemblyFile.Parent()
-                );
+            var assembly = await RebuildMyself.ProvideAssembly(s, version);
             Console.WriteLine(s.SourceDir.Glob("**/*").EnumerateFiles().Join());
-            Assert.That(s.TempAssemblyFile.IsFile(), () => s.Dump().ToString());
-
-            await s.TempAssemblyFile.Parent().Move(s.AssemblyFile.Parent().EnsureParentDirectoryExists());
-            Assert.That(s.AssemblyFile.IsFile());
+            Assert.That(assembly.IsFile(), () => s.Dump().ToString());
         }
     }
 }

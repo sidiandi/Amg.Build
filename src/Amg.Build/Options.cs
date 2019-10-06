@@ -31,6 +31,10 @@ namespace Amg.Build
         /// <summary />
         [Description("Force a rebuild of the build script")]
         public bool Clean { get; set; }
+
+        /// <summary />
+        [Description("watch parent directory of .cmd file")]
+        public bool Watch { get; set; }
     }
 
     /// <summary>

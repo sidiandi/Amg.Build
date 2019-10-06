@@ -44,7 +44,6 @@ namespace Amg.Build
                 CsprojFile = csprojFile;
                 Configuration = configuration;
                 TargetFramework = targetFramework;
-                time = DateTime.UtcNow;
             }
 
             public string AssemblyFile { get; }
@@ -53,16 +52,22 @@ namespace Amg.Build
             public string Configuration { get; }
             public string TargetFramework { get; }
             public string SourceFileVersionFile => AssemblyFile + ".source";
-            public string TempAssemblyFile => SourceDir.Combine("bin", "r" + time.ToShortFileName(), AssemblyFile.FileName());
 
-            public IEnumerable<string> TemporaryBuildDirectories()
+            string BuildRoot => SourceDir.Combine("bin", "r");
+            string TemporaryBuildRoot => SourceDir.Combine("bin", "t");
+
+            public IEnumerable<string> BuildDirectories()
             {
-                return SourceDir.Combine("bin").EnumerateDirectories("r*")
+                return BuildRoot.EnumerateDirectories("*")
                     .OrderBy(_ => _.FileName())
                     .ToList();
             }
 
-            readonly DateTime time;
+            public string TemporaryBuildDirectory(FileVersion fileVersion)
+                => TemporaryBuildRoot.Combine(Json.Hash(fileVersion));
+
+            public string BuildDirectory(FileVersion fileVersion)
+                => BuildRoot.Combine(Json.Hash(fileVersion));
         }
 
         const string CsprojExt = ".csproj";
@@ -140,30 +145,21 @@ namespace Amg.Build
 
                 if (await SourcesChanged(sourceInfo, currentSourceVersion))
                 {
-                    var outputDirectory = sourceInfo.TempAssemblyFile.Parent();
-                    Logger.Information("Rebuild {csprojFile} into output directory {outputDirectory}", 
-                        sourceInfo.CsprojFile, outputDirectory);
-
-                    await Build(
-                        csprojFile: sourceInfo.CsprojFile,
-                        sourceFileVersion: currentSourceVersion,
-                        configuration: sourceInfo.Configuration,
-                        targetFramework: sourceInfo.TargetFramework,
-                        outputDirectory: outputDirectory.EnsureDirectoryIsEmpty());
+                    var assemblyFile = await ProvideAssembly(sourceInfo, currentSourceVersion);
 
                     var dotnet = await Once.Create<Dotnet>().Tool();
                     
                     var result = await dotnet
                         .Passthrough()
                         .DoNotCheckExitCode()
-                        .WithArguments(sourceInfo.TempAssemblyFile)
+                        .WithArguments(assemblyFile)
                         .Run(commandLineArguments);
 
                     RebuildCleanup.Start(
-                        sourceInfo.TempAssemblyFile.WithExtension(".exe"),
+                        assemblyFile.WithExtension(".exe"),
                         new RebuildCleanup.Args
                         {
-                            Source = sourceInfo.TempAssemblyFile.Parent(),
+                            Source = assemblyFile.Parent(),
                             Dest = sourceInfo.AssemblyFile.Parent()
                         });
 
@@ -182,9 +178,43 @@ namespace Amg.Build
             }
         }
 
+        internal static async Task<string> ProvideAssembly(SourceInfo sourceInfo, FileVersion currentSourceVersion)
+        {
+            var outputDirectory = sourceInfo.BuildDirectory(currentSourceVersion);
+
+            if (!outputDirectory.IsDirectory())
+            {
+                Logger.Information("Rebuild {csprojFile} into output directory {outputDirectory}",
+                    sourceInfo.CsprojFile, outputDirectory);
+
+                var tempOutputDirectory = sourceInfo.TemporaryBuildDirectory(currentSourceVersion);
+                await Build(
+                    csprojFile: sourceInfo.CsprojFile,
+                    sourceFileVersion: currentSourceVersion,
+                    configuration: sourceInfo.Configuration,
+                    targetFramework: sourceInfo.TargetFramework,
+                    outputDirectory: tempOutputDirectory.EnsureDirectoryIsEmpty());
+                await tempOutputDirectory.Move(outputDirectory.EnsureParentDirectoryExists());
+            }
+            var tempAssembly = outputDirectory.Combine(sourceInfo.AssemblyFile.FileName());
+            return tempAssembly;
+        }
+
+        static DateTime BuildDate(string buildDirectory)
+        {
+            var source = SourceVersionFile(buildDirectory);
+            var info = source.Info();
+            return info == null
+                ? DateTime.MinValue
+                : info.LastWriteTimeUtc;
+        }
+
         static async Task CleanupOldBuildDirectories(SourceInfo source)
         {
-            foreach (var dir in source.TemporaryBuildDirectories().TakeAllBut(1))
+            foreach (var dir in source.BuildDirectories()
+                .TakeAllBut(1)
+                .OrderBy(BuildDate)
+                )
             {
                 try
                 {

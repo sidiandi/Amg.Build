@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -973,6 +975,17 @@ are more recent.
                     return await path.Move(backup);
                 }
             }
+        }
+
+        public static async System.Collections.Generic.IAsyncEnumerable<string[]> Watch(this string path, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var fsw = new FileSystemWatcher
+            {
+                IncludeSubdirectories = true,
+                Path = path
+            };
+
+            yield return await Task.FromResult(new[] { "hello" });
         }
     }
 }

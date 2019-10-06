@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -47,6 +48,70 @@ namespace Amg.Build
             return ExitCode.RebuildRequired;
         }
 
+        async Task<ExitCode?> Watch()
+        {
+            if (!String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(nowatchEnvironmentVariable)))
+            {
+                return null;
+            }
+
+            var sourceCodeLayout = SourceCodeLayout.Get(targetsType);
+            if (sourceCodeLayout != null)
+            {
+                await WatchInternal(sourceCodeLayout, this.commandLineArguments);
+                return ExitCode.Success;
+            }
+            else
+            {
+                return ExitCode.TargetFailed;
+            }
+        }
+
+        const string nowatchEnvironmentVariable = "Amg.Build_nowatch";
+
+        async Task WatchInternal(SourceCodeLayout source, string[] commandLineArgs)
+        {
+
+            var watchedDir = source.CmdFile.Parent();
+            using (var fsw = new FileSystemWatcher
+            {
+                Path = watchedDir,
+                IncludeSubdirectories = true,
+            })
+            {
+                var tool = Tools.Cmd.WithArguments(source.CmdFile)
+                    .WithEnvironment(nowatchEnvironmentVariable, true.ToString())
+                    .Passthrough();
+
+                Task run = Task.CompletedTask;
+
+                void Changed(object sender, FileSystemEventArgs e)
+                {
+                    if (run.IsCompleted)
+                    {
+                        run = tool.Run(commandLineArgs);
+                    }
+                }
+
+                fsw.Changed += Changed;
+                fsw.Created += Changed;
+                fsw.Deleted += Changed;
+                fsw.Renamed += Changed;
+
+                fsw.EnableRaisingEvents = true;
+
+                Console.Write($"Watching {watchedDir}...");
+                await Task.Delay(-1);
+
+                fsw.EnableRaisingEvents = false;
+
+                fsw.Changed -= Changed;
+                fsw.Created -= Changed;
+                fsw.Deleted -= Changed;
+                fsw.Renamed -= Changed;
+            }
+        }
+
         public async Task<ExitCode> Run()
         {
             try
@@ -74,7 +139,9 @@ namespace Amg.Build
                         .CreateLogger();
                 }
 
-                var source = await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
+                await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
+
+                var source = SourceCodeLayout.Get(targetsType);
 
                 var onceProxy = Once.Create(targetsType);
                 var combinedOptions = new CombinedOptions(onceProxy);
@@ -104,6 +171,11 @@ namespace Amg.Build
                     {
                         System.Diagnostics.Debugger.Launch();
                     }
+
+                    if (sourceOptions.Watch)
+                    {
+                        await Watch();
+                    }
                 }
 
                 var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
@@ -114,7 +186,7 @@ namespace Amg.Build
                 IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
 
                 object? result = null;
-                
+
                 try
                 {
                     result = await RunTarget(onceProxy, target, targetArguments);
@@ -128,7 +200,7 @@ namespace Amg.Build
 
                 if (combinedOptions.Options.Summary)
                 {
-                    Logger.Information(Summary.PrintTimeline(invocations));
+                    Summary.PrintTimeline(invocations).Write(Console.Out);
                 }
 
                 if (combinedOptions.Options.AsciiArt)
@@ -166,35 +238,6 @@ Details:
                 return ExitCode.UnknownError;
             }
         }
-
-        private async Task<bool> Watch()
-        {
-            var rootDir = Assembly.GetEntryAssembly().Location
-                .Parent()
-                .Parent()
-                .Parent()
-                .Parent();
-
-            if (rootDir != null)
-            {
-                var watcher = new Watcher(
-                    Assembly.GetEntryAssembly(),
-                    commandLineArguments,
-                    rootDir);
-                
-                if (watcher.IsWatching())
-                {
-                    return false;
-                }
-
-                await watcher.Watch();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-       }
 
         string StartupFile => BuildScriptDll + ".startup";
 

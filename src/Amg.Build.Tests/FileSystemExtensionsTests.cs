@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Amg.Build
@@ -266,6 +267,26 @@ namespace Amg.Build
             var d = @"C:\a\b\c";
             var f = d.Combine("d", "e", "f");
             Assert.That(d.Combine(f.RelativeTo(d)), Is.EqualTo(f));
+        }
+
+        [Test]
+        public async Task Watch()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var s = new CancellationTokenSource(100);
+
+            var watch = testDir.Watch(s.Token);
+
+            var f = testDir.Combine("a", "b", "c").WriteAllTextAsync("hello");
+
+            string[]? change = null;
+
+            await foreach (var c in watch)
+            {
+                change = c;
+            }
+
+            Assert.That(change![0], Is.EqualTo(await f));
         }
     }
 }

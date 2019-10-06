@@ -33,7 +33,7 @@ namespace hello
         [Once, Default]
         public virtual async Task Default()
         {
-            await Greet("Alice");
+            await Greet("Andreas");
         }
 
         [Once]

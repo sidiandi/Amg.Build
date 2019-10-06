@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -27,5 +28,16 @@ namespace Amg.Build
                 serializer.Serialize(writer, data);
             }
         });
+
+        internal static string Hash<T>(T data)
+        {
+            using (var text = new StringWriter())
+            {
+                var serializer = new JsonSerializer();
+                var writer = new JsonTextWriter(text);
+                serializer.Serialize(writer, data);
+                return text.ToString().Md5Checksum();
+            }
+        }
     }
 }

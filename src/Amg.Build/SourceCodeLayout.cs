@@ -109,7 +109,7 @@ namespace Amg.Build
         string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);
 
-        string ProgramCsText => ReadTemplate("name.Program.cs")
+        string ProgramCsText => ReadStringFromEmbeddedResource("ReplaceWithName.Program")
             .Replace("ReplaceWithName", Namespace);
 
         string BuildCmdText => ReadTemplate("name.cmd");
@@ -126,10 +126,11 @@ namespace Amg.Build
             {
                 if (resource == null)
                 {
+                    var available = assembly.GetManifestResourceNames();
                     throw new ArgumentOutOfRangeException(
                         nameof(resourceFileName), 
                         resourceFileName,
-                        $"available resources:\r\n{ assembly.GetManifestResourceNames().Join()}");
+                        $"available resources:\r\n{ available.Join()}");
                 }
                 return new StreamReader(resource).ReadToEnd();
             }
@@ -163,6 +164,24 @@ namespace Amg.Build
             }
         }
 
+        static string? GetCmdFile(string dllFile)
+        {
+            var cmd = dllFile.Parent().Parent().Parent().Parent().Parent()
+                .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
+            if (cmd.IsFile())
+            {
+                return cmd;
+            }
+
+            cmd = dllFile.Parent().Parent().Parent().Parent()
+                .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
+            if (cmd.IsFile())
+            {
+                return cmd;
+            }
+            return null;
+        }
+
         /// <summary>
         /// Try to determine the source directory from which the assembly of targetType was built.
         /// </summary>
@@ -171,9 +190,15 @@ namespace Amg.Build
         {
             try
             {
-                Logger.Dump(new { dllFile });
+                Logger.Debug(new { dllFile });
 
-                var cmdFile = dllFile.Parent().Parent().Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
+                var cmdFile = GetCmdFile(dllFile);
+                if (cmdFile == null)
+                {
+                    Logger.Debug("no cmd file found for {dllFile}", dllFile);
+                    return null;
+                }
+                    
                 var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
                 var paths = new[] {
@@ -182,7 +207,7 @@ namespace Amg.Build
                 }.Select(path => new { path, exists = path.Exists() })
                 .ToList();
 
-                Logger.Information("{@paths}", paths);
+                Logger.Debug(paths);
                 var hasSources = paths.All(_ => _.exists);
                 if (hasSources)
                 {
