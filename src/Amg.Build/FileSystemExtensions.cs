@@ -841,7 +841,7 @@ are more recent.
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        public static string Move(this string from, string to)
+        public static Task<string> Move(this string from, string to) => Task.Factory.StartNew(() =>
         {
             if (from.IsFile())
             {
@@ -856,9 +856,9 @@ are more recent.
             }
             else
             {
-                throw new NotImplementedException();
+                throw new FileNotFoundException("cannot move", from);
             }
-        }
+        });
 
         /// <summary>
         /// Reads 2 files to the end and compares for equality
@@ -957,7 +957,7 @@ are more recent.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static string? MoveToBackup(this string path)
+        public static async Task<string?> MoveToBackup(this string path)
         {
             if (!path.Exists())
             {
@@ -970,7 +970,7 @@ are more recent.
                 if (!backup.Exists())
                 {
                     Logger.Information("Creating backup of {path} at {backup}.", path, backup);
-                    return path.Move(backup);
+                    return await path.Move(backup);
                 }
             }
         }

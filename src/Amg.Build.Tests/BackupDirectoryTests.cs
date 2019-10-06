@@ -16,7 +16,7 @@ namespace Amg.Build
             var d = testDir.Combine("project");
             var p = await d.Combine("a", "b", "c").Touch();
             var b = new BackupDirectory(d);
-            var backupLocation = b.Move(p);
+            var backupLocation = await b.Move(p);
             Assert.That(!p.Exists());
             Assert.That(backupLocation.Exists());
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Amg.Build
 {
@@ -22,12 +23,12 @@ namespace Amg.Build
                 .EnsureDirectoryExists();
         }
 
-        public string Move(string file)
+        public async Task<string> Move(string file)
         {
             var dest = backupDirectory.Combine(file.RelativeTo(directory))
                 .EnsureParentDirectoryExists();
             Logger.Information("Backup {file} at {backup}", file, dest);
-            return file.Move(dest);
+            return await file.Move(dest);
         }
     }
 }

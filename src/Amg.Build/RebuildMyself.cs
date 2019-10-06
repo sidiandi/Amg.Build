@@ -108,10 +108,10 @@ namespace Amg.Build
                 );
         }
 
-        static void MoveAwayExistingAssembly(SourceInfo sourceInfo)
+        static async Task MoveAwayExistingAssembly(SourceInfo sourceInfo)
         {
             var a = sourceInfo.AssemblyFile;
-            a.Parent().MoveToBackup();
+            await a.Parent().MoveToBackup();
         }
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace Amg.Build
                 {
                     Logger.Debug("Delete old build directory {dir}", dir);
                     var toBeDeleted = dir.Parent().Combine("toBeDeleted-" + dir.FileName());
-                    dir.Move(toBeDeleted);
+                    await dir.Move(toBeDeleted);
                     await toBeDeleted.EnsureNotExists();
                 }
                 catch(Exception ex)

@@ -27,7 +27,7 @@ namespace Amg.Build
             Console.WriteLine(s.SourceDir.Glob("**/*").EnumerateFiles().Join());
             Assert.That(s.TempAssemblyFile.IsFile(), () => s.Dump().ToString());
 
-            s.TempAssemblyFile.Parent().Move(s.AssemblyFile.Parent().EnsureParentDirectoryExists());
+            await s.TempAssemblyFile.Parent().Move(s.AssemblyFile.Parent().EnsureParentDirectoryExists());
             Assert.That(s.AssemblyFile.IsFile());
         }
     }

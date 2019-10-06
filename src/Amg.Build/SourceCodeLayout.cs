@@ -142,19 +142,20 @@ namespace Amg.Build
 
         public async Task Fix()
         {
-            await FixFile(CmdFile, BuildCmdText);
-            await FixFile(PropsFile, PropsText);
-            await FixFile(SourceDir.Combine(".gitignore"), ReadTemplate("name..gitignore"));
+            var backup = new BackupDirectory(this.CmdFile.Parent());
+            await FixFile(CmdFile, BuildCmdText, backup);
+            await FixFile(PropsFile, PropsText, backup);
+            await FixFile(SourceDir.Combine(".gitignore"), ReadTemplate("name..gitignore"), backup);
         }
 
         string BuildCsProjText => ReadTemplate("build.csproj.template");
 
-        async Task FixFile(string file, string expected)
+        async Task FixFile(string file, string expected, BackupDirectory backup)
         {
             var actualText = await file.ReadAllTextAsync();
             if (!object.Equals(expected, actualText))
             {
-                file.MoveToBackup();
+                await backup.Move(file);
                 Logger.Information("Writing {file}", file);
                 await file
                     .EnsureParentDirectoryExists()

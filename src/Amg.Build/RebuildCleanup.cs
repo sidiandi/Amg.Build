@@ -34,7 +34,7 @@ namespace Amg.Build
         {
             try
             {
-                var old = args.Dest!.MoveToBackup();
+                var old = await args.Dest!.MoveToBackup();
                 if (old != null)
                 {
                     old = await old.EnsureNotExists();
