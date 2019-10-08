@@ -118,7 +118,8 @@ namespace Amg.Build
                 RecordStartupTime();
 
                 var minimalOptions = new Options();
-                GetOptParser.Parse(commandLineArguments, minimalOptions, ignoreUnknownOptions: true);
+                var rest = new ArraySegment<string>(commandLineArguments);
+                GetOptParser.Parse(ref rest, minimalOptions, ignoreUnknownOptions: true);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
                 if (needConfigureLogger)
@@ -161,7 +162,8 @@ namespace Amg.Build
                     combinedOptions.SourceOptions = new SourceOptions();
                 }
 
-                GetOptParser.Parse(commandLineArguments, combinedOptions);
+                rest = new ArraySegment<string>(commandLineArguments);
+                GetOptParser.Parse(ref rest, combinedOptions);
 
                 if (combinedOptions.Options.Help)
                 {
@@ -189,25 +191,31 @@ namespace Amg.Build
                     }
                 }
 
-                var (target, targetArguments) = ParseCommandLineTarget(commandLineArguments, combinedOptions);
-
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
 
-                IEnumerable<InvocationInfo> invocations = new[] { GetStartupInvocation() };
-
-                object? result = null;
-
-                try
+                for (var args = new ArraySegment<string>(combinedOptions.Options.TargetAndArguments); args.Any();)
                 {
-                    result = await RunTarget(onceProxy, target, targetArguments);
-                }
-                catch (InvocationFailedException)
-                {
-                    // can be ignored here, because failures are recorded in invocations
+                    var (method, parameters) = ParseCommands(ref args, combinedOptions.OnceProxy);
+
+                    object? result = null;
+
+                    try
+                    {
+                        result = await RunCommand(onceProxy, method, parameters);
+                        if (result != null)
+                        {
+                            result.Dump().Write(Console.Out);
+                        }
+                    }
+                    catch (InvocationFailedException)
+                    {
+                        // can be ignored here, because failures are recorded in invocations
+                    }
                 }
 
-                invocations = invocations.Concat(((IInvocationSource)onceProxy).Invocations);
+                var invocations = new[] { GetStartupInvocation() }
+                    .Concat(((IInvocationSource)onceProxy).Invocations);
 
                 if (combinedOptions.Options.Summary)
                 {
@@ -217,11 +225,6 @@ namespace Amg.Build
                 if (combinedOptions.Options.AsciiArt)
                 {
                     Summary.PrintAsciiArt(invocations);
-                }
-
-                if (result != null)
-                {
-                    result.Dump().Write(Console.Out);
                 }
 
                 return invocations.Failed()
@@ -299,41 +302,50 @@ Details:
 
         string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
-        /// <summary>
-        /// Extract the target to be called and its arguments from command line arguments
-        /// </summary>
-        /// <param name="arguments">all command line arguments (required for error display)</param>
-        /// <param name="options">parsed options</param>
-        /// <returns></returns>
-        static (MethodInfo target, string[] arguments) ParseCommandLineTarget(string[] arguments, CombinedOptions options)
+        internal static (MethodInfo method, object?[] parameters, ArraySegment<string> rest)
+            ParseCommands(string[] arguments, object targets)
         {
-            var commandAndArguments = options.Options!.TargetAndArguments;
-            var targets = options.OnceProxy;
-            if (commandAndArguments.Length == 0)
+            var rest = new ArraySegment<string>(arguments);
+            var (method, parameters) = ParseCommands(ref rest, targets);
+            return (method, parameters, rest);
+        }
+
+            /// <summary>
+            /// Extract the method to be called on targets and its arguments from command line arguments
+            /// </summary>
+            /// <param name="arguments">all command line arguments (required for error display)</param>
+            /// <param name="options">parsed options</param>
+            /// <returns></returns>
+            internal static (MethodInfo method, object?[] parameters) ParseCommands(
+            ref ArraySegment<string> arguments, 
+            object targets)
+        {
+            var r = arguments;
+
+            if (r.Count == 0)
             {
                 try
                 {
-                    var defaultTarget = GetDefaultTarget(targets);
+                    var defaultTarget = CommandObject.GetDefaultTarget(targets);
                     if (defaultTarget == null)
                     {
-                        HelpText.Print(Console.Out, options);
-                        Environment.Exit((int)ExitCode.HelpDisplayed);
+                        throw new CommandLineArgumentException(r, "no default command");
                     }
                     else
                     {
+                        arguments = r;
                         return (defaultTarget, new string[] { });
                     }
                 }
                 catch (Exception e)
                 {
-                    throw new CommandLineArgumentException(arguments, -1, e);
+                    throw new CommandLineArgumentException(r, e);
                 }
             }
 
-            var candidates = HelpText.Commands(targets.GetType());
+            var candidates = CommandObject.Commands(targets.GetType());
 
-            var commandName = commandAndArguments[0];
-            var commandArguments = commandAndArguments.Skip(1).ToArray();
+            var commandName = GetOptParser.GetFirst(ref r);
             try
             {
                 var command = candidates.FindByName(
@@ -341,31 +353,58 @@ Details:
                     commandName,
                     "commands"
                     );
-                return (command, commandArguments);
+                var parameterValues = ParseParameters(ref r, command);
+                arguments = r;
+                return (command, parameterValues);
             }
             catch (ArgumentOutOfRangeException e)
             {
-                throw new CommandLineArgumentException(arguments, Array.IndexOf(arguments, commandName), e);
+                throw new CommandLineArgumentException(arguments, e);
             }
         }
 
-        private static async Task<object?> RunTarget(object targets, MethodInfo target, string[] arguments)
+        static object? ReadParameter(ref ArraySegment<string> args, ParameterInfo parameter)
         {
-            Logger.Information("Run {target}({arguments})", target.Name, arguments.Join(", "));
-            return await AsTask(GetOptParser.Invoke(targets, target, arguments));
+            var r = args;
+            if (parameter.HasDefaultValue)
+            {
+                if (args.Count > 0)
+                {
+                    var p = GetOptParser.GetFirst(ref r);
+                    var parameterValue = GetOptOption.Parse(parameter.ParameterType, p);
+                    args = r;
+                    return parameterValue;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                if (args.Count == 0)
+                {
+                    throw new CommandLineArgumentException(args, $"Parameter {parameter.Name} is missing.");
+                }
+                var parameterString = GetOptParser.GetFirst(ref r);
+                var parameterValue = GetOptOption.Parse(parameter.ParameterType, parameterString);
+                args = r;
+                return parameterValue;
+            }
         }
 
-        private static MethodInfo? GetDefaultTarget(object targets)
+        internal static object?[] ParseParameters(ref ArraySegment<string> args, MethodInfo command)
         {
-            var t = HelpText.Targets(targets.GetType());
-            var defaultTarget = new[]
-            {
-                t.FirstOrDefault(_ => _.GetCustomAttribute<DefaultAttribute>() != null),
-                t.FindByNameOrDefault(_ => _.Name, "All"),
-                t.FindByNameOrDefault(_ => _.Name, "Default"),
-            }.FirstOrDefault(_ => _ != null);
+            var rest = args;
+            var p = command.GetParameters().Select(_ => ReadParameter(ref rest, _)).ToArray();
+            args = rest;
+            return p;
+        }
 
-            return defaultTarget;
+        private static async Task<object?> RunCommand(object instance, MethodInfo method, object?[] parameters)
+        {
+            Logger.Information("Run {target}({arguments})", method.Name, parameters.Join(", "));
+            return await AsTask(method.Invoke(instance, parameters));
         }
 
         /// <summary>

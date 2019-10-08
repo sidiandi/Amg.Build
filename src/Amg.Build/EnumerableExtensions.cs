@@ -560,5 +560,19 @@ namespace Amg.Build
         {
             return start.ZipPadSecond(e, (i1, i2) => object.Equals(i1, i2)).All(_ => _);
         }
+
+        public static int IndexOf<T>(this IEnumerable<T> e, T searchValue)
+        {
+            int index = 0;
+            foreach (var i in e)
+            {
+                if (object.Equals(i, searchValue))
+                {
+                    return index;
+                }
+                ++index;
+            }
+            return -1;
+        }
     }
 }

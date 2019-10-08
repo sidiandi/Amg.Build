@@ -64,6 +64,16 @@ namespace Amg.Build
             return $"Hello, {name}";
         }
 
+        [Once, Description("Say something")]
+        public virtual async Task SaySomething(string? something = null)
+        {
+            if (something != null)
+            {
+                Console.WriteLine(something);
+            }
+            await Task.CompletedTask;
+        }
+
         [Once] [Description("Pack nuget package")]
         public virtual async Task Pack()
         {

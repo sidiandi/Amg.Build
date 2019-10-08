@@ -152,12 +152,21 @@ namespace Amg.CommandLine
         }
 
         internal static TOptions Parse<TOptions>(
-            IEnumerable<string> args,
+            string[] args,
+            bool ignoreUnknownOptions = false
+            )
+        {
+            var rest = new ArraySegment<string>(args);
+            return Parse<TOptions>(ref rest, ignoreUnknownOptions: ignoreUnknownOptions);
+        }
+
+        internal static TOptions Parse<TOptions>(
+            ref ArraySegment<string> args,
             bool ignoreUnknownOptions = false
             )
         {
             var options = Activator.CreateInstance(typeof(TOptions));
-            Parse(args, options, ignoreUnknownOptions: ignoreUnknownOptions);
+            Parse(ref args, options, ignoreUnknownOptions: ignoreUnknownOptions);
             return (TOptions)options;
         }
 
@@ -167,53 +176,69 @@ namespace Amg.CommandLine
         /// <param name="args"></param>
         /// <param name="options"></param>
         public static void Parse(
-            IEnumerable<string> args, 
+            string[] args,
+            object options,
+            bool ignoreUnknownOptions = false)
+        {
+            var r = new ArraySegment<string>(args);
+            Parse(ref r, options, ignoreUnknownOptions: ignoreUnknownOptions);
+        }
+        
+        /// <summary>
+            /// Parse args into options
+            /// </summary>
+            /// <param name="args"></param>
+            /// <param name="options"></param>
+            public static void Parse(
+            ref ArraySegment<string> args, 
             object options,
             bool ignoreUnknownOptions = false)
         {
             var context = new GetOptContext(options);
-            using (var e = args.GetEnumerator())
+            var rest = args;
+            while (rest.Count > 0)
             {
-                while (e.MoveNext())
+                try
                 {
-                    try
+                    ReadOption(ref rest, context);
+                }
+                catch (Exception ex)
+                {
+                    if (ignoreUnknownOptions)
                     {
-                        ReadOption(context, e);
+                        GetFirst(ref rest);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        if (!ignoreUnknownOptions)
-                        {
-                            throw new CommandLineArgumentException(args, e, ex);
-                        }
+                        throw new CommandLineArgumentException(rest, ex);
                     }
                 }
             }
         }
 
-        private static void ReadOption(GetOptContext getOptContext, IEnumerator<string> args)
+        private static void ReadOption(ref ArraySegment<string> args, GetOptContext getOptContext)
         {
-            if (ReadOptionsStop(getOptContext, args))
+            if (ReadOptionsStop(ref args, getOptContext))
             {
                 return;
             }
 
-            if (ReadLongOption(getOptContext, args))
+            if (ReadLongOption(ref args, getOptContext))
             {
                 return;
             }
 
-            if (ReadShortOptions(getOptContext, args))
+            if (ReadShortOptions(ref args, getOptContext))
             {
                 return;
             }
 
-            if (ReadArgument(getOptContext, args))
+            if (ReadArgument(ref args, getOptContext))
             {
                 return;
             }
 
-            throw new ParserException("Cannot read option");
+            throw new CommandLineArgumentException(args, "Cannot read option");
         }
 
         internal static string GetLongOptionNameForMember(string memberName)
@@ -284,25 +309,36 @@ namespace Amg.CommandLine
                 o.Short != null && o.Short.Value.Equals(optionName));
         }
 
-        private static bool ReadArgument(GetOptContext getOptContext, IEnumerator<string> args)
+        internal static string GetFirst(ref ArraySegment<string> a)
         {
-            FindOperands(getOptContext.Options).Set(args.Current);
+            var f = a[0];
+            a = a.Slice(1);
+            return f;
+        }
+
+        private static bool ReadArgument(ref ArraySegment<string> args, GetOptContext getOptContext)
+        {
+            var rest = args;
+            FindOperands(getOptContext.Options).Set(GetFirst(ref rest));
+            args = rest;
             return true;
         }
 
-        private static bool ReadShortOptions(GetOptContext getOptContext, IEnumerator<string> args)
+        private static bool ReadShortOptions(ref ArraySegment<string> args, GetOptContext getOptContext)
         {
             if (getOptContext.OptionsStop)
             {
                 return false;
             }
 
-            if (!args.Current.StartsWith(ShortPrefix))
+            var r = args;
+            var current = GetFirst(ref r);
+            if (!current.StartsWith(ShortPrefix))
             {
                 return false;
             }
 
-            var option = args.Current.Substring(ShortPrefix.Length);
+            var option = current.Substring(ShortPrefix.Length);
 
             while (!string.IsNullOrEmpty(option))
             {
@@ -325,30 +361,33 @@ namespace Amg.CommandLine
                     option = string.Empty;
                     if (string.IsNullOrEmpty(optionValue))
                     {
-                        args.MoveNext();
-                        optionValue = args.Current;
+                        optionValue = GetFirst(ref r);
                     }
 
                     o.Set(optionValue);
                 }
             }
 
+            args = r;
             return true;
         }
 
-        private static bool ReadLongOption(GetOptContext getOptContext, IEnumerator<string> args)
+        private static bool ReadLongOption(ref ArraySegment<string> args, GetOptContext getOptContext)
         {
             if (getOptContext.OptionsStop)
             {
                 return false;
             }
 
-            if (!args.Current.StartsWith(LongPrefix))
+            var r = args;
+            var c = GetFirst(ref r);
+
+            if (!c.StartsWith(LongPrefix))
             {
                 return false;
             }
 
-            var parts = args.Current.Substring(LongPrefix.Length).Split(new[] { '=' }, 2);
+            var parts = c.Substring(LongPrefix.Length).Split(new[] { '=' }, 2);
             var optionName = parts[0];
 
             var o = FindLongOption(getOptContext.Options, optionName);
@@ -370,26 +409,29 @@ namespace Amg.CommandLine
                 }
                 else
                 {
-                    args.MoveNext();
-                    optionValue = args.Current;
+                    optionValue = GetFirst(ref r);
                 }
 
                 o.Set(optionValue);
             }
 
+            args = r;
             return true;
         }
 
-        private static bool ReadOptionsStop(GetOptContext getOptContext, IEnumerator<string> args)
+        private static bool ReadOptionsStop(ref ArraySegment<string> args, GetOptContext getOptContext)
         {
             if (getOptContext.OptionsStop)
             {
                 return false;
             }
 
-            if (args.Current.Equals(LongPrefix))
+            var r = args;
+            var c = GetFirst(ref r);
+            if (c.Equals(LongPrefix))
             {
                 getOptContext.OptionsStop = true;
+                args = r;
                 return true;
             }
 
@@ -415,7 +457,7 @@ namespace Amg.CommandLine
             return method.Invoke(instance, parameters);
         }
 
-        private static object[] ParseParameters(MethodInfo method, string[] arguments)
+        internal static object[] ParseParameters(MethodInfo method, string[] arguments)
         {
             return method.GetParameters()
                 .ZipOrDefault(arguments, (p, v) => GetOptOption.Parse(p.ParameterType, v))

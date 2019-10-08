@@ -1,13 +1,13 @@
 ﻿using Amg.CommandLine;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using static Amg.Build.CommandObject;
 
 namespace Amg.Build
 {
+
     internal static class HelpText
     {
         private static void PrintOptionsList(TextWriter @out, object options)
@@ -24,40 +24,6 @@ namespace Amg.Build
         {
             return !option.Long.Equals("ignore-clean");
         }
-            
-        internal static bool IsTarget(MethodInfo method)
-        {
-            return Once.Has(method);
-        }
-
-        internal static bool IsPublicTarget(MethodInfo method)
-        {
-            return IsTarget(method) &&
-                method.GetCustomAttribute<DescriptionAttribute>() != null;
-        }
-
-        public static IEnumerable<MethodInfo> Commands(Type type)
-        {
-            return type.GetMethods()
-                .Where(IsPublicTarget)
-                .ToList();
-        }
-
-        public static IEnumerable<MethodInfo> Targets(Type type)
-        {
-            return type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .Where(IsTarget)
-                .ToList();
-        }
-
-        private static string Description(MethodInfo method)
-        {
-            var a = method.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
-            return a == null
-                ? String.Empty
-                : a.Description;
-        }
-
         private static string Syntax(MethodInfo method)
         {
             return new[] { GetOptParser.GetLongOptionNameForMember(method.Name), }

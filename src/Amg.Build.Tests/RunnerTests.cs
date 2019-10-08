@@ -64,6 +64,34 @@ namespace Amg.Build
             Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
         }
 
+        [Test]
+        public void CommandLineErrorMissingArguments()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-hello" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
+        }
+
+        [Test]
+        public void CommandLineDefaultParameterMissing()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-something" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+        }
+
+        [Test]
+        public void CommandLineDefaultParameterPresent()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-something", "hello" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+        }
+
+        [Test]
+        public void MultipleCommands()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "say-something", "hello", "say-something" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+        }
+
         public class MinimalTargets
         {
         }

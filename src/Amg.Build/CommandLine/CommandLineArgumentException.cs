@@ -1,6 +1,5 @@
 ﻿using Amg.Build;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Amg.CommandLine
@@ -8,41 +7,34 @@ namespace Amg.CommandLine
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
     internal class CommandLineArgumentException : Exception
     {
-        private readonly IEnumerable<string> _args;
-        private readonly int _markedPosition;
+        private readonly ArraySegment<string> _args;
 
-        public CommandLineArgumentException(IEnumerable<string> args, IEnumerator<string> currentPosition, Exception exception)
-            : base("Error in command line arguments", exception)
+        public CommandLineArgumentException(
+            ArraySegment<string> args,
+            string message)
+            : base(message)
         {
             _args = args;
-            var p = args
-                .Select((_, i) => new { _, i })
-                .FirstOrDefault(_ => object.ReferenceEquals(_._, currentPosition.Current));
-            _markedPosition = (p == null)
-                ? -1
-                : p.i;
         }
 
         public CommandLineArgumentException(
-            IEnumerable<string> args, 
-            int markedPosition, 
+            ArraySegment<string> args,
             Exception exception)
-            : base("Error in command line arguments", exception)
+            : base(exception.Message, exception)
         {
             _args = args;
-            _markedPosition = markedPosition;
         }
 
         public override string Message => $@"Error in commmand line arguments:
 
-{ArgList(_args, _markedPosition)}
+{ArgList(_args)}
 
-{InnerException.Message}
+{(InnerException == null ? String.Empty :InnerException.Message)}
 ";
 
-        private static string ArgList(IEnumerable<string> args, int markedPosition)
+        private static string ArgList(ArraySegment<string> args)
         {
-            return args.Select((_,i) => $"{Marker(i, markedPosition)}{_}").Join();
+            return args.Array.Select((_,i) => $"{Marker(i, args.Offset)}{_}").Join();
         }
 
         private static string Marker(int index, int markedPosition)
