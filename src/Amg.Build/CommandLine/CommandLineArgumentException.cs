@@ -25,6 +25,15 @@ namespace Amg.CommandLine
             _args = args;
         }
 
+        public CommandLineArgumentException(
+            ArraySegment<string> args,
+            string message,
+            Exception exception)
+            : base(message, exception)
+        {
+            _args = args;
+        }
+
         public override string Message => $@"Error in commmand line arguments:
 
 {ArgList(_args)}

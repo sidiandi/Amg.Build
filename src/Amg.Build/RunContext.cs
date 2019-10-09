@@ -163,6 +163,7 @@ namespace Amg.Build
                 }
 
                 rest = new ArraySegment<string>(commandLineArguments);
+                
                 GetOptParser.Parse(ref rest, combinedOptions);
 
                 if (combinedOptions.Options.Help)
@@ -310,15 +311,15 @@ Details:
             return (method, parameters, rest);
         }
 
-            /// <summary>
-            /// Extract the method to be called on targets and its arguments from command line arguments
-            /// </summary>
-            /// <param name="arguments">all command line arguments (required for error display)</param>
-            /// <param name="options">parsed options</param>
-            /// <returns></returns>
-            internal static (MethodInfo method, object?[] parameters) ParseCommands(
-            ref ArraySegment<string> arguments, 
-            object targets)
+        /// <summary>
+        /// Extract the method to be called on targets and its arguments from command line arguments
+        /// </summary>
+        /// <param name="arguments">all command line arguments (required for error display)</param>
+        /// <param name="options">parsed options</param>
+        /// <returns></returns>
+        internal static (MethodInfo method, object?[] parameters) ParseCommands(
+        ref ArraySegment<string> arguments,
+        object targets)
         {
             var r = arguments;
 
@@ -363,17 +364,67 @@ Details:
             }
         }
 
-        static object? ReadParameter(ref ArraySegment<string> args, ParameterInfo parameter)
+        static object ReadArray(ref ArraySegment<string> args, Type arrayType)
         {
             var r = args;
+            var elementType = arrayType.GetElementType();
+
+            var items = new List<object?>();
+            while (r.Count > 0)
+            {
+                var i = ReadScalar(ref r, elementType);
+                items.Add(i);
+            }
+            try
+            {
+                var a = ToArray(items, arrayType);
+                args = r;
+                return a;
+            }
+            catch (Exception e)
+            {
+                throw new CommandLineArgumentException(args, $"Cannot read {arrayType}", e);
+            }
+        }
+
+        static object ToArray(IList<object?> items, Type arrayType)
+        {
+            var a = Array.CreateInstance(arrayType.GetElementType(), items.Count);
+            for (int i = 0; i < items.Count; ++i)
+            {
+                a.SetValue(items[i], i);
+            }
+            return a;
+        }
+
+        static object ReadScalar(ref ArraySegment<string> args, Type valueType)
+        {
+            if (valueType.IsArray)
+            {
+                return ReadArray(ref args, valueType);
+            }
+
+            var r = args;
+            var p = GetOptParser.GetFirst(ref r);
+            try
+            {
+                var parameterValue = GetOptOption.Parse(valueType, p);
+                args = r;
+                return parameterValue;
+            }
+            catch (ArgumentException e)
+            {
+                throw new CommandLineArgumentException(args, e);
+            }
+        }
+
+        static object? ReadParameter(ref ArraySegment<string> args, ParameterInfo parameter)
+        {
             if (parameter.HasDefaultValue)
             {
                 if (args.Count > 0)
                 {
-                    var p = GetOptParser.GetFirst(ref r);
-                    var parameterValue = GetOptOption.Parse(parameter.ParameterType, p);
-                    args = r;
-                    return parameterValue;
+                    return ReadScalar(ref args, parameter.ParameterType);
                 }
                 else
                 {
@@ -386,10 +437,7 @@ Details:
                 {
                     throw new CommandLineArgumentException(args, $"Parameter {parameter.Name} is missing.");
                 }
-                var parameterString = GetOptParser.GetFirst(ref r);
-                var parameterValue = GetOptOption.Parse(parameter.ParameterType, parameterString);
-                args = r;
-                return parameterValue;
+                return ReadScalar(ref args, parameter.ParameterType);
             }
         }
 

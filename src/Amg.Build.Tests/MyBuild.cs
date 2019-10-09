@@ -31,8 +31,7 @@ namespace Amg.Build
         [Once]
         MyBuild Nested => Runner.Once<MyBuild>();
 
-        [Once]
-        [Description("Print the dotnet version")]
+        [Once, Description("Print the dotnet version")]
         public virtual async Task Version()
         {
             await Task.WhenAll(Git.GetVersion(), Dotnet.Version());
@@ -41,8 +40,7 @@ namespace Amg.Build
             Console.WriteLine(v);
         }
 
-        [Once]        
-        [Description("Compile source code")]
+        [Once, Description("Compile source code")]
         public virtual async Task Compile()
         {
             await Task.CompletedTask;
@@ -50,18 +48,24 @@ namespace Amg.Build
             result.Enqueue(nameof(Compile));
         }
 
-        [Once][Description("Link object files")]
+        [Once, Description("Link object files")]
         public virtual async Task Link()
         {
             await Compile();
             result.Enqueue(nameof(Link));
         }
 
-        [Once] [Description("Say hello")]
+        [Once, Description("Say hello")]
         public virtual async Task<string> SayHello(string name)
         {
             await Task.CompletedTask;
             return $"Hello, {name}";
+        }
+
+        [Once, Description("Demonstrate the use of params")]
+        public virtual string UseParams(params string[] items)
+        {
+            return items.Join();
         }
 
         [Once, Description("Say something")]
@@ -74,7 +78,7 @@ namespace Amg.Build
             await Task.CompletedTask;
         }
 
-        [Once] [Description("Pack nuget package")]
+        [Once, Description("Pack nuget package")]
         public virtual async Task Pack()
         {
             await Compile();
@@ -82,7 +86,7 @@ namespace Amg.Build
             result.Enqueue(nameof(Pack));
         }
 
-        [Once] [Description("Compile, link, and pack")] [Default]
+        [Once, Description("Compile, link, and pack")] [Default]
         public virtual async Task All()
         {
             await Task.WhenAll(

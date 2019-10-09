@@ -86,6 +86,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void CommandLineDefaultParameterParams()
+        {
+            var exitCode = Runner.Run<MyBuild>(new string[] { "use-params", "1", "2", "3" });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+        }
+
+        [Test]
         public void MultipleCommands()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-something", "hello", "say-something" });

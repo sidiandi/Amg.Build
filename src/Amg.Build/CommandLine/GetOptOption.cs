@@ -103,11 +103,11 @@ namespace Amg.CommandLine
                     var enumName = Enum.GetNames(toType).FindByName(_ => _, stringValue, "values");
                     return Enum.Parse(toType, enumName);
                 }
-                throw new InvalidOperationException($"Cannot parse {stringValue.Quote()} as {toType.Name}.");
+                throw new ArgumentException($"Cannot parse {stringValue.Quote()} as {toType.Name}.");
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException($"{stringValue.Quote()} is not a value of type {toType.Name}.", e);
+                throw new ArgumentException($"{stringValue.Quote()} is not a value of type {toType.Name}.", e);
             }
         }
 
