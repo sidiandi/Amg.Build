@@ -113,6 +113,7 @@ namespace Amg.Build
             });
             Assert.AreEqual(String.Empty, o.Error);
             Assert.That(o.Out, Does.Not.Contain("--ignore-clean"));
+            Assert.That(o.Out, Does.Contain("use-params [items]..."));
         }
 
         [Test]

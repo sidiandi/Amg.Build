@@ -19,8 +19,8 @@ namespace Amg.Build
         {
         }
 
-        [Description("Release or Debug")]
-        public string Configuration { get; set; } = "Release";
+        [Once, Description("Release or Debug")]
+        public virtual string Configuration { get; set; } = "Release";
 
         [Once]
         protected virtual Git Git => Once.Create<Git>(Runner.RootDirectory());

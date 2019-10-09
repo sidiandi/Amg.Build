@@ -27,9 +27,20 @@ namespace Amg.Build
 
         public IEnumerable<InvocationInfo> Invocations => _cache.Values;
 
+        static bool IsSetter(MethodInfo method)
+        {
+            return method.Name.StartsWith("set_");
+        }
+
         public void Intercept(IInvocation invocation)
         {
             var cacheKey = GenerateCacheKey(invocation.Method, invocation.Arguments);
+
+            if (IsSetter(invocation.Method) && (_cache.ContainsKey(cacheKey)))
+            {
+                throw new OncePropertyCanOnlyBeCalledOnceException(invocation.Method);
+            }
+
             invocation.ReturnValue = _cache.GetOrAdd(cacheKey, () => new InvocationInfo(this, cacheKey, invocation))
                 .ReturnValue;
         }
@@ -41,7 +52,7 @@ namespace Amg.Build
             string Key()
             {
                 var id = $"{method.DeclaringType.Name}.{method.Name}";
-                if (arguments.Length > 0)
+                if (!IsSetter(method) && (arguments.Length > 0))
                 {
                     id = $"{id}({arguments.Join(",")})";
                 }

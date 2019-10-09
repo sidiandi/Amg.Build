@@ -27,8 +27,23 @@ namespace Amg.Build
         private static string Syntax(MethodInfo method)
         {
             return new[] { GetOptParser.GetLongOptionNameForMember(method.Name), }
-            .Concat(method.GetParameters().Select(_ => $"<{_.Name}>"))
+            .Concat(method.GetParameters().Select(ParameterSyntax))
             .Join(" ");
+        }
+
+        static string ParameterSyntax(ParameterInfo p)
+        {
+            if (p.ParameterType.IsArray)
+            { 
+                return $"[{p.Name}]...";
+            }
+
+            if (p.HasDefaultValue)
+            {
+                return $"[{p.Name}]";
+            }
+
+            return $"<{p.Name}>";
         }
 
         const string indent = " ";

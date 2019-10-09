@@ -53,7 +53,10 @@ namespace Amg.Build
         {
             if (!method.IsSpecialName) return null;
             return method.DeclaringType.GetProperty(method.Name.Substring(4),
-              BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic);
+              BindingFlags.Instance | 
+              BindingFlags.Static | 
+              BindingFlags.NonPublic |
+              BindingFlags.Public);
         }
 
         internal static bool Has(MemberInfo member)

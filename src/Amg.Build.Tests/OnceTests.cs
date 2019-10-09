@@ -45,11 +45,17 @@ namespace Amg.Build
     }
 #pragma warning restore CS0414
 
+    public class AClassWithOnceProperty
+    {
+        [Once]
+        public virtual string? Name { get; set; } = null;
+    }
+
     [TestFixture]
     public class OnceTests
     {
         [Test]
-        public async Task Once()
+        public async Task RunOnce()
         {
             var once = Amg.Build.Once.Create<MyBuild>();
             await once.All();
@@ -59,13 +65,24 @@ namespace Amg.Build
         [Test]
         public void OnceCannotBeAppliedWhenClassHasMutableFields()
         {
-            Assert.Throws<System.InvalidOperationException>(() =>
+            Assert.Throws<OnceException>(() =>
             {
                 Amg.Build.Once.Create<AClassThatHasMutableFields>();
             });
         }
 
         [Test]
+        public void OncePropertiesWithSettersCanOnlyBeSetOnce()
+        {
+            var once = Once.Create<AClassWithOnceProperty>();
+            once.Name = "Alice";
+            Assert.Throws<OncePropertyCanOnlyBeCalledOnceException>(() =>
+            {
+                once.Name = "Bob";
+            });
+        }
+
+       [Test]
         public void OnlyExecutesOnce()
         {
             var once = new Once();

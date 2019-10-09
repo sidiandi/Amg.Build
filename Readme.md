@@ -48,11 +48,14 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
-* allow more than one command on the command line (e.g. build.cmd clean build)
-* command line parser can handle default method parameters
-* [Once] properties with setters can only be set once
-
 ## Done
+
+### 0.28
+
+* [Once] properties with setters can only be set once
+* command line parser can handle arrays
+* command line parser can handle default method parameters
+* allow more than one command on the command line (e.g. build.cmd clean build)
 
 ### 0.27
 

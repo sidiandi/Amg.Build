@@ -35,7 +35,7 @@ namespace Amg.Build
 
             if (mutableFields.Any())
             {
-                throw new InvalidOperationException($@"All fields of {type} must be readonly. 
+                throw new OnceException($@"All fields of {type} must be readonly. 
 Following fields are not readonly:
 {mutableFields.Select(_ => _.Name).Join()}");
             }
@@ -54,11 +54,11 @@ Following fields are not readonly:
                 BindingFlags.NonPublic);
 
             var writableProperties = properties.Where(
-                f => f.CanWrite && !IsCommandLineProperty(f));
+                f => f.CanWrite && !Once.Has(f));
 
             if (writableProperties.Any())
             {
-                throw new InvalidOperationException($@"All properties of {type} must be readonly OR have the [Description] attribute.
+                throw new OnceException($@"All properties of {type} must be readonly OR have the [Once] attribute.
 Following properties do not fulfill the condition:
 {writableProperties.Select(_ => _.Name).Join()}");
             }
@@ -68,7 +68,7 @@ Following properties do not fulfill the condition:
         {
             if (Once.Has(memberInfo))
             {
-                throw new InvalidOperationException($"{memberInfo} must be virtual because it has the [Once] attribute.");
+                throw new OnceException($"{memberInfo} must be virtual because it has the [Once] attribute.");
             }
         }
 
