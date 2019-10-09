@@ -11,8 +11,8 @@ namespace ReplaceWithName
 	
 	    static int Main(string[] args) => Runner.Run(args);
 
-	    [Description("example command line option")]
-	    public string ExampleOption {get; set;}
+	    [Once, Description("example command line option")]
+	    public virtual string ExampleOption {get; set;}
 	
 	    [Once, Description("example action")]
 	    public virtual async Task ExampleAction()
