@@ -144,7 +144,27 @@ namespace Amg.Build
         /// <param name="x"></param>
         /// <param name="mapper"></param>
         /// <returns></returns>
-        public static Y? Map<Y, X>(this X? x, Func<X, Y?> mapper) where X: class where Y: class
+        public static Y Map<Y, X>(this X? x, Func<X, Y> onNotNull, Func<Y> onNull) where X: class where Y: class
+        {
+            if (x == null)
+            {
+                return onNull();
+            }
+            else
+            {
+                return onNotNull(x);
+            }
+        }
+
+        /// <summary>
+        /// Transforms x into type Y when x is not null. Returns null otherwise.
+        /// </summary>
+        /// <typeparam name="Y"></typeparam>
+        /// <typeparam name="X"></typeparam>
+        /// <param name="x"></param>
+        /// <param name="mapper"></param>
+        /// <returns></returns>
+        public static Y? Map<Y, X>(this X? x, Func<X, Y?> onNotNull) where X : class where Y : class
         {
             if (x == null)
             {
@@ -152,7 +172,7 @@ namespace Amg.Build
             }
             else
             {
-                return mapper(x);
+                return onNotNull(x);
             }
         }
 

@@ -164,17 +164,26 @@ namespace Amg.Build
         }
 
         /// <summary>
-        /// Returns the parent directory or null, if no parent directory exists for path.
+        /// Sequence of parent directories, starting with path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static IEnumerable<string> Up(this string path)
+        {
+            for (string? i = path.Absolute(); i != null; i = i.ParentOrNull())
+            {
+                yield return i;
+            }
+        }
+
+        /// <summary>
+        /// Returns the parent directory. Throws, if no parent directory exists for path.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
         public static string Parent(this string path)
         {
-            var p = Path.GetDirectoryName(path);
-            if (String.IsNullOrEmpty(p))
-            {
-                p = Path.GetDirectoryName(path.Absolute());
-            }
+            var p = path.ParentOrNull();
             if (p == null)
             {
                 throw new ArgumentOutOfRangeException(nameof(path), path, "Cannot determine parent.");
@@ -182,6 +191,15 @@ namespace Amg.Build
             return p;
         }
 
+        public static string? ParentOrNull(this string path)
+        {
+            var p = Path.GetDirectoryName(path);
+            if (String.IsNullOrEmpty(p))
+            {
+                p = Path.GetDirectoryName(path.Absolute());
+            }
+            return p;
+        }
         /// <summary>
         /// Reads all text in a file. Returns null on error.
         /// </summary>

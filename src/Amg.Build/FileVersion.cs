@@ -33,7 +33,7 @@ namespace Amg.Build
             }
         });
 
-        static bool Ignore(string  _)
+        public static bool DefaultIgnore(string  _)
         {
             var n = _.FileName();
             return n.Equals("bin")
@@ -42,6 +42,12 @@ namespace Amg.Build
         }
 
         public static async Task<FileVersion?> Get(string path)
+        {
+            return await Get(path, _ => DefaultIgnore(_));
+        }
+
+        public static async Task<FileVersion?> Get(string path, Func<string, bool> ignore)
+
         {
             if (path.IsFile())
             {
@@ -62,7 +68,7 @@ namespace Amg.Build
                     LastWriteTimeUtc = default(DateTime),
                     Length = 0,
                     Childs = (await path.EnumerateFileSystemEntries()
-                    .Where(_ => !Ignore(_))
+                    .Where(_ => !ignore(_))
                     .Select(async _ => await Get(_))
                     .Result())
                     .NotNull()

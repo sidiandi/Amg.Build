@@ -82,7 +82,11 @@ namespace Amg.Build
         {
             End = DateTime.UtcNow;
             this.Exception = exception;
-            Logger.Fatal(@"{target} failed. Reason: {exception}", this, Summary.ErrorDetails(this));
+            Logger.Fatal(@"{target} failed. Reason: {exception}", this, 
+                Logger.IsEnabled(Serilog.Events.LogEventLevel.Information)
+                    ? Summary.ErrorDetails(this)
+                    : Summary.ShortErrorDetails(this)
+                    );
             var invocationFailed = new InvocationFailedException(this);
             return invocationFailed;
         }

@@ -84,11 +84,27 @@ namespace Amg.Build
                 }
                 else
                 {
-                    o.WriteLine($"{ex.GetType()}: {ex.Message}");
+                    o.WriteLine($@"{ex.Message}
+
+Exception:
+
+{ex.GetType()}: {ex.Message}
+
+");
                     o.Write(ex.StackTrace.SplitLines()
                         .Where(_ => !Regex.IsMatch(_, @"(at System.Threading.|--- End of stack trace from previous location where exception was thrown ---|Amg.Build.InvocationInfo.TaskHandler.GetReturnValue)"))
                         .Join());
+                    o.WriteLine();
                 }
+            }
+        });
+
+        internal static IWritable ShortErrorDetails(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
+        {
+            var ex = failed.Exception;
+            if (ex != null)
+            {
+                o.Write(ex.Message);
             }
         });
 

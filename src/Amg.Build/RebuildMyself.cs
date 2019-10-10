@@ -97,7 +97,7 @@ namespace Amg.Build
                 return null;
             }
 
-            var cmdFile = sourceDir.Parent().Combine(name + ".cmd");
+            var cmdFile = sourceDir.Parent()!.Combine(name + ".cmd");
             if (cmdFile == null || !cmdFile.IsFile())
             {
                 Logger.Debug("{cmdFile} not found.", cmdFile);

@@ -59,7 +59,7 @@ namespace Amg.Build
             var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
             if (existing.Any())
             {
-                throw new System.IO.IOException($"Already exists: {existing.Join(", ")}");
+                throw new System.IO.IOException($"Cannot create because these files already exist: {existing.Join(", ")}");
             }
             await Create(s.CmdFile, "name.cmd");
             await Create(s.CsprojFile, "name.name.csproj");

@@ -18,47 +18,100 @@ namespace amgbuild
             return Runner.Run(args);
         }
 
-        static string PathFromName(string name)
+        static string ResolveNewCmdFile(string? name)
         {
-            if (name.Contains("."))
+            var cmdFile = name == null
+                ? defaultCmdFileName
+                : name;
+
+            if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
             {
-                // treat as path
-                var path = name.Absolute();
-                if (!path.HasExtension(SourceCodeLayout.CmdExtension))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(name), name, $"Must have {SourceCodeLayout.CmdExtension} extension.");
-                }
-                return path;
+                cmdFile = cmdFile + SourceCodeLayout.CmdExtension;
             }
-            else
-            {
-                return (name + SourceCodeLayout.CmdExtension).Absolute();
-            }
+
+            cmdFile = cmdFile.Absolute();
+
+            return cmdFile;
         }
 
         [Once]
         [Description("Create an Amg.Build script")]
-        public virtual async Task<SourceCodeLayout> New(string name)
+        public virtual async Task<string> New(string? name = null)
         {
-            var path = PathFromName(name);
-            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(path);
-            return sourceLayout;
+            var resolvedCmdFile = ResolveNewCmdFile(name);
+            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(resolvedCmdFile);
+            Logger.Information("Amg.Build script {cmdFile} created.", sourceLayout.CmdFile);
+            return sourceLayout.CmdFile;
         }
 
-        [Once, Description("Fix an Amg.Build script")]
-        public virtual Task Fix(string cmdFile)
+        const string defaultCmdFileName = "build.cmd";
+
+        static string FindDefaultCmdFile(string startDirectory)
         {
-            if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
+            var c = startDirectory.Combine(defaultCmdFileName);
+            if (c.IsFile())
             {
-                throw new ArgumentOutOfRangeException(nameof(cmdFile), cmdFile, "Must have .cmd extension.");
+                return c;
             }
 
-            if (!cmdFile.IsFile())
+            foreach (var d in startDirectory.Up())
             {
-                throw new ArgumentOutOfRangeException(nameof(cmdFile), cmdFile, "File not found.");
+                var p = d.ParentOrNull();
+                if (p != null)
+                {
+                    c = p.Combine(d.FileName() + SourceCodeLayout.CmdExtension);
+                    if (c.IsFile())
+                    {
+                        return c;
+                    }
+                }
             }
 
-            return FixInternal(cmdFile);
+            throw new ArgumentOutOfRangeException(
+                nameof(startDirectory),
+                startDirectory,
+                $"No {SourceCodeLayout.CmdExtension} file found in {startDirectory}");
+        }
+
+        static string FindExistingCmdFile(string? cmdFileSpec, string startDirectory)
+        {
+            return cmdFileSpec.Map(spec =>
+            {
+                if (spec.IsDirectory())
+                {
+                    return FindDefaultCmdFile(spec);
+                }
+                var cmdFile = spec;
+                if (!cmdFile.HasExtension(SourceCodeLayout.CmdExtension))
+                {
+                    cmdFile = cmdFile + SourceCodeLayout.CmdExtension;
+                }
+
+                if (!cmdFile.IsFile())
+                {
+                    throw new ArgumentOutOfRangeException(nameof(spec), spec, "File not found.");
+                }
+
+                return cmdFile;
+            },
+            () =>
+            {
+                return FindDefaultCmdFile(startDirectory);
+            });
+
+        }
+
+        [Once, Description("The script (.cmd) to work with.")]
+        public virtual string? Script { get; set; }
+
+        [Once]
+        public virtual string CmdFile => FindExistingCmdFile(Script, System.Environment.CurrentDirectory);
+
+        [Once, Description("Fix a script")]
+        public virtual Task Fix()
+        {
+            Logger.Information("Fixing {CmdFile}", CmdFile);
+            return FixInternal(CmdFile);
         }
 
         async Task FixInternal(string cmdFile)
@@ -72,6 +125,13 @@ namespace amgbuild
         {
             var version = Assembly.GetEntryAssembly()!.NugetVersion();
             return await Task.FromResult(version);
+        }
+
+        [Once, Description("Open in Visual Studio")]
+        public virtual async Task Open()
+        {
+            var layout = new SourceCodeLayout(CmdFile);
+            await Tools.Cmd.Run("start", layout.CsprojFile);
         }
     }
 }
