@@ -39,7 +39,7 @@ namespace amgbuild
         public virtual async Task<string> New(string? name = null)
         {
             var resolvedCmdFile = ResolveNewCmdFile(name);
-            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(resolvedCmdFile);
+            var sourceLayout = await Amg.Build.SourceCodeLayout.Create(resolvedCmdFile, overwrite: Overwrite);
             Logger.Information("Amg.Build script {cmdFile} created.", sourceLayout.CmdFile);
             return sourceLayout.CmdFile;
         }
@@ -103,6 +103,9 @@ namespace amgbuild
 
         [Once, Description("The script (.cmd) to work with.")]
         public virtual string? Script { get; set; }
+
+        [Once, Description("overwrite existing files")]
+        public virtual bool Overwrite { get; set; }
 
         [Once]
         public virtual string CmdFile => FindExistingCmdFile(Script, System.Environment.CurrentDirectory);

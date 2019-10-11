@@ -35,17 +35,24 @@ namespace Amg.Build
         public string Configuration => "Debug";
         public string TargetFramework => "netcoreapp3.0";
 
-        static async Task Create(string path, string templateName)
+        static async Task Create(string path, string templateName, BackupDirectory? backup)
         {
             var text = ReadTemplate(templateName);
-            await CreateFromText(path, text);
+            await CreateFromText(path, text, backup);
         }
 
-        static async Task CreateFromText(string path, string text)
+        static async Task CreateFromText(string path, string text, BackupDirectory? backup)
         {
             if (path.Exists())
             {
-                throw new System.IO.IOException($"File {path} exists");
+                if (backup == null)
+                {
+                    throw new System.IO.IOException($"File {path} exists");
+                }
+                else
+                {
+                    await backup.Move(path);
+                }
             }
             Logger.Information("Write {path}", path);
             await path
@@ -53,18 +60,24 @@ namespace Amg.Build
                 .WriteAllTextIfChangedAsync(text);
         }
 
-        public static async Task<SourceCodeLayout> Create(string cmdFilePath)
+        public static async Task<SourceCodeLayout> Create(string cmdFilePath, bool overwrite = false)
         {
             var s = new SourceCodeLayout(cmdFilePath);
             var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
-            if (existing.Any())
+            if (!overwrite && existing.Any())
             {
                 throw new System.IO.IOException($"Cannot create because these files already exist: {existing.Join(", ")}");
             }
-            await Create(s.CmdFile, "name.cmd");
-            await Create(s.CsprojFile, "name.name.csproj");
-            await CreateFromText(s.ProgramCs, s.ProgramCsText);
-            await CreateFromText(s.PropsFile, s.PropsText);
+
+            var backup = overwrite
+                ? new BackupDirectory(s.RootDir)
+                : null;
+
+            await Create(s.CmdFile, "name.cmd", backup);
+            await Create(s.CsprojFile, "name.name.csproj", backup);
+            await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
+            await CreateFromText(s.PropsFile, s.PropsText, backup);
+            await Create(".gitignore", "name..gitignore", backup);
             return s;
         }
 
@@ -146,7 +159,6 @@ namespace Amg.Build
             var backup = new BackupDirectory(this.CmdFile.Parent());
             await FixFile(CmdFile, BuildCmdText, backup);
             await FixFile(PropsFile, PropsText, backup);
-            await FixFile(SourceDir.Combine(".gitignore"), ReadTemplate("name..gitignore"), backup);
         }
 
         string BuildCsProjText => ReadTemplate("build.csproj.template");

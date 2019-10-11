@@ -23,12 +23,25 @@ namespace Amg.Build
                 .EnsureDirectoryExists();
         }
 
-        public async Task<string> Move(string file)
+        /// <summary>
+        /// Moves path to backup directory if it exists 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns>backup location</returns>
+        public async Task<string> Move(string path)
         {
-            var dest = backupDirectory.Combine(file.RelativeTo(directory))
+            var dest = backupDirectory.Combine(path.RelativeTo(directory))
                 .EnsureParentDirectoryExists();
-            Logger.Information("Backup {file} at {backup}", file, dest);
-            return await file.Move(dest);
+
+            if (path.Exists())
+            {
+                Logger.Information("Backup {file} at {backup}", path, dest);
+                return await path.Move(dest);
+            }
+            else
+            {
+                return dest;
+            }
         }
     }
 }
