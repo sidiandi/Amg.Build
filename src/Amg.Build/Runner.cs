@@ -27,7 +27,7 @@ namespace Amg.Build
             StackFrame frame = new StackFrame(1);
             var method = frame.GetMethod();
             var type = method.DeclaringType;
-            return Run(type, commandLineArguments);
+            return Run(Once.Create(type), commandLineArguments);
         }
 
         /// <summary>
