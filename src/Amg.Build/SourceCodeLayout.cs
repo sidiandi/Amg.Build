@@ -77,7 +77,7 @@ namespace Amg.Build
             await Create(s.CsprojFile, "name.name.csproj", backup);
             await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
             await CreateFromText(s.PropsFile, s.PropsText, backup);
-            await Create(".gitignore", "name..gitignore", backup);
+            await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
             return s;
         }
 
