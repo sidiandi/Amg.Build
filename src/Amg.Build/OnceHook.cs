@@ -54,7 +54,7 @@ Following fields are not readonly:
                 BindingFlags.NonPublic);
 
             var writableProperties = properties.Where(
-                f => f.CanWrite && !Once.Has(f));
+                f => f.CanWrite && !OnceContainer.Has(f));
 
             if (writableProperties.Any())
             {
@@ -66,7 +66,7 @@ Following properties do not fulfill the condition:
 
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
         {
-            if (Once.Has(memberInfo))
+            if (OnceContainer.Has(memberInfo))
             {
                 throw new OnceException($"{memberInfo} must be virtual because it has the [Once] attribute.");
             }
@@ -74,7 +74,7 @@ Following properties do not fulfill the condition:
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
-            if (Once.Has(methodInfo))
+            if (OnceContainer.Has(methodInfo))
             {
                 types.Add(methodInfo.DeclaringType);
                 return true;

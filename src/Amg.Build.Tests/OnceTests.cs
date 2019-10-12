@@ -85,13 +85,12 @@ namespace Amg.Build
        [Test]
         public void OnlyExecutesOnce()
         {
-            var once = new Once();
             var name = "Alice";
-            var hello = once.Get<Hello>(name);
+            var hello = Once.Create<Hello>(name);
             hello.Greet();
             hello.Greet();
 
-            var hello2 = once.Get<Hello>(name);
+            var hello2 = Once.Create<Hello>(name);
             hello2.Greet();
             hello2.Greet();
 
