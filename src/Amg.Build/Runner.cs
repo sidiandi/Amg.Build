@@ -27,11 +27,12 @@ namespace Amg.Build
             StackFrame frame = new StackFrame(1);
             var method = frame.GetMethod();
             var type = method.DeclaringType;
-            return Run(Once.Create(type), commandLineArguments);
+
+            return RunType(type, commandLineArguments);
         }
 
         /// <summary>
-        /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
+        /// Creates an CommandsClass instance and runs the contained commands according to the passed commandLineArguments.
         /// </summary>
         /// Call this method directly from your Main()
         /// <typeparam name="CommandsClass"></typeparam>
@@ -42,16 +43,21 @@ namespace Amg.Build
             string[] commandLineArguments)
             where CommandsClass : class
         {
+            return RunType(typeof(CommandsClass), commandLineArguments);
+        }
+
+        internal static int Run(object commandObject, string[] commandLineArguments)
+        {
             var runner = new RunContext(
-                () => Once.Create<CommandsClass>(),
+                () => commandObject,
                 commandLineArguments);
             return (int)runner.Run().Result;
         }
 
-        public static int Run(object commandObject, string[] commandLineArguments)
+        static int RunType(Type commandObjectType, string[] commandLineArguments)
         {
             var runner = new RunContext(
-                () => commandObject,
+                () => Once.Create(commandObjectType),
                 commandLineArguments);
             return (int)runner.Run().Result;
         }

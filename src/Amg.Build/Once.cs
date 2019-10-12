@@ -11,15 +11,6 @@ using System.Threading.Tasks;
 
 namespace Amg.Build
 {
-    /// <summary>
-    /// Creates proxies for classes that execute methods marked with [Once] only once.
-    /// </summary>
-
-    internal interface IInvocationSource
-    {
-        IEnumerable<InvocationInfo> Invocations { get; }
-    }
-
     public class Once
     {
         /// <summary>
