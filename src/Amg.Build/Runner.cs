@@ -34,15 +34,18 @@ namespace Amg.Build
         /// Creates an TargetsDerivedClass instance and runs the contained targets according to the passed commandLineArguments.
         /// </summary>
         /// Call this method directly from your Main()
-        /// <typeparam name="TargetsDerivedClass"></typeparam>
+        /// <typeparam name="CommandsClass"></typeparam>
         /// <param name="commandLineArguments"></param>
         /// <param name="callerFilePath"></param>
         /// <returns>Exit code: 0 if success, unequal to 0 otherwise.</returns>
-        public static int Run<TargetsDerivedClass>(
+        public static int Run<CommandsClass>(
             string[] commandLineArguments)
-            where TargetsDerivedClass : class
+            where CommandsClass : class
         {
-            return Run(typeof(TargetsDerivedClass), commandLineArguments);
+            var runner = new RunContext(
+                () => Once.Create<CommandsClass>(),
+                commandLineArguments);
+            return (int)runner.Run().Result;
         }
 
         public static int Run(object commandObject, string[] commandLineArguments)
