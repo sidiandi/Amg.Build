@@ -149,9 +149,23 @@ namespace Amg.Build
             }
         }
 
-        public static SourceCodeLayout? Get(Type targetsType)
+        public static SourceCodeLayout? Get(object commandObject)
         {
-            return FromDll(targetsType.Assembly.Location);
+            return GetFromType(commandObject.GetType());
+        }
+
+        public static SourceCodeLayout? GetFromType(Type type)
+        {
+            var assembly = type.Assembly;
+            if (assembly.IsDynamic)
+            {
+                var interfaces = type.GetInterfaces();
+                return GetFromType(interfaces.First(_ => !_.Assembly.IsDynamic));
+            }
+            else
+            {
+                return FromDll(assembly.Location);
+            }
         }
 
         public async Task Fix()

@@ -19,7 +19,7 @@ namespace Amg.Build
     {
         private static Serilog.ILogger Logger => Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private readonly Type targetsType;
+        private readonly Func<object> commandObjectFactory;
         private readonly string[] commandLineArguments;
 
         public enum ExitCode
@@ -33,11 +33,11 @@ namespace Amg.Build
         }
 
         public RunContext(
-            Type targetsType,
+            Func<object> commandObjectFactory,
             string[] commandLineArguments
             )
         {
-            this.targetsType = targetsType;
+            this.commandObjectFactory = commandObjectFactory;
             this.commandLineArguments = commandLineArguments;
         }
 
@@ -54,7 +54,9 @@ namespace Amg.Build
                 return null;
             }
 
-            var sourceCodeLayout = SourceCodeLayout.Get(targetsType);
+            var instance = commandObjectFactory();
+
+            var sourceCodeLayout = SourceCodeLayout.Get(instance);
             if (sourceCodeLayout != null)
             {
                 await WatchInternal(sourceCodeLayout, this.commandLineArguments);
@@ -141,22 +143,10 @@ namespace Amg.Build
 
                 await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
 
-                var source = SourceCodeLayout.Get(targetsType);
+                var commandObject = commandObjectFactory();
+                var source = SourceCodeLayout.Get(commandObject);
 
-                object CreateOnceProxy(Type type)
-                {
-                    try
-                    {
-                        return Once.Create(type);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new OnceException($"Error in using the [Once] attribute in {type}.", ex);
-                    }
-                }
-
-                var onceProxy = CreateOnceProxy(targetsType);
-                var combinedOptions = new CombinedOptions(onceProxy);
+                var combinedOptions = new CombinedOptions(commandObject);
                 if (source != null)
                 {
                     combinedOptions.SourceOptions = new SourceOptions();
@@ -203,7 +193,7 @@ namespace Amg.Build
 
                     try
                     {
-                        result = await RunCommand(onceProxy, method, parameters);
+                        result = await RunCommand(commandObject, method, parameters);
                         if (result != null)
                         {
                             result.Dump().Write(Console.Out);
@@ -216,7 +206,7 @@ namespace Amg.Build
                 }
 
                 var invocations = new[] { GetStartupInvocation() }
-                    .Concat(((IInvocationSource)onceProxy).Invocations);
+                    .Concat(((IInvocationSource)commandObject).Invocations);
 
                 if (combinedOptions.Options.Summary)
                 {

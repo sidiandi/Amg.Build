@@ -45,6 +45,14 @@ namespace Amg.Build
             return Run(typeof(TargetsDerivedClass), commandLineArguments);
         }
 
+        public static int Run(object commandObject, string[] commandLineArguments)
+        {
+            var runner = new RunContext(
+                () => commandObject,
+                commandLineArguments);
+            return (int)runner.Run().Result;
+        }
+
         /// <summary>
         /// Returns the directory where build.cmd resides.
         /// </summary>
@@ -53,23 +61,6 @@ namespace Amg.Build
         public static string RootDirectory([CallerFilePath] string callerFilePath = null!)
         {
             return callerFilePath.Parent().Parent();
-        }
-
-        static int Run(Type type, string[] commandLineArguments)
-        {
-            var runner = new RunContext(type, commandLineArguments);
-            return (int)runner.Run().Result;
-        }
-
-        /// <summary>
-        /// Creates an instance of T where all methods marked with [Once] are only executed once.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        [Obsolete("use Once.Create")]
-        public static T Once<T>(params object[] ctorArguments) where T: class
-        {
-            return Amg.Build.Once.Create<T>(ctorArguments);
         }
     }
 }

@@ -11,8 +11,10 @@ namespace Amg.Build
         [Test]
         public void Run()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { });
-            Assert.That(exitCode, Is.EqualTo(0));
+            var c = Once.Create<MyBuild>();
+            var exitCode = Runner.Run(c, new string[] { });
+            Console.WriteLine(c.result.Join());
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
         }
 
         [Test]

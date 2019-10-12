@@ -19,7 +19,7 @@ namespace Amg.Build
         [Test]
         public async Task DownloadTool()
         {
-            var nuget = Runner.Once<Nuget>();
+            var nuget = Once.Create<Nuget>();
             var sevenZip = await nuget.GetTool(
                 "7-Zip.CommandLine",
                 version: "18.1.0",

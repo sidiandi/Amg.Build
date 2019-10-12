@@ -31,7 +31,7 @@ namespace Amg.Build
         /// <returns></returns>
         public static Tools Create()
         {
-            return Runner.Once<Tools>();
+            return Once.Create<Tools>();
         }
 
         [Once] protected virtual Nuget NugetHelper => Once.Create<Nuget>();

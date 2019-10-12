@@ -29,7 +29,7 @@ namespace Amg.Build
         protected virtual Dotnet Dotnet => Once.Create<Dotnet>();
 
         [Once]
-        MyBuild Nested => Runner.Once<MyBuild>();
+        protected virtual MyBuild Nested => Once.Create<MyBuild>();
 
         [Once, Description("Print the dotnet version")]
         public virtual async Task Version()
