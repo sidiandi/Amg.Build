@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 using Castle.DynamicProxy;
 
 namespace Amg.Build

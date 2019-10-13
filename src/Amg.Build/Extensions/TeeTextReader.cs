@@ -1,13 +1,13 @@
 ﻿using System.IO;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
-    internal class TeeStream : TextReader
+    internal class TeeTextReader : TextReader
     {
         readonly private TextReader input;
         readonly private TextWriter output;
 
-        public TeeStream(TextReader input, TextWriter output)
+        public TeeTextReader(TextReader input, TextWriter output)
         {
             this.input = input;
             this.output = output;

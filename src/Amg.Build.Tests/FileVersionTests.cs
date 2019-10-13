@@ -1,9 +1,10 @@
-﻿using NUnit.Framework;
+﻿using Amg.Extensions;
+using NUnit.Framework;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     [TestFixture]
     public class FileVersionTests : TestBase

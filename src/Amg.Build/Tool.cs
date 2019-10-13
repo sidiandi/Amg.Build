@@ -1,4 +1,4 @@
-using Amg.Build.Extensions;
+using Amg.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,8 +14,7 @@ namespace Amg.Build
     /// Start a command line tool.
     /// </summary>
     /// Immutable. To customize, use the With... methods.
-    [Obsolete("Use Tools.Default")]
-    public partial class Tool : ITool
+    partial class Tool : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 

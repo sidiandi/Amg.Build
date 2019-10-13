@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     [TestFixture]
     public class GlobTests : TestBase

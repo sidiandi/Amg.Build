@@ -1,11 +1,10 @@
-﻿using Amg.Build.Extensions;
-using Amg.Build.FileSystem;
+﻿using Amg.Extensions;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.FileSystem
 {
     class FileVersion : IEquatable<FileVersion>
     {

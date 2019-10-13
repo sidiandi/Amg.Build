@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
 
     sealed class BackupDirectory : IBackup

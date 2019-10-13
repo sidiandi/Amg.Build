@@ -1,4 +1,4 @@
-﻿using Amg.Build.Extensions;
+﻿using Amg.Extensions;
 using Amg.CommandLine;
 using System;
 using System.IO;

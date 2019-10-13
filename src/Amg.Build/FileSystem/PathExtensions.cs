@@ -1,4 +1,4 @@
-﻿using Amg.Build.Extensions;
+﻿using Amg.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     /// <summary>
     /// Extensions to work with file system objects.

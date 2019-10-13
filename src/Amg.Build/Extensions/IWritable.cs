@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     /// <summary>
     /// Something that can be written to a TextWriter

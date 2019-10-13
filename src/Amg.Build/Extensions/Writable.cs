@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     class Writable : IWritable
     {

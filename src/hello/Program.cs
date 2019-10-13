@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 using System;
 using Amg.Build;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 using System.Linq;
 using System.ComponentModel;
 using Cake.Common.IO;
-using Amg.Build.FileSystem;
+using Amg.FileSystem;
 
 namespace hello
 {

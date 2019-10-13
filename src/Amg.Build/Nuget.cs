@@ -1,5 +1,5 @@
-﻿using Amg.Build.Extensions;
-using Amg.Build.FileSystem;
+﻿using Amg.Extensions;
+using Amg.FileSystem;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;

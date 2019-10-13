@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
+using Amg.Build;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
     internal static class InternalExtensions
     {

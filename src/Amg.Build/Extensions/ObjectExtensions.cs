@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
     public static class ObjectExtensions
     {

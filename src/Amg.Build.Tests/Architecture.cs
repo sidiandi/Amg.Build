@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 
 namespace Amg.Build
 {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     public interface IBackup : System.IDisposable
     {

@@ -1,5 +1,5 @@
-﻿using Amg.Build.Extensions;
-using Amg.Build.FileSystem;
+﻿using Amg.Extensions;
+using Amg.FileSystem;
 using Amg.CommandLine;
 using Serilog;
 using Serilog.Core;

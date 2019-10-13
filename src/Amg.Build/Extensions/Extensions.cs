@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
 
     /// <summary>
@@ -57,7 +57,7 @@ namespace Amg.Build.Extensions
         /// <returns></returns>
         public static TextReader Tee(this TextReader input, TextWriter output)
         {
-            return new TeeStream(input, output);
+            return new TeeTextReader(input, output);
         }
 
 
@@ -69,7 +69,7 @@ namespace Amg.Build.Extensions
         /// <returns></returns>
         public static TextReader Tee(this TextReader input, Action<string> output)
         {
-            return new TeeStream(input, output.AsTextWriter());
+            return new TeeTextReader(input, output.AsTextWriter());
         }
 
         /// <summary>

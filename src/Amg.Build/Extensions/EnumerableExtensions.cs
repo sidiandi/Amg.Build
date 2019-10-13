@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
     /// <summary>
     /// Extensions for IEnumerable

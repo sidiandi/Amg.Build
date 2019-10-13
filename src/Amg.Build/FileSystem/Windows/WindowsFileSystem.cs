@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Amg.Build.FileSystem.Windows
+namespace Amg.FileSystem.Windows
 {
     /// <summary>
     /// Operations that access the Windows file system

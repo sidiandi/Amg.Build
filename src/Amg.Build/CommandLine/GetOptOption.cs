@@ -1,8 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Reflection;
-using Amg.Build;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 using static Amg.CommandLine.GetOptParser;
 
 namespace Amg.CommandLine

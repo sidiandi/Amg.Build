@@ -13,7 +13,7 @@ namespace Amg.Build
         public void ActionIsCalledForEveryLine()
         {
             var lines = new List<String>();
-            var s = Amg.Build.Extensions.Utils.AsTextWriter(_ => lines.Add(_));
+            var s = Amg.Extensions.Utils.AsTextWriter(_ => lines.Add(_));
 
             s.WriteLine("Hello");
             s.Write("W");

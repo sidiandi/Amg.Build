@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
-using Amg.Build.Extensions;
+using Amg.Extensions;
 
 namespace Amg.Build
 {

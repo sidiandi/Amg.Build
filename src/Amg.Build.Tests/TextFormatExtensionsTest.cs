@@ -1,9 +1,8 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Linq;
-using Amg.Build.Extensions;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     [TestFixture]
     public class TextFormatExtensionsTest

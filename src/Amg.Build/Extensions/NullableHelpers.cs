@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
     public static class NullableHelpers
     {

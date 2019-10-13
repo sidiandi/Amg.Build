@@ -7,17 +7,19 @@ namespace Amg.Build
     /// <summary>
     /// ITool implementation that only logs, but does not run the tool. For testing purposes.
     /// </summary>
-    public class MockTool : ITool
+    public static class MockTool
+    { 
+        public static ITool Create()
+        {
+            return new MockToolImplementation();
+        }
+    }
+
+    class MockToolImplementation : ITool
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private string fileName;
-
-        /// <summary />
-        public MockTool(string filename)
-        {
-            this.fileName = filename;
-        }
+        private string? fileName;
 
         /// <summary />
         public async Task<IToolResult> Run(params string[] args)
@@ -30,7 +32,7 @@ namespace Amg.Build
         /// <summary />
         public ITool WithArguments(params string[] args)
         {
-            throw new System.NotImplementedException();
+            return this;
         }
 
         /// <summary />

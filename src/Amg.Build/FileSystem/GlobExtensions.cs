@@ -1,11 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Amg.Build.Tests")]
-
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     /// <summary>
     /// Convenience extensions for Glob

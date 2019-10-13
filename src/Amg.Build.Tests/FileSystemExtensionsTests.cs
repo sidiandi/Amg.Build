@@ -5,9 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Amg.Build.Extensions;
+using Amg.Extensions;
+using Amg.Build;
 
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     [TestFixture]
     public class FileSystemExtensionsTests : TestBase

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace Amg.Build.Extensions
+namespace Amg.Extensions
 {
     /// <summary>
     /// Calls an <![CDATA[ Action<string> ]]> for every written line.

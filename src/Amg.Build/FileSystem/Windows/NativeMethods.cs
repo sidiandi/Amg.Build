@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
 
-namespace Amg.Build.FileSystem.Windows
+namespace Amg.FileSystem.Windows
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "<Pending>")]
     internal static class NativeMethods

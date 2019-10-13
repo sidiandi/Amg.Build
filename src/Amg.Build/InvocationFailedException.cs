@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Extensions;
+using System;
 using System.Runtime.Serialization;
 
 namespace Amg.Build

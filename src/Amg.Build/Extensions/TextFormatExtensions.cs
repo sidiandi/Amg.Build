@@ -1,10 +1,9 @@
-﻿using Amg.Build.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     /// <summary>
     /// Extensions for formatted text output

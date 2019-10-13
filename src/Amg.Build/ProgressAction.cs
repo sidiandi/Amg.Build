@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     internal class ProgressAction<T> : IProgress<T>
     {

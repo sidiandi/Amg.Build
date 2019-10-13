@@ -1,15 +1,12 @@
-﻿using Amg.Build.Extensions;
+﻿using Amg.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-[assembly: InternalsVisibleTo("Amg.Build.Tests")]
-
-namespace Amg.Build.FileSystem
+namespace Amg.FileSystem
 {
     /// <summary>
     /// Search files

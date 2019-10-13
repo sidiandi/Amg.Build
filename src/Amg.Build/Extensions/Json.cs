@@ -1,11 +1,10 @@
-﻿using Amg.Build.Extensions;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
-    internal static class Json
+    public static class Json
     {
         public static Task<T> Read<T>(string path) => Task.Factory.StartNew(() =>
         {

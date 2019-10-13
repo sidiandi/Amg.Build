@@ -3,9 +3,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Amg.Build.FileSystem;
+using Amg.FileSystem;
 
-namespace Amg.Build
+namespace Amg
 {
     public class TestBase
     {
