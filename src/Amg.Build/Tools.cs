@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using Amg.Build.FileSystem;
+using System;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -50,7 +52,7 @@ namespace Amg.Build
         [Once]
         public virtual async Task<ITool> Get(Uri uri)
         {
-            var dir = FileSystemExtensions.GetProgramDataDirectory(typeof(Tools))
+            var dir = typeof(Tools).GetProgramDataDirectory()
                 .Combine(uri.ToString().Md5Checksum());
             var file = dir.Combine(uri.LocalPath.FileName());
             if (!file.IsFile())

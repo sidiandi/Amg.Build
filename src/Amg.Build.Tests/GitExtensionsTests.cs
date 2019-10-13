@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Threading.Tasks;
+using Amg.Build.FileSystem;
 
 namespace Amg.Build
 {

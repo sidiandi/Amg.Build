@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     internal class CopyFileProgress
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     /// <summary>
     /// Information about a file system hard link

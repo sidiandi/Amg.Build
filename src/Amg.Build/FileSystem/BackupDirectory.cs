@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
-    public class BackupDirectory
+
+    sealed class BackupDirectory : IBackup
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -21,6 +22,11 @@ namespace Amg.Build
             this.backupDirectory = backupRoot.Combine(directory.FileName() + "." + DateTime.UtcNow.ToFileName())
                 .GetNotExisting()
                 .EnsureDirectoryExists();
+        }
+
+        public void Dispose()
+        {
+            // no activities are required to close a backup to a directory
         }
 
         /// <summary>

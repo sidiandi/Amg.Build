@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 
-namespace Amg.Build
+namespace Amg.Build.Extensions
 {
     [TestFixture]
     public class EnumerableExtensionsTests : TestBase

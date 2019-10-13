@@ -2,11 +2,12 @@
 using System.ComponentModel;
 using System.Reflection;
 using Amg.Build;
+using Amg.Build.Extensions;
 using static Amg.CommandLine.GetOptParser;
 
 namespace Amg.CommandLine
 {
-    public class GetOptOption
+    class GetOptOption
     {
         private readonly object _object;
 

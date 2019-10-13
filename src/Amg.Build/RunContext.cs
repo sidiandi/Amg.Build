@@ -1,4 +1,6 @@
-﻿using Amg.CommandLine;
+﻿using Amg.Build.Extensions;
+using Amg.Build.FileSystem;
+using Amg.CommandLine;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -196,7 +198,7 @@ namespace Amg.Build
                         result = await RunCommand(commandObject, method, parameters);
                         if (result != null)
                         {
-                            result.Dump().Write(Console.Out);
+                            result.Destructure().Write(Console.Out);
                         }
                     }
                     catch (InvocationFailedException)

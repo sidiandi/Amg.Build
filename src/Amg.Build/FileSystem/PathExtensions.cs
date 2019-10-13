@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,14 +7,14 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     /// <summary>
     /// Extensions to work with file system objects.
     /// </summary>
     /// These extensions of `string` allow fluent handling of file and directory paths.
     /// For examples, see Amg.Build.Tests/FileSystemExtensionsTests.cs
-    public static class FileSystemExtensions
+    public static class PathExtensions
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
@@ -991,6 +992,16 @@ are more recent.
                     return await path.Move(backup);
                 }
             }
+        }
+
+        public static IBackup Backup(this string sourceRoot)
+        {
+            return sourceRoot.Backup(Path.GetTempPath());
+        }
+
+        public static IBackup Backup(this string sourceRoot, string dest)
+        {
+            return new BackupDirectory(sourceRoot, dest);
         }
     }
 }

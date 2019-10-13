@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using System;
 using System.Linq;
+using Amg.Build.Extensions;
 
 namespace Amg.Build
 {

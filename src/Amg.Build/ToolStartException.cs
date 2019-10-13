@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -47,7 +48,7 @@ namespace Amg.Build
             Path = GetPath(StartInfo),
             Environment = StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
                 .Select(_ => $"set {_.Key}={_.Value}").Join(),
-        }.Dump()}";
+        }.Destructure()}";
 
         /// <summary />
         public string DiagnosticMessage => $@"{base.Message}
@@ -60,6 +61,6 @@ namespace Amg.Build
             StartInfo.WorkingDirectory,
             Environment = StartInfo.EnvironmentVariables.Cast<System.Collections.DictionaryEntry>()
                 .Select(_ => $"set {_.Key}={_.Value}").Join(),
-        }.Dump()}";
+        }.Destructure()}";
     }
 }

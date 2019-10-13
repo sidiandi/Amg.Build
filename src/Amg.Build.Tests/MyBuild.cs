@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using Amg.Build.Extensions;
 
 namespace Amg.Build
 {

@@ -1,4 +1,5 @@
-﻿using Castle.DynamicProxy;
+﻿using Amg.Build.Extensions;
+using Castle.DynamicProxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,21 +37,26 @@ namespace Amg.Build
                     BindingFlags.Instance |
                     BindingFlags.Public |
                     BindingFlags.NonPublic)
-                    .Any(_ => Has(_));
+                    .Any(_ => HasOnceAttribute(_));
             }
         }
 
-        internal static PropertyInfo? GetPropertyInfo(MethodInfo method)
+        /// <summary>
+        /// Get the property info for a getter or setter method.
+        /// </summary>
+        /// <param name="getterOrSetterMethod"></param>
+        /// <returns>property info, or null if property info for the passed method does not exist.</returns>
+        internal static PropertyInfo? GetPropertyInfo(MethodInfo getterOrSetterMethod)
         {
-            if (!method.IsSpecialName) return null;
-            return method.DeclaringType.GetProperty(method.Name.Substring(4),
+            if (!getterOrSetterMethod.IsSpecialName) return null;
+            return getterOrSetterMethod.DeclaringType.GetProperty(getterOrSetterMethod.Name.Substring(4),
               BindingFlags.Instance | 
               BindingFlags.Static | 
               BindingFlags.NonPublic |
               BindingFlags.Public);
         }
 
-        internal static bool Has(MemberInfo member)
+        public static bool HasOnceAttribute(MemberInfo member)
         {
             var r = member.GetCustomAttribute<OnceAttribute>() != null;
             if (r)
@@ -64,7 +70,7 @@ namespace Amg.Build
                     var property = GetPropertyInfo(method);
                     return property == null
                         ? r
-                        : Has(property);
+                        : HasOnceAttribute(property);
                 }
                 else
                 {

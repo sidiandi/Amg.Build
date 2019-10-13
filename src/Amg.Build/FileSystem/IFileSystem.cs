@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     interface IFileSystem
     {

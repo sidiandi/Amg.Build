@@ -1,4 +1,4 @@
-﻿namespace Amg.Build
+﻿namespace Amg.Build.FileSystem
 {
     class CopyFileOptions
     {

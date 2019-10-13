@@ -1,4 +1,4 @@
-﻿using Amg.Build;
+﻿using Amg.Build.Extensions;
 using System;
 using System.Linq;
 

@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Amg.Build.Extensions;
+using Amg.Build.FileSystem;
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 

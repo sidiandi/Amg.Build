@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,7 @@ using System.Text.RegularExpressions;
 
 [assembly: InternalsVisibleTo("Amg.Build.Tests")]
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     /// <summary>
     /// Search files

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Amg.Build.Tests")]
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     /// <summary>
     /// Convenience extensions for Glob

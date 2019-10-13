@@ -2,18 +2,18 @@
 using System.IO;
 using System.Text;
 
-namespace Amg.Build
+namespace Amg.Build.Extensions
 {
     /// <summary>
     /// Calls an <![CDATA[ Action<string> ]]> for every written line.
     /// </summary>
-    public class ActionStream : TextWriter
+    class ActionTextWriter : TextWriter
     {
         private readonly Action<string> output;
         StringBuilder? startedLine = null;
 
         /// <summary />
-        public ActionStream(Action<string> output)
+        public ActionTextWriter(Action<string> output)
         {
             this.output = output;
         }
@@ -27,7 +27,7 @@ namespace Amg.Build
             }
             else if (value == '\n')
             {
-                WriteLine(String.Empty);
+                WriteLine(string.Empty);
             }
             else
             {

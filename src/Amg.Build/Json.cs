@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Amg.Build.Extensions;
+using Newtonsoft.Json;
 using System.IO;
 using System.Threading.Tasks;
 

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Reflection;
 
-namespace Amg.Build
+namespace Amg.Build.Extensions
 {
     internal static class InternalExtensions
     {

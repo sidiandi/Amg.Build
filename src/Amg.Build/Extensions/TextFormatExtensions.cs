@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,15 +33,7 @@ namespace Amg.Build
             return "\"" + x.Replace("\"", "\\\"") + "\"";
         }
 
-
-        /// <summary>
-        /// Writes instance properties
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static IWritable Dump(this object x) => GetWritable(_ => _.Dump(x));
-
-        static TextWriter Dump(this TextWriter w, object x)
+        public static TextWriter Dump(this TextWriter w, object x)
         {
             var type = x.GetType();
             if (type.IsPrimitive || type.Equals(typeof(string)))
@@ -109,36 +102,6 @@ namespace Amg.Build
             else
             {
                 return Table(e.Select(_ => properties.Select(p => CellText(p.GetValue(_, index)))));
-            }
-        }
-
-        /// <summary>
-        /// object properties as table
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static IWritable ToPropertiesTable(this object x)
-        {
-            return x.GetType()
-                .GetProperties()
-                .Select(p => new { p.Name, Value = p.GetValue(x, new object[] { }) })
-                .ToTable(header: false);
-        }
-
-        /// <summary>
-        /// like ToString, but never throws. x can also be null.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static string SafeToString(this object x)
-        {
-            try
-            {
-                return x.ToString();
-            }
-            catch
-            {
-                return String.Empty;
             }
         }
 

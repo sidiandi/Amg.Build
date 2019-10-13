@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Amg.Build.Extensions;
 using Castle.DynamicProxy;
 
 namespace Amg.Build

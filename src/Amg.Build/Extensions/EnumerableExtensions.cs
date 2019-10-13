@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Build.Extensions
 {
     /// <summary>
     /// Extensions for IEnumerable
@@ -323,7 +323,8 @@ namespace Amg.Build
         /// <param name="metricUnit"></param>
         /// <param name="description"></param>
         /// <returns></returns>
-        public static IEnumerable<T> Progress<T>(this IEnumerable<T> e, 
+        public static IEnumerable<T> Progress<T>(
+            this IEnumerable<T> e, 
             Func<T, double>? metric = null, 
             TimeSpan updateInterval = default(TimeSpan),
             string? metricUnit = null,
@@ -379,6 +380,15 @@ namespace Amg.Build
                 updateInterval: updateInterval
                 );
         }
+
+        /// <summary>
+        /// Shows progress information is enumerating takes longer
+        /// </summary>
+        /// <param name="e"></param>
+        /// <param name="progress"></param>
+        /// <param name="metric"></param>
+        /// <param name="updateInterval"></param>
+        /// <returns></returns>
 
         public static IEnumerable<T> Progress<T>(this IEnumerable<T> e,
             IProgress<ProgressUpdate<T>> progress,
@@ -458,14 +468,6 @@ namespace Amg.Build
             public TimeSpan Elapsed { get; }
         }
 
-        /// <summary>
-        /// Shows progress information is enumerating takes longer
-        /// </summary>
-        /// <param name="e"></param>
-        /// <param name="progress"></param>
-        /// <param name="metric"></param>
-        /// <param name="updateInterval"></param>
-        /// <returns></returns>
         /// <summary>
         /// Splits a string and returns the re-combined components
         /// </summary>

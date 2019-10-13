@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Linq;
+using Amg.Build.Extensions;
 
 namespace Amg.Build
 {
@@ -26,7 +27,7 @@ namespace Amg.Build
             Assert.AreEqual(@"A: 1
 B: 2
 C: 3
-", o.Dump().ToString());
+", o.Destructure().ToString());
         }
 
         [Test]
@@ -36,8 +37,9 @@ C: 3
             Assert.AreEqual(@"[0] 0
 [1] 1
 [2] 2
-", o.Dump().ToString());
+", o.Destructure().ToString());
         }
+
         [Test]
         public void PrintTable()
         {

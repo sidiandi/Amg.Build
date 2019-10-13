@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 
-namespace Amg.Build.Windows
+namespace Amg.Build.FileSystem.Windows
 {
     class HardLinkInfo : IHardLinkInfo
     {

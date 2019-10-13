@@ -3,7 +3,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Build.FileSystem
 {
     [TestFixture]
     public class FileVersionTests : TestBase

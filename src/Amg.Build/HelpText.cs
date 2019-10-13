@@ -1,4 +1,5 @@
-﻿using Amg.CommandLine;
+﻿using Amg.Build.Extensions;
+using Amg.CommandLine;
 using System;
 using System.IO;
 using System.Linq;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Amg.Build.Extensions;
 using Castle.DynamicProxy;
 
 namespace Amg.Build
@@ -54,7 +55,7 @@ Following fields are not readonly:
                 BindingFlags.NonPublic);
 
             var writableProperties = properties.Where(
-                f => f.CanWrite && !OnceContainer.Has(f));
+                f => f.CanWrite && !OnceContainer.HasOnceAttribute(f));
 
             if (writableProperties.Any())
             {
@@ -66,7 +67,7 @@ Following properties do not fulfill the condition:
 
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
         {
-            if (OnceContainer.Has(memberInfo))
+            if (OnceContainer.HasOnceAttribute(memberInfo))
             {
                 throw new OnceException($"{memberInfo} must be virtual because it has the [Once] attribute.");
             }
@@ -74,7 +75,7 @@ Following properties do not fulfill the condition:
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
-            if (OnceContainer.Has(methodInfo))
+            if (OnceContainer.HasOnceAttribute(methodInfo))
             {
                 types.Add(methodInfo.DeclaringType);
                 return true;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Amg.Build.Extensions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace Amg.Build
                 begin,
                 end,
                 duration = end - begin
-            }.ToPropertiesTable().Write(@out);
+            }.PropertiesTable().Write(@out);
 
             @out.WriteLine();
 
