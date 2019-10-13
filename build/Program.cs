@@ -340,7 +340,7 @@ namespace Build
                 }
                 return new[] { nugetPushSource };
             }
-            catch (Exception e)
+            catch (ToolException)
             {
                 return Enumerable.Empty<string>();
             }
