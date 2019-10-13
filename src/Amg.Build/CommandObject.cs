@@ -14,8 +14,9 @@ namespace Amg.Build
             return method.GetCustomAttribute<DescriptionAttribute>() != null;
         }
 
-        public static IEnumerable<MethodInfo> Commands(Type type)
+        public static IEnumerable<MethodInfo> Commands(object commandObject)
         {
+            var type = commandObject.GetType();
             return type.GetMethods()
                 .Where(IsPublicCommand)
                 .ToList();
@@ -31,7 +32,7 @@ namespace Amg.Build
 
         public static MethodInfo? GetDefaultCommand(object commandObject)
         {
-            var commands = Commands(commandObject.GetType());
+            var commands = Commands(commandObject);
             var defaultTarget = new[]
             {
                 commands.FirstOrDefault(_ => _.GetCustomAttribute<DefaultAttribute>() != null),

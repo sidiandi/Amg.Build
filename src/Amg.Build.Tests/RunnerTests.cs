@@ -19,6 +19,13 @@ namespace Amg.Build
         }
 
         [Test]
+        public void HasDefaultCommand()
+        {
+            var c = Once.Create<MyBuild>();
+            Assert.That(CommandObject.HasDefaultCommand(c));
+        }
+
+        [Test]
         public void Ascii()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "--ascii-art" });

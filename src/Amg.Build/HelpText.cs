@@ -51,7 +51,7 @@ namespace Amg.Build
 
         private static void PrintTargetsList(TextWriter @out, object targets)
         {
-            var publicTargets = Commands(targets.GetType());
+            var publicTargets = Commands(targets);
             publicTargets
                 .Select(_ => new { indent, Syntax = Syntax(_), Description = Description(_) })
                 .ToTable(header: false)
@@ -63,7 +63,7 @@ namespace Amg.Build
             var name = Assembly.GetEntryAssembly().GetName().Name;
             @out.WriteLine($@"Usage: {name} [options] <command> [command parameters]...
 ");
-            var targets = Commands(options.OnceProxy.GetType());
+            var targets = Commands(options.OnceProxy);
             if (targets.Any())
             {
                 @out.WriteLine(@"Commands:");

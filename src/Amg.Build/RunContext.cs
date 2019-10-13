@@ -153,7 +153,7 @@ namespace Amg.Build
 
                 if (
                     combinedOptions.Options.Help || 
-                    (!CommandObject.HasDefaultCommand(combinedOptions) && commandLineArguments.Length == 0)
+                    (!CommandObject.HasDefaultCommand(commandObject) && commandLineArguments.Length == 0)
                     )
                 {
                     HelpText.Print(Console.Out, combinedOptions);
@@ -329,7 +329,7 @@ Details:
         /// <returns></returns>
         internal static CommandInvocation ParseCommand(
             ref ArraySegment<string> arguments,
-            object targets)
+            object commandObject)
         {
             var r = arguments;
 
@@ -337,7 +337,7 @@ Details:
             {
                 try
                 {
-                    var defaultTarget = CommandObject.GetDefaultCommand(targets);
+                    var defaultTarget = CommandObject.GetDefaultCommand(commandObject);
                     if (defaultTarget == null)
                     {
                         throw new CommandLineArgumentException(arguments, "no default command");
@@ -354,7 +354,7 @@ Details:
                 }
             }
 
-            var candidates = CommandObject.Commands(targets.GetType());
+            var candidates = CommandObject.Commands(commandObject);
 
             var commandName = GetOptParser.GetFirst(ref r);
             try
