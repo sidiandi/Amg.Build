@@ -182,20 +182,13 @@ namespace Amg.Build
                 Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
 
                 var args = new ArraySegment<string>(combinedOptions.Options.TargetAndArguments);
-                while (true)
+                foreach (var command in ParseCommands(ref args, combinedOptions.OnceProxy))
                 {
-                    var (method, parameters) = ParseCommands(ref args, combinedOptions.OnceProxy);
-
-                    if (method == null)
-                    {
-                        break;
-                    }
-
                     object? result = null;
 
                     try
                     {
-                        result = await RunCommand(commandObject, method, parameters);
+                        result = await RunCommand(commandObject, command.method, command.parameters);
                         if (result != null)
                         {
                             result.Destructure().Write(Console.Out);
@@ -295,15 +288,46 @@ Details:
 
         string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
+        internal static IEnumerable<CommandInvocation> ParseCommands(
+            ref ArraySegment<string> arguments,
+            object commandObject)
+        {
+            var commands = new List<CommandInvocation>();
+            while (true)
+            {
+                var c = ParseCommand(ref arguments, commandObject);
+                if (c != null)
+                {
+                    commands.Add(c);
+                }
+                if (arguments.Count == 0)
+                {
+                    break;
+                }
+            }
+            return commands;
+        }
+
+        internal class CommandInvocation
+        {
+            public CommandInvocation(MethodInfo method, object?[] parameters)
+            {
+                this.method = method;
+                this.parameters = parameters;
+            }
+            public MethodInfo method;
+            public object?[] parameters;
+        }
+        
         /// <summary>
         /// Extract the method to be called on targets and its arguments from command line arguments
         /// </summary>
         /// <param name="arguments">all command line arguments (required for error display)</param>
         /// <param name="options">parsed options</param>
         /// <returns></returns>
-        internal static (MethodInfo? method, object?[] parameters) ParseCommands(
-        ref ArraySegment<string> arguments,
-        object targets)
+        internal static CommandInvocation ParseCommand(
+            ref ArraySegment<string> arguments,
+            object targets)
         {
             var r = arguments;
 
@@ -314,12 +338,12 @@ Details:
                     var defaultTarget = CommandObject.GetDefaultCommand(targets);
                     if (defaultTarget == null)
                     {
-                        return (null, new object[] { });
+                        throw new CommandLineArgumentException(arguments, "no default command");
                     }
                     else
                     {
                         arguments = r;
-                        return (defaultTarget, new string[] { });
+                        return new CommandInvocation(defaultTarget, new object[] { });
                     }
                 }
                 catch (Exception e)
@@ -340,7 +364,7 @@ Details:
                     );
                 var parameterValues = ParseParameters(ref r, command);
                 arguments = r;
-                return (command, parameterValues);
+                return new CommandInvocation(command, parameterValues);
             }
             catch (ArgumentOutOfRangeException e)
             {

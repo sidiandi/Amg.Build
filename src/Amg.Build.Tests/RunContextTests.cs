@@ -1,19 +1,18 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Linq;
-using System.Reflection;
 
 namespace Amg.Build
 {
     [TestFixture]
     class RunContextTests
     {
-        internal static (MethodInfo? method, object?[] parameters, ArraySegment<string> rest)
-            ParseCommands(string[] arguments, object targets)
+        internal static (RunContext.CommandInvocation c, ArraySegment<string> rest)
+            ParseCommand(string[] arguments, object targets)
         {
             var rest = new ArraySegment<string>(arguments);
-            var (method, parameters) = RunContext.ParseCommands(ref rest, targets);
-            return (method, parameters, rest);
+            var c = RunContext.ParseCommand(ref rest, targets);
+            return (c, rest);
         }
 
         [Test]
@@ -22,7 +21,7 @@ namespace Amg.Build
             var co = new CombinedOptions(Once.Create<MyBuild>());
             Assert.Throws<CommandLine.CommandLineArgumentException>(() =>
             {
-                ParseCommands(new[] { "say-hello" }, co);
+                ParseCommand(new[] { "say-hello" }, co);
             });
         }
 
@@ -30,7 +29,7 @@ namespace Amg.Build
         public void Rest()
         {
             var co = Once.Create<MyBuild>();
-            var (m,p,r) = ParseCommands(new[] { "say-hello", "name", "additional" }, co);
+            var (c,r) = ParseCommand(new[] { "say-hello", "name", "additional" }, co);
             Assert.That(r.SequenceEqual(new[] { "additional" }));
         }
 
@@ -38,7 +37,7 @@ namespace Amg.Build
         public void OptionalParameter()
         {
             var co = Once.Create<MyBuild>();
-            var (m, p, r) = ParseCommands(new[] { "say-something" }, co);
+            var (c, r) = ParseCommand(new[] { "say-something" }, co);
             Assert.That(r.SequenceEqual(new string[] { }));
         }
     }
