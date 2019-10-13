@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.ComponentModel;
 using System.Linq;
 using System.Collections.Generic;
+using Amg.FileSystem;
+using Amg.Extensions;
 
 namespace Build
 {
@@ -19,8 +21,8 @@ namespace Build
         string year => DateTime.UtcNow.ToString("yyyy");
         string copyright => $"Copyright (c) {Company} {year}";
 
-        [Description("Release or Debug. Default: Release")]
-        public string Configuration { get; set; } = ConfigurationRelease;
+        [Once, Description("Release or Debug. Default: Release")]
+        public virtual string Configuration { get; set; } = ConfigurationRelease;
 
         const string ConfigurationRelease = "Release";
         const string ConfigurationDebug = "Debug";
