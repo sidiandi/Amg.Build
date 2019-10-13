@@ -19,16 +19,19 @@ namespace Amg.Build
 
         IWritable PublicApi(Assembly a) => TextFormatExtensions.GetWritable(w =>
         {
+            w.WriteLine(a.GetName().Name);
             foreach (var t in a.GetTypes()
                 .Where(_ => _.IsPublic))
             {
-                w.Write(PublicApi(t));
+                w.Indent("  ").Write(PublicApi(t));
             }
         });
 
         IWritable PublicApi(Type t) => TextFormatExtensions.GetWritable(w =>
         {
             if (!t.IsPublic) return;
+
+            w.WriteLine(t.FullName);
 
             var publicMethods = t.GetMethods(
                 BindingFlags.Public |
@@ -37,9 +40,10 @@ namespace Amg.Build
                 BindingFlags.DeclaredOnly
                 );
 
+            var iw = w.Indent("  ");
             foreach (var i in publicMethods)
             {
-                w.WriteLine(FullSignature(i));
+                iw.WriteLine($"{i.Name}({Parameters(i)}): {Nice(i.ReturnType)}");
             }
         });
 

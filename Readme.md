@@ -50,6 +50,11 @@ Properties of the Targets container are available as build properties on the com
 
 ## Done
 
+### 0.29
+
+* Starting without command line arguments shows help if no default command is given.
+* Namespace refactoring
+
 ### 0.28
 
 * [Once] properties with setters can only be set once

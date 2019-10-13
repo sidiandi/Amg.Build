@@ -36,21 +36,21 @@ namespace Amg.Build
         public void OnceFail()
         {
             var exitCode = Runner.Run<AClassThatHasMutableFields >(new string[] { });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
         }
 
         [Test]
         public void Fail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii"});
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
         }
 
         [Test]
         public void ToolFail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "tool-fails", "-vq" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.TargetFailed));
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
         }
 
         [Test]

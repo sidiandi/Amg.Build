@@ -28,10 +28,9 @@ namespace Amg.Build
         {
             Success = 0,
             UnknownError = 1,
-            RebuildRequired = 2,
             HelpDisplayed = 3,
             CommandLineError = 4,
-            TargetFailed = 5
+            CommandFailed = 5
         }
 
         public RunContext(
@@ -41,12 +40,6 @@ namespace Amg.Build
         {
             this.commandObjectFactory = commandObjectFactory;
             this.commandLineArguments = commandLineArguments;
-        }
-
-        static ExitCode RequireRebuild()
-        {
-            Console.Out.WriteLine("Build script requires rebuild.");
-            return ExitCode.RebuildRequired;
         }
 
         async Task<ExitCode?> Watch()
@@ -66,7 +59,7 @@ namespace Amg.Build
             }
             else
             {
-                return ExitCode.TargetFailed;
+                return ExitCode.CommandFailed;
             }
         }
 
@@ -158,7 +151,8 @@ namespace Amg.Build
                 
                 GetOptParser.Parse(ref rest, combinedOptions);
 
-                if (combinedOptions.Options.Help)
+                if (combinedOptions.Options.Help || 
+                    (CommandObject.HasDefaultCommand(combinedOptions) && commandLineArguments.Length == 0))
                 {
                     HelpText.Print(Console.Out, combinedOptions);
                     return ExitCode.HelpDisplayed;
@@ -187,9 +181,15 @@ namespace Amg.Build
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
 
-                for (var args = new ArraySegment<string>(combinedOptions.Options.TargetAndArguments); args.Any();)
+                var args = new ArraySegment<string>(combinedOptions.Options.TargetAndArguments);
+                while (true)
                 {
                     var (method, parameters) = ParseCommands(ref args, combinedOptions.OnceProxy);
+
+                    if (method == null)
+                    {
+                        break;
+                    }
 
                     object? result = null;
 
@@ -221,7 +221,7 @@ namespace Amg.Build
                 }
 
                 return invocations.Failed()
-                    ? ExitCode.TargetFailed
+                    ? ExitCode.CommandFailed
                     : ExitCode.Success;
             }
             catch (OnceException ex)
@@ -229,7 +229,7 @@ namespace Amg.Build
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine("See https://github.com/sidiandi/Amg.Build/ for instructions.");
-                return ExitCode.TargetFailed;
+                return ExitCode.CommandFailed;
             }
             catch (CommandLineArgumentException ex)
             {
@@ -295,21 +295,13 @@ Details:
 
         string BuildScriptDll => Assembly.GetEntryAssembly().Location;
 
-        internal static (MethodInfo method, object?[] parameters, ArraySegment<string> rest)
-            ParseCommands(string[] arguments, object targets)
-        {
-            var rest = new ArraySegment<string>(arguments);
-            var (method, parameters) = ParseCommands(ref rest, targets);
-            return (method, parameters, rest);
-        }
-
         /// <summary>
         /// Extract the method to be called on targets and its arguments from command line arguments
         /// </summary>
         /// <param name="arguments">all command line arguments (required for error display)</param>
         /// <param name="options">parsed options</param>
         /// <returns></returns>
-        internal static (MethodInfo method, object?[] parameters) ParseCommands(
+        internal static (MethodInfo? method, object?[] parameters) ParseCommands(
         ref ArraySegment<string> arguments,
         object targets)
         {
@@ -319,10 +311,10 @@ Details:
             {
                 try
                 {
-                    var defaultTarget = CommandObject.GetDefaultTarget(targets);
+                    var defaultTarget = CommandObject.GetDefaultCommand(targets);
                     if (defaultTarget == null)
                     {
-                        throw new CommandLineArgumentException(r, "no default command");
+                        return (null, new object[] { });
                     }
                     else
                     {

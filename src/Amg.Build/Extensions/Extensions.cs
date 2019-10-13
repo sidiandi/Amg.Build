@@ -83,6 +83,20 @@ namespace Amg.Extensions
         }
 
         /// <summary>
+        /// Returns a TextWriter that indents
+        /// </summary>
+        /// <param name="output"></param>
+        /// <returns></returns>
+        public static TextWriter Indent(this TextWriter dest, string prefix)
+        {
+            return new ActionTextWriter(_ =>
+            {
+                dest.Write(prefix);
+                dest.WriteLine(_);
+            });
+        }
+
+        /// <summary>
         /// "Caching" function: get an element of a dictionary or creates it and adds it if it not yet exists.
         /// </summary>
         /// <typeparam name="Key"></typeparam>

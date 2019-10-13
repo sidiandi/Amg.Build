@@ -29,7 +29,7 @@ namespace Amg.Build
                 : a.Description;
         }
 
-        public static MethodInfo? GetDefaultTarget(object commandObject)
+        public static MethodInfo? GetDefaultCommand(object commandObject)
         {
             var commands = Commands(commandObject.GetType());
             var defaultTarget = new[]
@@ -40,6 +40,11 @@ namespace Amg.Build
             }.FirstOrDefault(_ => _ != null);
 
             return defaultTarget;
+        }
+
+        public static bool HasDefaultCommand(object commandObject)
+        {
+            return GetDefaultCommand(commandObject) != null;
         }
     }
 }
