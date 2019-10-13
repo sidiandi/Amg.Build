@@ -151,8 +151,10 @@ namespace Amg.Build
                 
                 GetOptParser.Parse(ref rest, combinedOptions);
 
-                if (combinedOptions.Options.Help || 
-                    (CommandObject.HasDefaultCommand(combinedOptions) && commandLineArguments.Length == 0))
+                if (
+                    combinedOptions.Options.Help || 
+                    (!CommandObject.HasDefaultCommand(combinedOptions) && commandLineArguments.Length == 0)
+                    )
                 {
                     HelpText.Print(Console.Out, combinedOptions);
                     return ExitCode.HelpDisplayed;
