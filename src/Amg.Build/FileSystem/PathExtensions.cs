@@ -192,9 +192,21 @@ namespace Amg.FileSystem
             return p;
         }
 
+        public static string RemoveTrailingDirectorySeparator(this string path)
+        {
+            if (path.EndsWith('/') || path.EndsWith('\\'))
+            {
+                return path.Substring(0, path.Length - 1);
+            }
+            else
+            {
+                return path;
+            }
+        }
+
         public static string? ParentOrNull(this string path)
         {
-            var p = Path.GetDirectoryName(path);
+            var p = Path.GetDirectoryName(path.RemoveTrailingDirectorySeparator());
             if (String.IsNullOrEmpty(p))
             {
                 p = Path.GetDirectoryName(path.Absolute());
@@ -1002,6 +1014,28 @@ are more recent.
         public static IBackup Backup(this string sourceRoot, string dest)
         {
             return new BackupDirectory(sourceRoot, dest);
+        }
+
+        /// <summary>
+        /// True, if path is identical to parent or a descendant of parent
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        public static bool IsDescendantOrSelf(this string path, string parent)
+        {
+            return parent.SplitDirectories()
+                .ZipPadSecond(path.SplitDirectories(), (a, b) => FileNameEqual(a, b))
+                .All(_ => _);
+        }
+
+        static bool FileNameEqual(string? a, string? b)
+        {
+            if (a == null || b== null)
+            {
+                return b == null && a == null;
+            }
+            return a.Equals(b, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

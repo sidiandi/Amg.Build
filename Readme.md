@@ -49,9 +49,13 @@ Properties of the Targets container are available as build properties on the com
 ## Todo
 
 * remove warning when removing old build results
-* complete Amg.FileSystem (Info, copying)
+* complete Amg.FileSystem (copying)
+* How-to documentation: create script, the concept of [Once], Cake
 
 ## Done
+
+* gitignore
+* complete Amg.FileSystem (RelativeTo, IsDescendantOrSelf)
 
 ### 0.29
 

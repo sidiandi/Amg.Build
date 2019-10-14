@@ -4,6 +4,7 @@
     <IsPackable>false</IsPackable>
 	  <NoWarn>CS1591;CS0618</NoWarn>
     <IsTestProject>true</IsTestProject>
+    <RootNamespace>Amg</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

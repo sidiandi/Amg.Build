@@ -157,6 +157,12 @@ namespace Amg.FileSystem
                 return Enumerable.Empty<FileSystemInfo>();
             }
 
+            // do not follow junction points
+            if ((root.Attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                return Enumerable.Empty<FileSystemInfo>();
+            }
+
             var first = glob[0];
             var rest = glob.Skip(1).ToArray();
             var leaf = rest.Length == 0;

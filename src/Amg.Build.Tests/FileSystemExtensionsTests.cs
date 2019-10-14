@@ -269,5 +269,17 @@ namespace Amg.FileSystem
             var f = d.Combine("d", "e", "f");
             Assert.That(d.Combine(f.RelativeTo(d)), Is.EqualTo(f));
         }
+
+        [Test]
+        public void DescendantOrSelf()
+        {
+            var a = @"C:\a\b\c";
+            var b = a.Combine("d");
+            var c = a.Parent();
+
+            Assert.That(a.IsDescendantOrSelf(a));
+            Assert.That(b.IsDescendantOrSelf(a));
+            Assert.That(!c.IsDescendantOrSelf(a));
+        }
     }
 }
