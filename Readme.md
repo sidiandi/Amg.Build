@@ -15,16 +15,17 @@ build
 ````
 
 Edit the build program 
-````
-$ build\build.csproj
+````[cmd]
+amgbuild open
 ````
 
 ## Features
 
-* Pure C#. Write your build tasks as you write any other C# class. 
+* Pure C#. Write your build tasks as you write any other C# class.
+* Fast startup
 * Supports async tasks and automatically achieves maximum possible parallelization of build tasks.
 * Fluent interface for the handling of file system paths.
-* An adapter is available to run [Cake](https://cakebuild.net/) [addins](https://cakebuild.net/addins/).
+* Contains an adapter to run [Cake](https://cakebuild.net/) [addins](https://cakebuild.net/addins/).
 
 ## Concepts
 
@@ -45,6 +46,20 @@ Properties of the Targets container are available as build commands on the comma
 Properties of the Targets container are available as build properties on the command line if
 * they have a public setter
 * they have a System.Component.Description attribute
+
+### `amgbuild`
+
+`amgbuild` is the dotnet tool that supports you while working with your Amg.Build scripts.
+
+Install it with 
+````[cmd]
+dotnet tool install -g amgbuild
+````
+
+amgbuild can 
+* create new scripts (`new`)
+* fix the script files of an existing Amg.Build script (`fix`)
+* open the script in Visual Studio (`open`)
 
 ## Todo
 

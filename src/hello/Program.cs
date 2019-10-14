@@ -15,11 +15,15 @@ namespace hello
 
         static int Main(string[] args) => Runner.Run(args);
 
+        [Once]
+        protected virtual Cake.Core.ICakeContext Cake => Amg.Build.Cake.Cake.CreateContext();
+
         [Once, Description("Demo of the Cake adapter")]
         public virtual void WorkWithCakeAddins()
         {
-            var cake = Amg.Build.Cake.Cake.CreateContext();
-            cake.Zip(Runner.RootDirectory().Combine("hello"), Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
+            Cake.Zip(
+                Runner.RootDirectory().Combine("hello"), 
+                Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
         }
 
         [Once, Description("Greet someone.")]

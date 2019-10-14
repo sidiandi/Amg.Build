@@ -175,6 +175,10 @@ namespace Amg.Build
             var backup = new BackupDirectory(this.CmdFile.Parent());
             await FixFile(CmdFile, BuildCmdText, backup);
             await FixFile(PropsFile, PropsText, backup);
+            
+            // delete old Amg.Build.props file
+            var amgBuildProps = SourceDir.Combine("Amg.Build.props");
+            amgBuildProps.EnsureFileNotExists();
         }
 
         string BuildCsProjText => ReadTemplate("build.csproj.template");
