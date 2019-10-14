@@ -256,7 +256,7 @@ namespace Amg.FileSystem
             var p = await testDir.Combine("a", "b", "c").Touch();
             var t = p.Info()!.LastWriteTimeUtc;
             Assert.That(p.Exists());
-            await Task.Delay(10);
+            await Task.Delay(100);
             await testDir.Combine("a", "b", "c").Touch();
             Assert.That(p.Exists());
             Assert.That(p.Info()!.LastAccessTimeUtc, Is.Not.EqualTo(t));

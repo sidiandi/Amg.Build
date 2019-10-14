@@ -972,14 +972,11 @@ are more recent.
 
         public static Task<string> Touch(this string path) => Task.Factory.StartNew(() =>
         {
-            using (var s = File.Open(
-                path.EnsureParentDirectoryExists(),
-                FileMode.Append, FileAccess.Write))
+            using (var myFileStream = File.Open(path.EnsureParentDirectoryExists(), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite))
             {
-                var length = s.Length;
-                s.Write(new byte[] { 0 }, 0, 1);
-                s.SetLength(length);
+                myFileStream.Close();
             }
+            File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
             return path;
         });
 
