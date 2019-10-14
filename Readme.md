@@ -48,6 +48,9 @@ Properties of the Targets container are available as build properties on the com
 
 ## Todo
 
+* remove warning when removing old build results
+* complete Amg.FileSystem (Info, copying)
+
 ## Done
 
 ### 0.29
