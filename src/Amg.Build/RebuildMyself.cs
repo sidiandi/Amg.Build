@@ -214,8 +214,8 @@ namespace Amg.Build
         static async Task CleanupOldBuildDirectories(SourceInfo source)
         {
             foreach (var dir in source.BuildDirectories()
-                .TakeAllBut(1)
                 .OrderBy(BuildDate)
+                .TakeAllBut(1)
                 )
             {
                 try
@@ -227,7 +227,7 @@ namespace Amg.Build
                 }
                 catch(Exception ex)
                 {
-                    Logger.Warning(ex, "Cannot delete {dir}", dir);
+                    Logger.Debug("Cannot delete {dir} at the moment: {ex}", dir, ex);
                 }
             }
         }
