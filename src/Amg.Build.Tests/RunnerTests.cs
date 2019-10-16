@@ -139,6 +139,7 @@ namespace Amg.Build
             Assert.AreEqual(String.Empty, o.Error);
             Assert.That(o.Out, Does.Not.Contain("--ignore-clean"));
             Assert.That(o.Out, Does.Contain("use-params [items]..."));
+            Assert.That(o.Out, Does.Contain("describe what the script does"));
         }
 
         [Test]

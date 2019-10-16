@@ -6,6 +6,7 @@ using Amg.Extensions;
 
 namespace Amg.Build
 {
+    [Description("describe what the script does")]
     public class MyBuild
     {
         protected MyBuild(string? result)

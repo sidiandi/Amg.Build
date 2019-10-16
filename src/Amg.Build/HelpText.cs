@@ -58,11 +58,25 @@ namespace Amg.Build
                 .Write(@out);
         }
 
+        static string? ScriptDescription(CombinedOptions options)
+        {
+            var type = options.OnceProxy.GetType();
+            var d = type.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
+            return d == null ? null : d.Description;
+        }
+
         public static void Print(TextWriter @out, CombinedOptions options)
         {
             var name = Assembly.GetEntryAssembly().GetName().Name;
             @out.WriteLine($@"Usage: {name} [options] <command> [command parameters]...
 ");
+
+            ScriptDescription(options).Map(_ =>
+            {
+                @out.WriteLine(_);
+                @out.WriteLine();
+            });
+
             var targets = Commands(options.OnceProxy);
             if (targets.Any())
             {
