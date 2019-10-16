@@ -45,7 +45,7 @@ namespace Amg.Build
             }
             catch (Exception exception)
             {
-                Logger.Warning(exception, "Cannot cleanup {args}", args);
+                Logger.Debug("Cannot cleanup {args} at the moment. {exception}", args, exception);
             }
         }
 
