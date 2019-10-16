@@ -250,14 +250,28 @@ namespace Amg.Extensions
         /// <exception cref="ArgumentOutOfRangeException">When query does not identify a named element.</exception>
         public static T? FindByNameOrDefault<T>(this IEnumerable<T> candidates, Func<T, string> name, string query) where T : class
         {
-            try
+            var r = candidates.SingleOrDefault(option =>
+                name(option).Equals(query, StringComparison.InvariantCultureIgnoreCase));
+
+            if (r != null)
             {
-                return candidates.FindByName(name, query);
+                return r;
             }
-            catch (Exception)
+
+            var matches = candidates.Where(option => query.IsAbbreviation(name(option)))
+                .ToList();
+
+            if (matches.Count > 1)
             {
-                return default(T);
+                return null;
             }
+
+            if (matches.Count == 1)
+            {
+                return matches[0];
+            }
+
+            return null;
         }
 
         /// <summary>

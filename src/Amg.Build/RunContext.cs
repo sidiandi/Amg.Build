@@ -368,7 +368,7 @@ Details:
                 arguments = r;
                 return new CommandInvocation(command, parameterValues);
             }
-            catch (ArgumentOutOfRangeException e)
+            catch (ArgumentException e)
             {
                 throw new CommandLineArgumentException(arguments, e);
             }
