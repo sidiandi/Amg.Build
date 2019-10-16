@@ -291,7 +291,7 @@ namespace Amg.Extensions
 
             if (matches.Count > 1)
             {
-                throw new ArgumentOutOfRangeException($@"{query.Quote()} is ambiguous. Could be
+                throw new ArgumentException($@"{query.Quote()} is ambiguous. Could be
 
 {matches.Select(name).Join()}
 
@@ -303,7 +303,7 @@ namespace Amg.Extensions
                 return matches[0];
             }
 
-            throw new ArgumentOutOfRangeException(nameof(query), query, $@"{query.Quote()} not found in {itemsName}
+            throw new ArgumentException($@"{query.Quote()} not found in {itemsName}
 
 {candidates.Select(_ => "  " + name(_)).Join()}
 ");
