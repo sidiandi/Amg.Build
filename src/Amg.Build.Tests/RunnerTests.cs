@@ -10,12 +10,27 @@ namespace Amg.Build
     public class RunnerTests
     {
         [Test]
-        public void Run()
+        public void WhenNoArgumentsAreGivenThenTheDefaultCommandIsRun()
         {
             var c = Once.Create<MyBuild>();
             var exitCode = Runner.Run(c, new string[] { });
-            Console.WriteLine(c.result.Join());
             Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            AssertCalled(c, "MyBuild.All");
+        }
+
+        [Test]
+        public void WhenNoArgumentsAreGivenAndNoDefaultCommandExistsThenTheHelpIsDisplayed()
+        {
+            var c = Once.Create<AClassWithoutDefaultCommand>();
+            var exitCode = Runner.Run(c, new string[] { });
+            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
+        }
+
+        static void AssertCalled(object c, string id)
+        {
+            var i = (c as IInvocationSource)!.Invocations;
+            Console.WriteLine(i.Join());
+            Assert.That(i.Any(_ => _.Id.Equals(id)));
         }
 
         [Test]
@@ -42,14 +57,14 @@ namespace Amg.Build
         [Test]
         public void OnceFail()
         {
-            var exitCode = Runner.Run<AClassThatHasMutableFields >(new string[] { });
+            var exitCode = Runner.Run<AClassThatHasMutableFields>(new string[] { });
             Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
         }
 
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii"});
+            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii" });
             Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
         }
 
