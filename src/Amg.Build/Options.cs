@@ -1,4 +1,4 @@
-﻿using Amg.CommandLine;
+﻿using Amg.GetOpt;
 using System.ComponentModel;
 
 namespace Amg.Build
@@ -43,11 +43,6 @@ namespace Amg.Build
     class Options
     {
         /// <summary />
-        [Operands]
-        [Description("command name and arguments")]
-        public string[] TargetAndArguments { get; set; } = new string[] { };
-
-        /// <summary />
         [Short('h'), Description("Show help and exit")]
         public bool Help { get; set; }
 
@@ -68,8 +63,12 @@ namespace Amg.Build
         {
             OnceProxy = onceProxy;
         }
+        
+        [CommandProvider]
         public object OnceProxy { get; }
+        [CommandProvider]
         public Options Options { get; } = new Options();
+        [CommandProvider]
         public SourceOptions? SourceOptions { get; set; }
     }
 }

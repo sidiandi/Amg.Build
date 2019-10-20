@@ -32,8 +32,14 @@ namespace Amg.Extensions
             return "\"" + x.Replace("\"", "\\\"") + "\"";
         }
 
-        public static TextWriter Dump(this TextWriter w, object x)
+        public static TextWriter Dump(this TextWriter w, object? x)
         {
+            if (x == null)
+            {
+                w.WriteLine("<null>");
+                return w;
+            }
+
             var type = x.GetType();
             if (type.IsPrimitive || type.Equals(typeof(string)))
             {

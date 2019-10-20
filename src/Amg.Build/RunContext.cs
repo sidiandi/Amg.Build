@@ -1,6 +1,6 @@
 ﻿using Amg.Extensions;
 using Amg.FileSystem;
-using Amg.CommandLine;
+using Amg.GetOpt;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -24,15 +24,6 @@ namespace Amg.Build
         private readonly Func<object> commandObjectFactory;
         private readonly string[] commandLineArguments;
 
-        public enum ExitCode
-        {
-            Success = 0,
-            UnknownError = 1,
-            HelpDisplayed = 3,
-            CommandLineError = 4,
-            CommandFailed = 5
-        }
-
         public RunContext(
             Func<object> commandObjectFactory,
             string[] commandLineArguments
@@ -42,7 +33,7 @@ namespace Amg.Build
             this.commandLineArguments = commandLineArguments;
         }
 
-        async Task<ExitCode?> Watch()
+        async Task<int?> Watch()
         {
             if (!String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(nowatchEnvironmentVariable)))
             {
@@ -108,15 +99,16 @@ namespace Amg.Build
             }
         }
 
-        public async Task<ExitCode> Run()
+        public async Task<int> Run()
         {
             try
             {
                 RecordStartupTime();
 
                 var minimalOptions = new Options();
-                var rest = new ArraySegment<string>(commandLineArguments);
-                GetOptParser.Parse(ref rest, minimalOptions, ignoreUnknownOptions: true);
+
+                var parser = new Parser(CommandProviderFactory.FromObject(minimalOptions));
+                parser.Parse(commandLineArguments);
 
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
                 if (needConfigureLogger)
@@ -147,17 +139,14 @@ namespace Amg.Build
                     combinedOptions.SourceOptions = new SourceOptions();
                 }
 
-                rest = new ArraySegment<string>(commandLineArguments);
-                
-                GetOptParser.Parse(ref rest, combinedOptions);
+                var commandProvider = CommandProviderFactory.FromObject(combinedOptions);
+                parser = new Parser(commandProvider);
+                parser.Parse(commandLineArguments);
 
-                if (
-                    combinedOptions.Options.Help || 
-                    (!CommandObject.HasDefaultCommand(commandObject) && commandLineArguments.Length == 0)
-                    )
+                if (combinedOptions.Options.Help)
                 {
-                    HelpText.Print(Console.Out, combinedOptions);
-                    return ExitCode.HelpDisplayed;
+                    Help.PrintHelpMessage(Console.Out, commandProvider);
+                    return Amg.GetOpt.ExitCode.HelpDisplayed;
                 }
 
                 if (combinedOptions.SourceOptions != null && source != null)
@@ -166,7 +155,7 @@ namespace Amg.Build
                     if (sourceOptions.Edit)
                     {
                         await Tools.Cmd.Run("start", source.CsprojFile);
-                        return ExitCode.Success;
+                        return Amg.GetOpt.ExitCode.Success;
                     }
 
                     if (sourceOptions.Debug)
@@ -183,23 +172,37 @@ namespace Amg.Build
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
                 Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
 
-                var args = new ArraySegment<string>(combinedOptions.Options.TargetAndArguments);
-                foreach (var command in ParseCommands(ref args, combinedOptions.OnceProxy))
+                try
                 {
-                    object? result = null;
+                    var results = await parser.Run();
+                    results.Destructure().Write(Console.Out);
+                }
+                catch (NoDefaultCommandException)
+                {
+                    Help.PrintHelpMessage(Console.Out, commandProvider);
+                    return GetOpt.ExitCode.HelpDisplayed;
+                }
+                catch (AggregateException aex)
+                {
+                    int exitCode = ExitCode.Success;
 
-                    try
+                    aex.Handle(exception =>
                     {
-                        result = await RunCommand(commandObject, command.method, command.parameters);
-                        if (result != null)
+                        if (exception is NoDefaultCommandException)
                         {
-                            result.Destructure().Write(Console.Out);
+                            Help.PrintHelpMessage(Console.Out, commandProvider);
+                            exitCode = ExitCode.HelpDisplayed;
+                            return true;
                         }
-                    }
-                    catch (InvocationFailedException)
-                    {
-                        // can be ignored here, because failures are recorded in invocations
-                    }
+                        else
+                        {
+                            Console.Error.WriteLine(exception);
+                            exitCode = ExitCode.UnknownError;
+                            return true;
+                        }
+                    });
+
+                    return exitCode;
                 }
 
                 var invocations = new[] { GetStartupInvocation() }
@@ -224,14 +227,18 @@ namespace Amg.Build
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine("See https://github.com/sidiandi/Amg.Build/ for instructions.");
-                return ExitCode.CommandFailed;
+                return Amg.GetOpt.ExitCode.CommandFailed;
             }
-            catch (CommandLineArgumentException ex)
+            catch (Amg.GetOpt.CommandLineException ex)
             {
                 Console.Error.WriteLine(ex.Message);
                 Console.Error.WriteLine();
                 Console.Error.WriteLine("Run with --help to get help.");
-                return ExitCode.CommandLineError;
+                return Amg.GetOpt.ExitCode.CommandLineError;
+            }
+            catch (InvocationFailedException)
+            {
+                return Amg.GetOpt.ExitCode.CommandFailed;
             }
             catch (Exception ex)
             {
@@ -244,7 +251,7 @@ Submit here: https://github.com/sidiandi/Amg.Build/issues
 Details:
 {ex}
 ");
-                return ExitCode.UnknownError;
+                return Amg.GetOpt.ExitCode.UnknownError;
             }
         }
 
@@ -289,213 +296,6 @@ Details:
         }
 
         string BuildScriptDll => Assembly.GetEntryAssembly().Location;
-
-        internal static IEnumerable<CommandInvocation> ParseCommands(
-            ref ArraySegment<string> arguments,
-            object commandObject)
-        {
-            var commands = new List<CommandInvocation>();
-            while (true)
-            {
-                var c = ParseCommand(ref arguments, commandObject);
-                if (c != null)
-                {
-                    commands.Add(c);
-                }
-                if (arguments.Count == 0)
-                {
-                    break;
-                }
-            }
-            return commands;
-        }
-
-        internal class CommandInvocation
-        {
-            public CommandInvocation(MethodInfo method, object?[] parameters)
-            {
-                this.method = method;
-                this.parameters = parameters;
-            }
-            public MethodInfo method;
-            public object?[] parameters;
-        }
-        
-        /// <summary>
-        /// Extract the method to be called on targets and its arguments from command line arguments
-        /// </summary>
-        /// <param name="arguments">all command line arguments (required for error display)</param>
-        /// <param name="options">parsed options</param>
-        /// <returns></returns>
-        internal static CommandInvocation ParseCommand(
-            ref ArraySegment<string> arguments,
-            object commandObject)
-        {
-            var r = arguments;
-
-            if (r.Count == 0)
-            {
-                try
-                {
-                    var defaultTarget = CommandObject.GetDefaultCommand(commandObject);
-                    if (defaultTarget == null)
-                    {
-                        throw new CommandLineArgumentException(arguments, "no default command");
-                    }
-                    else
-                    {
-                        arguments = r;
-                        return new CommandInvocation(defaultTarget, new object[] { });
-                    }
-                }
-                catch (Exception e)
-                {
-                    throw new CommandLineArgumentException(r, e);
-                }
-            }
-
-            var candidates = CommandObject.Commands(commandObject);
-
-            var commandName = GetOptParser.GetFirst(ref r);
-            try
-            {
-                var command = candidates.FindByName(
-                    _ => GetOptParser.GetLongOptionNameForMember(_.Name),
-                    commandName,
-                    "commands"
-                    );
-                var parameterValues = ParseParameters(ref r, command);
-                arguments = r;
-                return new CommandInvocation(command, parameterValues);
-            }
-            catch (ArgumentException e)
-            {
-                throw new CommandLineArgumentException(arguments, e);
-            }
-        }
-
-        static object ReadArray(ref ArraySegment<string> args, Type arrayType)
-        {
-            var r = args;
-            var elementType = arrayType.GetElementType();
-
-            var items = new List<object?>();
-            while (r.Count > 0)
-            {
-                var i = ReadScalar(ref r, elementType);
-                items.Add(i);
-            }
-            try
-            {
-                var a = ToArray(items, arrayType);
-                args = r;
-                return a;
-            }
-            catch (Exception e)
-            {
-                throw new CommandLineArgumentException(args, $"Cannot read {arrayType}", e);
-            }
-        }
-
-        static object ToArray(IList<object?> items, Type arrayType)
-        {
-            var a = Array.CreateInstance(arrayType.GetElementType(), items.Count);
-            for (int i = 0; i < items.Count; ++i)
-            {
-                a.SetValue(items[i], i);
-            }
-            return a;
-        }
-
-        static object ReadScalar(ref ArraySegment<string> args, Type valueType)
-        {
-            if (valueType.IsArray)
-            {
-                return ReadArray(ref args, valueType);
-            }
-
-            var r = args;
-            var p = GetOptParser.GetFirst(ref r);
-            try
-            {
-                var parameterValue = GetOptOption.Parse(valueType, p);
-                args = r;
-                return parameterValue;
-            }
-            catch (ArgumentException e)
-            {
-                throw new CommandLineArgumentException(args, e);
-            }
-        }
-
-        static object? ReadParameter(ref ArraySegment<string> args, ParameterInfo parameter)
-        {
-            if (parameter.HasDefaultValue)
-            {
-                if (args.Count > 0)
-                {
-                    return ReadScalar(ref args, parameter.ParameterType);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                if (args.Count == 0)
-                {
-                    throw new CommandLineArgumentException(args, $"Parameter {parameter.Name} is missing.");
-                }
-                return ReadScalar(ref args, parameter.ParameterType);
-            }
-        }
-
-        internal static object?[] ParseParameters(ref ArraySegment<string> args, MethodInfo command)
-        {
-            var rest = args;
-            var p = command.GetParameters().Select(_ => ReadParameter(ref rest, _)).ToArray();
-            args = rest;
-            return p;
-        }
-
-        private static async Task<object?> RunCommand(object instance, MethodInfo method, object?[] parameters)
-        {
-            Logger.Information("Run {target}({arguments})", method.Name, parameters.Join(", "));
-            return await AsTask(method.Invoke(instance, parameters));
-        }
-
-        /// <summary>
-        /// Waits if returnValue is Task
-        /// </summary>
-        /// <param name="returnValue"></param>
-        /// <returns></returns>
-        static Task<object?> AsTask(object returnValue)
-        {
-            if (returnValue is Task task)
-            {
-                var type = returnValue.GetType();
-                var resultProperty = type.GetProperty("Result");
-                return task.ContinueWith((_) =>
-                {
-                    try
-                    {
-                        var result = resultProperty == null
-                            ? null
-                            : resultProperty.GetValue(task);
-                        return result;
-                    }
-                    catch (TargetInvocationException targetInvocationException)
-                    {
-                        throw targetInvocationException.InnerException.InnerException;
-                    }
-                });
-            }
-            else
-            {
-                return Task.FromResult<object?>(returnValue);
-            }
-        }
 
         private static LogEventLevel SerilogLogEventLevel(Verbosity verbosity)
         {

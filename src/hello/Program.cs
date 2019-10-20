@@ -6,6 +6,7 @@ using System.Linq;
 using System.ComponentModel;
 using Cake.Common.IO;
 using Amg.FileSystem;
+using Amg.GetOpt;
 
 namespace hello
 {
@@ -42,10 +43,10 @@ namespace hello
             await Greet(Enumerable.Range(0, 100).Select(_ => "Very long name ").Join());
         }
 
-        [Once, Default]
+        [Once, Default, Description("Greet Alice.")]
         public virtual async Task Default()
         {
-            await Greet("Andreas");
+            await Greet("Alice");
         }
 
         [Once, Description("Simulate a failing tool")]

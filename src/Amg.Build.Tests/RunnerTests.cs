@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Linq;
 using Amg.Extensions;
+using Amg.GetOpt;
 
 namespace Amg.Build
 {
@@ -14,7 +15,7 @@ namespace Amg.Build
         {
             var c = Once.Create<MyBuild>();
             var exitCode = Runner.Run(c, new string[] { });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.Success));
             AssertCalled(c, "MyBuild.All");
         }
 
@@ -23,7 +24,7 @@ namespace Amg.Build
         {
             var c = Once.Create<AClassWithoutDefaultCommand>();
             var exitCode = Runner.Run(c, new string[] { });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.HelpDisplayed));
         }
 
         static void AssertCalled(object c, string id)
@@ -31,13 +32,6 @@ namespace Amg.Build
             var i = (c as IInvocationSource)!.Invocations;
             Console.WriteLine(i.Join());
             Assert.That(i.Any(_ => _.Id.Equals(id)));
-        }
-
-        [Test]
-        public void HasDefaultCommand()
-        {
-            var c = Once.Create<MyBuild>();
-            Assert.That(CommandObject.HasDefaultCommand(c));
         }
 
         [Test]
@@ -58,70 +52,70 @@ namespace Amg.Build
         public void OnceFail()
         {
             var exitCode = Runner.Run<AClassThatHasMutableFields>(new string[] { });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandFailed));
         }
 
         [Test]
         public void Fail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandFailed));
         }
 
         [Test]
         public void ToolFail()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "tool-fails", "-vq" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandFailed));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandFailed));
         }
 
         [Test]
         public void CommandLineErrorWrongOption()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "--this-option-is-wrong" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandLineError));
         }
 
         [Test]
         public void CommandLineErrorWrongTarget()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "this-target-is-wrong" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandLineError));
         }
 
         [Test]
         public void CommandLineErrorMissingArguments()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-hello" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.CommandLineError));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.CommandLineError));
         }
 
         [Test]
         public void CommandLineDefaultParameterMissing()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-something" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.Success));
         }
 
         [Test]
         public void CommandLineDefaultParameterPresent()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-something", "hello" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.Success));
         }
 
         [Test]
         public void CommandLineDefaultParameterParams()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "use-params", "1", "2", "3" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.Success));
         }
 
         [Test]
         public void MultipleCommands()
         {
             var exitCode = Runner.Run<MyBuild>(new string[] { "say-something", "hello", "say-something" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.Success));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.Success));
         }
 
         public class MinimalTargets
@@ -134,19 +128,20 @@ namespace Amg.Build
             var o = TestUtil.CaptureOutput(() =>
             {
                 var exitCode = Runner.Run<MyBuild>(new[] { "--help" });
-                Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
+                Assert.That(exitCode, Is.EqualTo(ExitCode.HelpDisplayed));
             });
             Assert.AreEqual(String.Empty, o.Error);
             Assert.That(o.Out, Does.Not.Contain("--ignore-clean"));
-            Assert.That(o.Out, Does.Contain("use-params [items]..."));
-            Assert.That(o.Out, Does.Contain("describe what the script does"));
+            Assert.That(o.Out, Does.Contain("use-params <items: string[]>"));
+            Assert.That(o.Out, Does.Contain("Compile, link, and pack"));
+            Assert.Pass(o.Out);
         }
 
         [Test]
         public void Minimal()
         {
             var exitCode = Runner.Run<MinimalTargets>(new[] { "--help" });
-            Assert.That(exitCode, Is.EqualTo((int)RunContext.ExitCode.HelpDisplayed));
+            Assert.That(exitCode, Is.EqualTo(ExitCode.HelpDisplayed));
         }
 
         [Test]

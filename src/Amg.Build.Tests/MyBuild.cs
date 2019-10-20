@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Amg.Extensions;
+using Amg.GetOpt;
 
 namespace Amg.Build
 {
@@ -19,6 +20,17 @@ namespace Amg.Build
 
         protected MyBuild()
         {
+        }
+
+        [Default, Once, Description("Compile, link, and pack")]
+        public virtual async Task All()
+        {
+            await Task.WhenAll(
+                Compile(),
+                Link(),
+                Pack(),
+                Version()
+                );
         }
 
         [Once, Description("Release or Debug")]
@@ -86,17 +98,6 @@ namespace Amg.Build
             await Compile();
             await Link();
             result.Enqueue(nameof(Pack));
-        }
-
-        [Once, Description("Compile, link, and pack")] [Default]
-        public virtual async Task All()
-        {
-            await Task.WhenAll(
-                Compile(),
-                Link(),
-                Pack(),
-                Version()
-                );
         }
 
         [Once]

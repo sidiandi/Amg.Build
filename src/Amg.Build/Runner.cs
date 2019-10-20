@@ -52,7 +52,7 @@ namespace Amg.Build
             var runner = new RunContext(
                 () => commandObject,
                 commandLineArguments);
-            return (int)runner.Run().Result;
+            return runner.Run().Result;
         }
 
         static int RunType(Type commandObjectType, string[] commandLineArguments)
@@ -60,7 +60,7 @@ namespace Amg.Build
             var runner = new RunContext(
                 () => Once.Create(commandObjectType),
                 commandLineArguments);
-            return (int)runner.Run().Result;
+            return runner.Run().Result;
         }
 
         /// <summary>
