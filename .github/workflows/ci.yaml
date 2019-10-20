@@ -1,0 +1,22 @@
+name: ContinuousIntegration
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Run build.cmd script
+      run: build.cmd pack
+
+    - name: Install NuGet client
+      uses: warrenbuckley/Setup-Nuget@v1
+
+    - name: Add private GitHub registry to NuGet
+      run: nuget sources add -name "GPR" -Source https://nuget.pkg.github.com/sidiandi/index.json -Username sidiandi -Password ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push generated package to GitHub registry
+      run: nuget push .\out\Release\packages\*.nupkg -Source "GPR" -SkipDuplicate
+
