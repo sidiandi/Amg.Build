@@ -68,6 +68,7 @@ amgbuild can
 
 ## Done
 
+* amgbuild packs scripts and installs them as global dotnet tool
 * gitignore
 * complete Amg.FileSystem (RelativeTo, IsDescendantOrSelf)
 * remove warning when removing old build results
