@@ -2,6 +2,7 @@
   <PropertyGroup>
     <Configuration>Debug</Configuration>
     <AmgBuildVersion Condition="$(AmgBuildVersion)==''" >{AmgBuildVersion}</AmgBuildVersion>
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amg.Build" Version="$(AmgBuildVersion)" />

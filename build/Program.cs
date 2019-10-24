@@ -251,9 +251,15 @@ namespace Build
                 }
             }
 
+            async Task TestPack()
+            {
+                await amgbuildTool.Run("--script", name, "pack");
+            }
+
             await ScriptRuns();
             await WhenSourceFileTimestampIsChangedScriptRebuilds();
             await HelpIsDisplayed();
+            await TestPack();
         }
 
         static IDisposable OnDispose(Action a) => new OnDisposeAction(a);
