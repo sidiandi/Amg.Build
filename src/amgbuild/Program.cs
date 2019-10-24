@@ -125,6 +125,9 @@ namespace amgbuild
             await sourceLayout.Fix();
         }
 
+        [Once]
+        protected virtual SourceCodeLayout SourceCodeLayout => new SourceCodeLayout(CmdFile);
+
         [Once, Description("Print version")]
         public virtual async Task<string> Version()
         {
@@ -139,9 +142,15 @@ namespace amgbuild
             await Tools.Cmd.Run("start", layout.CsprojFile);
         }
 
+        [Once]
+        protected virtual ITool DotnetTool => Tools.Default
+            .WithFileName("dotnet.exe")
+            .WithWorkingDirectory(SourceCodeLayout.SourceDir);
+
         [Once, Description("Pack as dotnet tool")]
         public virtual async Task Pack()
         {
+            await DotnetTool.Run("pack");
             await Task.CompletedTask;
         }
     }
