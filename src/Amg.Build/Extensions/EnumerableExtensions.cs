@@ -592,7 +592,7 @@ namespace Amg.Extensions
             return -1;
         }
 
-        public static IEnumerable<string> WhereMatch(IEnumerable<string> lines, Regex re)
+        public static IEnumerable<string> WhereMatch(this IEnumerable<string> lines, Regex re)
         {
             return lines.Select(line => re.Match(line))
                 .Where(_ => _.Success)
