@@ -6,6 +6,9 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Amg.Extensions;
 using Amg.FileSystem;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.Linq;
 
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
@@ -147,11 +150,33 @@ namespace amgbuild
             .WithFileName("dotnet.exe")
             .WithWorkingDirectory(SourceCodeLayout.SourceDir);
 
-        [Once, Description("Pack as dotnet tool")]
-        public virtual async Task Pack()
+        [Once]
+        protected virtual async Task<IEnumerable<string>> Pack(ITool dotnet)
         {
-            await DotnetTool.Run("pack");
-            await Task.CompletedTask;
+            var r = await dotnet.Run("pack");
+            return r.Output.SplitLines().WhereMatch(new Regex(@"Successfully created package '([^']+)'."));
+        }
+        
+        [Once, Description("Pack as dotnet tool")]
+        public virtual async Task<string> Pack()
+        {
+            return (await Pack(DotnetTool)).First();
+        }
+
+        [Once, Description("Install as global dotnet tool")]
+        public virtual async Task Install()
+        {
+            var nupkgFile = await Pack();
+
+            await DotnetTool.DoNotCheckExitCode()
+                .Run("tool", "uninstall", "--global", SourceCodeLayout.Name);
+
+            await DotnetTool.Run(
+                "tool", "install",
+                "--global",
+                "--add-source", nupkgFile.Parent(),
+                SourceCodeLayout.Name
+                );
         }
     }
 }

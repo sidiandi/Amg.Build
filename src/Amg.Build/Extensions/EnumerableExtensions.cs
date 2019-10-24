@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Amg.Extensions
@@ -589,6 +590,13 @@ namespace Amg.Extensions
                 ++index;
             }
             return -1;
+        }
+
+        public static IEnumerable<string> WhereMatch(IEnumerable<string> lines, Regex re)
+        {
+            return lines.Select(line => re.Match(line))
+                .Where(_ => _.Success)
+                .Select(_ => _.Groups[1].Value);
         }
     }
 }
