@@ -80,6 +80,11 @@ namespace amgbuild
 
         static string FindExistingCmdFile(string? cmdFileSpec, string startDirectory)
         {
+            return FindExistingCmdFileInternal(cmdFileSpec, startDirectory).Absolute();
+        }
+
+        static string FindExistingCmdFileInternal(string? cmdFileSpec, string startDirectory)
+        {
             return cmdFileSpec.Map(spec =>
             {
                 if (spec.IsDirectory())
@@ -103,7 +108,6 @@ namespace amgbuild
             {
                 return FindDefaultCmdFile(startDirectory);
             });
-
         }
 
         [Once, Description("The script (.cmd) to work with.")]
