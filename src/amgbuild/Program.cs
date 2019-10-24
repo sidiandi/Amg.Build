@@ -123,7 +123,7 @@ namespace amgbuild
         }
 
         async Task FixInternal(string cmdFile)
-        { 
+        {
             var sourceLayout = new SourceCodeLayout(cmdFile);
             await sourceLayout.Fix();
         }
@@ -156,7 +156,7 @@ namespace amgbuild
             var r = await dotnet.Run("pack");
             return r.Output.SplitLines().WhereMatch(new Regex(@"Successfully created package '([^']+)'."));
         }
-        
+
         [Once, Description("Pack as dotnet tool")]
         public virtual async Task<string> Pack()
         {
@@ -177,6 +177,19 @@ namespace amgbuild
                 "--add-source", nupkgFile.Parent(),
                 SourceCodeLayout.Name
                 );
+        }
+
+        [Once, Description("Adds the script to the users PATH")]
+        public virtual async Task<string> AddToPath()
+        {
+            var dir = System.Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                .Combine(".dotnet", "tools");
+
+            var layout = SourceCodeLayout;
+            var shim = dir.Combine(layout.CmdFile.FileName());
+
+            return await shim
+                .WriteAllTextAsync($@"@call {layout.CmdFile.Quote()} %*");
         }
     }
 }
