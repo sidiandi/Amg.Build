@@ -138,5 +138,11 @@ namespace amgbuild
             var layout = new SourceCodeLayout(CmdFile);
             await Tools.Cmd.Run("start", layout.CsprojFile);
         }
+
+        [Once, Description("Pack as dotnet tool")]
+        public virtual async Task Pack()
+        {
+            await Task.CompletedTask;
+        }
     }
 }

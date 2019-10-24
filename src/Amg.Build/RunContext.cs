@@ -105,20 +105,10 @@ namespace Amg.Build
             {
                 RecordStartupTime();
 
-                var minimalOptions = new Options();
-
-                var parser = new Parser(CommandProviderFactory.FromObject(minimalOptions));
-                parser.Parse(commandLineArguments);
-
+                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
                 bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
                 if (needConfigureLogger)
                 {
-                    var levelSwitch = new LoggingLevelSwitch(SerilogLogEventLevel(minimalOptions.Verbosity));
-                    if (minimalOptions.Verbosity == Verbosity.Quiet)
-                    {
-                        Tools.Default = Tools.Default.Silent();
-                    }
-
                     Log.Logger = new LoggerConfiguration()
                         .MinimumLevel.ControlledBy(levelSwitch)
                         .WriteTo.Console(LogEventLevel.Verbose,
@@ -140,7 +130,7 @@ namespace Amg.Build
                 }
 
                 var commandProvider = CommandProviderFactory.FromObject(combinedOptions);
-                parser = new Parser(commandProvider);
+                var parser = new Parser(commandProvider);
                 parser.Parse(commandLineArguments);
 
                 if (combinedOptions.Options.Help)
@@ -148,6 +138,8 @@ namespace Amg.Build
                     Help.PrintHelpMessage(Console.Out, commandProvider);
                     return Amg.GetOpt.ExitCode.HelpDisplayed;
                 }
+
+                levelSwitch.MinimumLevel = SerilogLogEventLevel(combinedOptions.Options.Verbosity);
 
                 if (combinedOptions.SourceOptions != null && source != null)
                 {
