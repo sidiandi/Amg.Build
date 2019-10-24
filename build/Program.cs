@@ -256,10 +256,16 @@ namespace Build
                 await amgbuildTool.Run("--script", name, "pack");
             }
 
+            async Task TestInstall()
+            {
+                await amgbuildTool.Run("--script", name, "install");
+            }
+
             await ScriptRuns();
             await WhenSourceFileTimestampIsChangedScriptRebuilds();
             await HelpIsDisplayed();
             await TestPack();
+            await TestInstall();
         }
 
         static IDisposable OnDispose(Action a) => new OnDisposeAction(a);
