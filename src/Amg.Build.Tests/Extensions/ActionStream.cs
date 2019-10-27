@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Amg.Build
+namespace Amg.Extensions
 {
     [TestFixture]
     internal class ActionStreamTests : TestBase

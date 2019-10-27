@@ -54,14 +54,28 @@ namespace Amg.Build
         {
             var dir = typeof(Tools).GetProgramDataDirectory()
                 .Combine(uri.ToString().Md5Checksum());
-            var file = dir.Combine(uri.LocalPath.FileName());
+            var fileName = uri.LocalPath.FileName();
+            var file = dir.Combine(fileName);
             if (!file.IsFile())
             {
-                using (var webClient = new WebClient())
+                await dir.EnsureNotExists();
+                var tempDir = dir + "-download";
+                var tempFile = tempDir.Combine(fileName);
+                try
                 {
-                    await webClient.DownloadFileTaskAsync(
-                        uri.ToString(),
-                        file.EnsureParentDirectoryExists());
+                    using (var webClient = new WebClient())
+                    {
+                        webClient.UseDefaultCredentials = true;
+                        webClient.Proxy = WebRequest.GetSystemWebProxy();
+                        await webClient.DownloadFileTaskAsync(
+                            uri.ToString(),
+                            tempFile.EnsureParentDirectoryExists());
+                    }
+                    await tempDir.Move(dir);
+                }
+                finally
+                {
+                    await tempDir.EnsureNotExists();
                 }
             }
 
