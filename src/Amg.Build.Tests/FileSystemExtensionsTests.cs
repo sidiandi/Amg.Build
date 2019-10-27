@@ -163,10 +163,6 @@ namespace Amg.FileSystem
                 .Select(_ => MeasureTime(() => source.CopyTree(dest, useHardlinks: useHardlinks)))
                 .ToList();
             Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
-            if (!useHardlinks)
-            {
-                Assert.That(time.Skip(1).All(_ => _.TotalSeconds < time.First().TotalSeconds * 0.5));
-            }
         }
 
         [Test, TestCase(true), TestCase(false)]
