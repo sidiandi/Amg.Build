@@ -68,6 +68,7 @@ amgbuild can
 
 ## Done
 
+* amgbuild add scripts to user's PATH
 * amgbuild packs scripts and installs them as global dotnet tool
 * gitignore
 * complete Amg.FileSystem (RelativeTo, IsDescendantOrSelf)

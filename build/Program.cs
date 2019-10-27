@@ -261,11 +261,17 @@ namespace Build
                 await amgbuildTool.Run("--script", name, "install");
             }
 
+            async Task TestAddToPath()
+            {
+                await amgbuildTool.Run("--script", name, "add-to-path");
+            }
+
             await ScriptRuns();
             await WhenSourceFileTimestampIsChangedScriptRebuilds();
             await HelpIsDisplayed();
             await TestPack();
             await TestInstall();
+            await TestAddToPath();
         }
 
         static IDisposable OnDispose(Action a) => new OnDisposeAction(a);
