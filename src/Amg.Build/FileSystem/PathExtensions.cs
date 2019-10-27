@@ -620,6 +620,7 @@ are more recent.
             }
             else if (source.IsDirectory())
             {
+                dest.EnsureDirectoryExists();
                 foreach (var i in source.EnumerateFileSystemEntries())
                 {
                     await DoCopyTree(i, dest.Combine(i.FileName()), copyFile);

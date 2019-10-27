@@ -163,7 +163,10 @@ namespace Amg.FileSystem
                 .Select(_ => MeasureTime(() => source.CopyTree(dest, useHardlinks: useHardlinks)))
                 .ToList();
             Logger.Information("{0}", time.Select(_ => new { _.TotalSeconds }).ToTable());
-            Assert.That(FileVersion.Get(source).Equals(FileVersion.Get(dest)));
+            var sourceVersion = (await FileVersion.Get(source))!;
+            var destVersion = (await FileVersion.Get(dest))!;
+            destVersion.Name = sourceVersion.Name;
+            Assert.That(destVersion, Is.EqualTo(sourceVersion));
         }
 
         [Test, TestCase(true), TestCase(false)]

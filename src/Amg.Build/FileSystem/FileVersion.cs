@@ -84,9 +84,30 @@ namespace Amg.FileSystem
 
         public bool Equals(FileVersion other)
         {
-            return Name.Equals(other.Name)
+            var thisNodeEquals = Name.Equals(other.Name)
                 && LastWriteTimeUtc.Equals(other.LastWriteTimeUtc)
-                && Childs.SequenceEqual(other.Childs);
+                && Length.Equals(other.Length);
+
+            if (!thisNodeEquals)
+            {
+                return false;
+            }
+
+            return Childs.SequenceEqual(other.Childs);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj switch
+            {
+                FileVersion f => Equals(f),
+                _ => false
+            };
+        }
+
+        public override int GetHashCode()
+        {
+            return LastWriteTimeUtc.GetHashCode() + 23 * Name.GetHashCode();
         }
 
         public bool IsNewer(FileVersion current)
