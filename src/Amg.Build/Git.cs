@@ -33,7 +33,7 @@ namespace Amg.Build
         /// Git command line tool
         /// </summary>
         [Once]
-        public virtual ITool GitTool => new Tool("git.exe").WithArguments("-C", RootDirectory);
+        public virtual ITool GitTool => Tools.Default.WithFileName("git.exe").WithArguments("-C", RootDirectory);
 
         /// <summary>
         /// Use GitVersion to extract the application version
