@@ -41,9 +41,9 @@ namespace amgbuild
 
         [Once]
         [Description("Create an Amg.Build script")]
-        public virtual async Task<string> New(string? name = null)
+        public virtual async Task<string> New(string? scriptName = null)
         {
-            var resolvedCmdFile = ResolveNewCmdFile(name);
+            var resolvedCmdFile = ResolveNewCmdFile(scriptName);
             var sourceLayout = await Amg.Build.SourceCodeLayout.Create(resolvedCmdFile, overwrite: Overwrite);
             Logger.Information("Amg.Build script {cmdFile} created.", sourceLayout.CmdFile);
             return sourceLayout.CmdFile;
@@ -110,20 +110,18 @@ namespace amgbuild
             });
         }
 
-        [Once, Description("The script (.cmd) to work with.")]
-        public virtual string? Script { get; set; }
-
         [Once, Description("overwrite existing files")]
         public virtual bool Overwrite { get; set; }
 
         [Once]
-        public virtual string CmdFile => FindExistingCmdFile(Script, System.Environment.CurrentDirectory);
+        public virtual string CmdFile(string? script) => FindExistingCmdFile(script, System.Environment.CurrentDirectory);
 
         [Once, Description("Fix a script")]
-        public virtual Task Fix()
+        public virtual Task Fix(string? script = null)
         {
-            Logger.Information("Fixing {CmdFile}", CmdFile);
-            return FixInternal(CmdFile);
+            var cmdFile = CmdFile(script);
+            Logger.Information("Fixing {CmdFile}", cmdFile);
+            return FixInternal(cmdFile);
         }
 
         async Task FixInternal(string cmdFile)
@@ -133,7 +131,7 @@ namespace amgbuild
         }
 
         [Once]
-        protected virtual SourceCodeLayout SourceCodeLayout => new SourceCodeLayout(CmdFile);
+        protected virtual SourceCodeLayout SourceCode(string cmdFile) => new SourceCodeLayout(cmdFile);
 
         [Once, Description("Print version")]
         public virtual async Task<string> Version()
@@ -143,16 +141,17 @@ namespace amgbuild
         }
 
         [Once, Description("Open in Visual Studio")]
-        public virtual async Task Open()
+        public virtual async Task Open(string? script = null)
         {
-            var layout = new SourceCodeLayout(CmdFile);
+            var cmdFile = CmdFile(script);
+            var layout = new SourceCodeLayout(cmdFile);
             await Tools.Cmd.Run("start", layout.CsprojFile);
         }
 
         [Once]
-        protected virtual ITool DotnetTool => Tools.Default
+        protected virtual ITool DotnetTool(SourceCodeLayout sourceCode) => Tools.Default
             .WithFileName("dotnet.exe")
-            .WithWorkingDirectory(SourceCodeLayout.SourceDir);
+            .WithWorkingDirectory(sourceCode.SourceDir);
 
         [Once]
         protected virtual async Task<IEnumerable<string>> Pack(ITool dotnet)
@@ -162,38 +161,46 @@ namespace amgbuild
         }
 
         [Once, Description("Pack as dotnet tool")]
-        public virtual async Task<string> Pack()
+        public virtual async Task<string> Pack(string? script=null)
         {
-            return (await Pack(DotnetTool)).First();
+            var cmdFile = CmdFile(script);
+            var sourceCode = SourceCode(cmdFile);
+            return (await Pack(DotnetTool(sourceCode))).First();
         }
 
         [Once, Description("Install as global dotnet tool")]
-        public virtual async Task Install()
+        public virtual async Task Install(string? script=null)
         {
+            var cmdFile = CmdFile(script);
+            var sourceCode = SourceCode(cmdFile);
+
             var nupkgFile = await Pack();
+            var dotnet = DotnetTool(sourceCode);
+            
+            await dotnet.DoNotCheckExitCode()
+                .Run("tool", "uninstall", "--global", sourceCode.Name);
 
-            await DotnetTool.DoNotCheckExitCode()
-                .Run("tool", "uninstall", "--global", SourceCodeLayout.Name);
-
-            await DotnetTool.Run(
+            await dotnet.Run(
                 "tool", "install",
                 "--global",
                 "--add-source", nupkgFile.Parent(),
-                SourceCodeLayout.Name
+                sourceCode.Name
                 );
         }
 
         [Once, Description("Adds the script to the users PATH")]
-        public virtual async Task<string> AddToPath()
+        public virtual async Task<string> AddToPath(string? script = null)
         {
+            var cmdFile = CmdFile(script);
+            var sourceCode = SourceCode(cmdFile);
+
             var dir = System.Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
                 .Combine(".dotnet", "tools");
 
-            var layout = SourceCodeLayout;
-            var shim = dir.Combine(layout.CmdFile.FileName());
+            var shim = dir.Combine(sourceCode.CmdFile.FileName());
 
             return await shim
-                .WriteAllTextAsync($@"@call {layout.CmdFile.Quote()} %*");
+                .WriteAllTextAsync($@"@call {sourceCode.CmdFile.Quote()} %*");
         }
     }
 }

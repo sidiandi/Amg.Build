@@ -68,6 +68,9 @@ amgbuild can
 
 ## Done
 
+* remove --ascii option
+* amgbuild now without --script option
+
 ## 0.31.0
 
 * amgbuild add scripts to user's PATH
