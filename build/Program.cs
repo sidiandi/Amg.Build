@@ -253,17 +253,17 @@ namespace Build
 
             async Task TestPack()
             {
-                await amgbuildTool.Run("--script", name, "pack");
+                await amgbuildTool.Run("pack", name);
             }
 
             async Task TestInstall()
             {
-                await amgbuildTool.Run("--script", name, "install");
+                await amgbuildTool.Run("install", name);
             }
 
             async Task TestAddToPath()
             {
-                await amgbuildTool.Run("--script", name, "add-to-path");
+                await amgbuildTool.Run("add-to-path", name);
             }
 
             await ScriptRuns();
