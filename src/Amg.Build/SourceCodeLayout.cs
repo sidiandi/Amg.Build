@@ -124,7 +124,7 @@ namespace Amg.Build
         string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);
 
-        string ProgramCsText => ReadStringFromEmbeddedResource("ReplaceWithName.Program")
+        string ProgramCsText => ReadTemplate("name.Program.cs")
             .Replace("ReplaceWithName", Namespace);
 
         string BuildCmdText => ReadTemplate("name.cmd");
