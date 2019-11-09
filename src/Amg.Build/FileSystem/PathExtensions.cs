@@ -194,7 +194,7 @@ namespace Amg.FileSystem
 
         public static string RemoveTrailingDirectorySeparator(this string path)
         {
-            if (path.EndsWith('/') || path.EndsWith('\\'))
+            if (path.EndsWith("/") || path.EndsWith("\\"))
             {
                 return path.Substring(0, path.Length - 1);
             }
