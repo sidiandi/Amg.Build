@@ -110,7 +110,7 @@ namespace Amg.Build
             return x;
         }
 
-        public override string ToString() => $"{Id.OneLine().Truncate(32)}";
+        public override string ToString() => Id;
 
         public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 
