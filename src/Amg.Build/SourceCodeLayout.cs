@@ -80,7 +80,9 @@ namespace Amg.Build
             await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
             var dotnet = (await Once.Create<Dotnet>().Tool())
                 .WithWorkingDirectory(s.SourceDir);
-            await dotnet.Run("add", "package", "Amg.Build");
+            await dotnet.Run("add", "package", 
+                "Amg.Build",
+                "--version", s.NugetVersion);
             return s;
         }
 
