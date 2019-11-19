@@ -78,13 +78,22 @@ namespace Amg.Build
             await Create(s.CsprojFile, "name.name.csproj", backup);
             await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
             await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
-            var dotnet = (await Once.Create<Dotnet>().Tool())
-                .WithWorkingDirectory(s.SourceDir);
-            await dotnet.Run("add", "package", 
-                "Amg.Build",
+            var dotnetAddPackage = (await Once.Create<Dotnet>().Tool())
+                .WithWorkingDirectory(s.SourceDir)
+                .WithArguments("add", "package");
+
+            var r = await dotnetAddPackage
+                .DoNotCheckExitCode()
+                .Run(AmgBuildPackageName,
                 "--version", s.NugetVersion);
+            if (r.ExitCode != 0)
+            {
+                await dotnetAddPackage.Run(AmgBuildPackageName);
+            }
             return s;
         }
+
+        const string AmgBuildPackageName = "Amg.Build";
 
         public async Task Check()
         {
