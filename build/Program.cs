@@ -218,9 +218,10 @@ namespace Build
                 {
                     var result = await build.Run();
                     AssertExitCode(result, 0);
+                    Logger.Information("{result}", result);
                     if (!result.Output.Contains(version.NuGetVersionV2))
                     {
-                        throw new InvalidOperationException();
+                        throw new InvalidOperationException($"output does not contain ${version.NuGetVersionV2}");
                     }
                     if (!String.IsNullOrEmpty(result.Error))
                     {
