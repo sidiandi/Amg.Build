@@ -13,7 +13,6 @@
     <EmbeddedResource Include="template/name/.gitignore" />
     <EmbeddedResource Include="template/name.cmd" />
     <EmbeddedResource Include="template/name/Program.cs" />
-    <EmbeddedResource Include="template/name/Directory.Build.props" />
     <EmbeddedResource Include="template/name/name.csproj" />
   </ItemGroup>
 

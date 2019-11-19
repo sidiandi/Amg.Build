@@ -35,10 +35,10 @@ namespace Amg.Build
             invocations.OrderBy(_ => _.End)
                 .Select(_ => new
                 {
-                    Name = _.Id.Truncate(32),
+                    Name = _.Id.Truncate(64),
                     State = _.State,
                     Duration = _.Duration.HumanReadable(),
-                    Timeline = TextFormatExtensions.TimeBar(80, begin, end, _.Begin, _.End)
+                    Timeline = TextFormatExtensions.TimeBar(64, begin, end, _.Begin, _.End)
                 })
                 .ToTable()
                 .Write(@out);

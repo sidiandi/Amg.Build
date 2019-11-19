@@ -32,7 +32,6 @@ namespace Amg.Build
         public string SourceDir => CmdFile.Parent().Combine(Name);
         public string ProgramCs => SourceDir.Combine("Program.cs");
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
-        public string PropsFile => SourceDir.Combine("Directory.Build.props");
         public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
         public string Configuration => "Debug";
         public string TargetFramework => "netcoreapp3.0";
@@ -78,15 +77,16 @@ namespace Amg.Build
             await Create(s.CmdFile, "name.cmd", backup);
             await Create(s.CsprojFile, "name.name.csproj", backup);
             await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
-            await CreateFromText(s.PropsFile, s.PropsText, backup);
             await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
+            var dotnet = (await Once.Create<Dotnet>().Tool())
+                .WithWorkingDirectory(s.SourceDir);
+            await dotnet.Run("add", "package", "Amg.Build");
             return s;
         }
 
         public async Task Check()
         {
             await CheckFileEnd(CmdFile, BuildCmdText);
-            await CheckFile(PropsFile, PropsText);
         }
 
         async Task CheckFile(string file, string expected)
@@ -174,11 +174,12 @@ namespace Amg.Build
         {
             var backup = new BackupDirectory(this.CmdFile.Parent());
             await FixFile(CmdFile, BuildCmdText, backup);
-            await FixFile(PropsFile, PropsText, backup);
-            
+
+            // delete old Directory.props file
+            SourceDir.Combine("Directory.props").EnsureFileNotExists();
+
             // delete old Amg.Build.props file
-            var amgBuildProps = SourceDir.Combine("Amg.Build.props");
-            amgBuildProps.EnsureFileNotExists();
+            SourceDir.Combine("Amg.Build.props").EnsureFileNotExists();
         }
 
         string BuildCsProjText => ReadTemplate("build.csproj.template");

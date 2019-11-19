@@ -43,12 +43,6 @@ namespace hello
             await Greet(Enumerable.Range(0, 100).Select(_ => "Very long name ").Join());
         }
 
-        [Once, Default, Description("Greet Alice.")]
-        public virtual async Task Default()
-        {
-            await Greet("Alice");
-        }
-
         [Once, Description("Simulate a failing tool")]
         public virtual async Task FailTool()
         {
@@ -66,6 +60,13 @@ namespace hello
         public virtual async Task UseFailingTool()
         {
             await Task.WhenAll(FailTool(), RunForever());
+        }
+
+        [Once, Default, Description("Greet Alice.")]
+        public virtual async Task Default()
+        {
+            await Greet("Someone with a really long name. Someone with a really long name. Someone with a really long name. Someone with a really long name.");
+            await Greet("Alice");
         }
     }
 }
