@@ -68,6 +68,9 @@ amgbuild can
 
 ## Done
 
+## 0.35.0
+
+* remove Directory.props file. All settings are now in the .csproj file of the build script.
 * remove --ascii option
 * amgbuild now without --script option
 
