@@ -224,6 +224,7 @@ namespace Build
                     }
                     if (!String.IsNullOrEmpty(result.Error))
                     {
+                        Logger.Error(result.Error);
                         throw new InvalidOperationException(result.Error);
                     }
                 }
