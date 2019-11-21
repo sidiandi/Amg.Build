@@ -4,8 +4,6 @@ using Amg.Build;
 using Amg.Extensions;
 using System.Linq;
 using System.ComponentModel;
-using Cake.Common.IO;
-using Amg.FileSystem;
 using Amg.GetOpt;
 
 namespace hello
@@ -16,15 +14,11 @@ namespace hello
 
         static int Main(string[] args) => Runner.Run(args);
 
-        [Once]
-        protected virtual Cake.Core.ICakeContext Cake => Amg.Build.Cake.Cake.CreateContext();
-
         [Once, Description("Demo of the Cake adapter")]
         public virtual void WorkWithCakeAddins()
         {
-            Cake.Zip(
-                Runner.RootDirectory().Combine("hello"), 
-                Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
+            var cakeExample = Once.Create<CakeAddinExample>();
+            cakeExample.ZipSomethingWithCake();
         }
 
         [Once, Description("Greet someone.")]

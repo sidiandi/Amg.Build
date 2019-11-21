@@ -434,6 +434,7 @@ namespace Build
         public virtual async Task<string> Release()
         {
             await Git.EnsureNoPendingChanges();
+            await EndToEndTest();
             var git = Git.Create(this.Root);
             var v = await git.GetVersion();
             Logger.Information("Tagging with {version}", v.MajorMinorPatch);
@@ -450,7 +451,6 @@ namespace Build
                 }
             }
             await gitTool.Run("push", "--tags");
-            await Push();
             return v.NuGetVersionV2;
         }
 
