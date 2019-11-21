@@ -37,7 +37,7 @@ All methods and properties in your code marked with the `[Once]` attribute will 
 
 Let's hava a look at an example:
 
-````
+````csharp
     internal class OnceExample
     {
         [Once]
@@ -69,10 +69,10 @@ Let's hava a look at an example:
     }
 ```` 
 
-	When you call `Release` here, it will run `Test` and `Package` in parallel. Although `Compile` is called in both methods, the code in `Compile` will only executed once and `Package()` and `Test()` can start their own activities as soon as the `Compile()` results are available.
+When you call `Release` here, it will run `Test` and `Package` in parallel. Although `Compile` is called in both methods, the code in `Compile` will only executed once and `Package()` and `Test()` can start their own activities as soon as the `Compile()` results are available.
 
 To activate the `[Once]` attributes in your classes, you create a derived proxy class from your class with
-````
+````csharp
 	var example = Once.Create<OnceExample>();
 	example.Release();
 ````
