@@ -281,5 +281,20 @@ namespace Amg.FileSystem
             Assert.That(b.IsDescendantOrSelf(a));
             Assert.That(!c.IsDescendantOrSelf(a));
         }
+
+        [Test]
+        public async Task Split()
+        {
+            var testDir = CreateEmptyTestDirectory();
+            var count = 100;
+            var content = "hello";
+            var input = await testDir.Combine("whole")
+                .WriteAllTextAsync(Enumerable.Range(0, count).Select(_ => content).Join(String.Empty));
+            var output = testDir.Combine("part");
+
+            var parts = await input.SplitFile(output, content.Length);
+            Assert.That(parts.Count(), Is.EqualTo(count));
+            Assert.That(parts.All(_ => _.IsFile()));
+        }
     }
 }

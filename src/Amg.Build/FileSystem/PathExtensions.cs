@@ -1034,5 +1034,59 @@ are more recent.
             }
             return a.Equals(b, StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// inputFile => partFile.000, partFile.001, partFile.002, ...
+        /// </summary>
+        /// <param name="inputFile"></param>
+        /// <param name="partFile"></param>
+        /// <param name="partLength"></param>
+        /// <returns></returns>
+        public static async Task<IEnumerable<string>> SplitFile(this string inputFile, string partFile, long partLength)
+        {
+            var info = new FileInfo(inputFile);
+            if (info.Length <= partLength)
+            {
+                await inputFile.CopyTree(partFile);
+                return new[] { partFile };
+            }
+            else
+            {
+                var buffer = new byte[0x10000];
+                var parts = new List<string>();
+
+                using (var r = File.OpenRead(inputFile))
+                {
+                    bool readEnd = false;
+                    for (int partNumber = 0; !readEnd; ++partNumber)
+                    {
+                        var currentPartFile = partFile + partNumber.ToString("D3");
+                        using (var w = File.OpenWrite(currentPartFile))
+                        {
+                            long bytesWritten = 0;
+                            while (bytesWritten < partLength && !readEnd)
+                            {
+                                var bytesToRead = (int)Math.Min((long)buffer.Length, (partLength - bytesWritten));
+                                var bytesRead = await r.ReadAsync(buffer, 0, bytesToRead);
+                                if (bytesRead <= 0)
+                                {
+                                    readEnd = true;
+                                }
+                                else
+                                {
+                                    await w.WriteAsync(buffer, 0, bytesRead);
+                                    bytesWritten += bytesRead;
+                                }
+                            }
+                            if (bytesWritten > 0)
+                            {
+                                parts.Add(currentPartFile);
+                            }
+                        }
+                    }
+                }
+                return parts;
+            }
+        }
     }
 }
