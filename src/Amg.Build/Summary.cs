@@ -9,7 +9,7 @@ namespace Amg.Build
 {
     static class Summary
     {
-        internal static IWritable PrintTimeline(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        internal static IWritable PrintTimeline(IEnumerable<IInvocation> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
             var begin = invocations
                 .Select(_ => _.Begin.GetValueOrDefault(DateTime.MaxValue))
@@ -19,7 +19,7 @@ namespace Amg.Build
                 .Select(_ => _.End.GetValueOrDefault(DateTime.MinValue))
                 .Max();
 
-            var success = invocations.All(_ => !_.Failed);
+            var success = invocations.All(_ => !_.Failed());
 
             @out.WriteLine("Summary");
             new
@@ -35,9 +35,9 @@ namespace Amg.Build
             invocations.OrderBy(_ => _.End)
                 .Select(_ => new
                 {
-                    Name = _.Id.Truncate(64),
+                    Name = _.Id.ToString().Truncate(64),
                     State = _.State,
-                    Duration = _.Duration.HumanReadable(),
+                    Duration = _.Duration().HumanReadable(),
                     Timeline = TextFormatExtensions.TimeBar(64, begin, end, _.Begin, _.End)
                 })
                 .ToTable()
@@ -58,11 +58,11 @@ namespace Amg.Build
             }
         }
 
-        internal static IWritable Error(IEnumerable<InvocationInfo> invocations) => TextFormatExtensions.GetWritable(@out =>
+        internal static IWritable Error(IEnumerable<IInvocation> invocations) => TextFormatExtensions.GetWritable(@out =>
         {
             @out.WriteLine();
             foreach (var failedTarget in invocations.OrderByDescending(_ => _.End)
-                .Where(_ => _.State == InvocationInfo.States.Failed))
+                .Where(_ => _.Failed()))
             {
                 var exception = failedTarget.Exception!;
                 var r = GetRootCause(exception);
@@ -74,7 +74,7 @@ namespace Amg.Build
             @out.WriteLine("FAILED");
         });
 
-        internal static IWritable ErrorDetails(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
+        internal static IWritable ErrorDetails(IInvocation failed) => TextFormatExtensions.GetWritable(o =>
         {
             var ex = failed.Exception;
             if (ex != null)
@@ -100,7 +100,7 @@ Exception:
             }
         });
 
-        internal static IWritable ShortErrorDetails(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
+        internal static IWritable ShortErrorDetails(IInvocation failed) => TextFormatExtensions.GetWritable(o =>
         {
             var ex = failed.Exception;
             if (ex != null)
@@ -109,7 +109,7 @@ Exception:
             }
         });
 
-        internal static IWritable ErrorMessage(InvocationInfo failed) => TextFormatExtensions.GetWritable(o =>
+        internal static IWritable ErrorMessage(IInvocation failed) => TextFormatExtensions.GetWritable(o =>
         {
             var ex = failed.Exception;
             if (ex != null)
@@ -122,11 +122,11 @@ Exception:
             }
         });
 
-        internal static void PrintSummary(IEnumerable<InvocationInfo> invocations)
+        internal static void PrintSummary(IEnumerable<IInvocation> invocations)
         {
             if (invocations.Failed())
             {
-                foreach (var fail in invocations.Where(_ => _.Failed))
+                foreach (var fail in invocations.Where(_ => _.Failed()))
                 {
                     ErrorMessage(fail).Write(Console.Error);
                 }

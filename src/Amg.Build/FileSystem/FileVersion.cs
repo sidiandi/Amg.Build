@@ -1,12 +1,13 @@
 ﻿using Amg.Extensions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Amg.FileSystem
 {
-    class FileVersion : IEquatable<FileVersion>
+    public sealed class FileVersion : IEquatable<FileVersion>
     {
         public string Name { get; set; }
         public DateTime LastWriteTimeUtc { get; set; }
@@ -42,6 +43,17 @@ namespace Amg.FileSystem
                 || n.Equals(".vs");
         }
 
+        public static async Task<IEnumerable<FileVersion?>> Get(IEnumerable<string> paths)
+        {
+            var v = new List<FileVersion?>();
+            foreach (var i in paths)
+            {
+                v.Add(await Get(i));
+            }
+            return v;
+        }
+
+
         public static async Task<FileVersion?> Get(string path)
         {
             return await Get(path, _ => DefaultIgnore(_));
@@ -56,7 +68,7 @@ namespace Amg.FileSystem
                 return new FileVersion
                 {
                     Name = path.FileName(),
-                    LastWriteTimeUtc = info.LastWriteTimeUtc,
+                    LastWriteTimeUtc = info.LastWriteTimeUtc.ToUniversalTime(),
                     Length = info.Length,
                     Childs = new FileVersion[] { }
                 };
@@ -84,9 +96,18 @@ namespace Amg.FileSystem
 
         public bool Equals(FileVersion other)
         {
+            var tt = LastWriteTimeUtc.ToUniversalTime();
+            var ot = other.LastWriteTimeUtc.ToUniversalTime();
             return Name.Equals(other.Name)
-                && LastWriteTimeUtc.Equals(other.LastWriteTimeUtc)
+                && tt.Equals(ot)
                 && Childs.SequenceEqual(other.Childs);
+        }
+
+        public override bool Equals(object obj) => obj is FileVersion r && Equals(r);
+
+        public override int GetHashCode()
+        {
+            return this.Name.GetHashCode();
         }
 
         public bool IsNewer(FileVersion current)
@@ -97,5 +118,6 @@ namespace Amg.FileSystem
         DateTime MinLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.MinLastWriteTime)).Min();
 
         DateTime MaxLastWriteTime => new[] { LastWriteTimeUtc }.Concat(Childs.Select(_ => _.MaxLastWriteTime)).Max();
+
     }
 }

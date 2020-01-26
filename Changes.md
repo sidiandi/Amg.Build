@@ -6,6 +6,10 @@
 
 ## Done
 
+* Caching
+* `make` style rules
+* improved handling of property setters
+
 ## 0.35.0
 
 * How-to documentation: create script, the concept of [Once], Cake

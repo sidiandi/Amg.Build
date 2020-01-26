@@ -8,9 +8,9 @@ namespace Amg.Build
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
     internal class InvocationFailedException : Exception
     {
-        public InvocationInfo Invocation { get; }
+        public IInvocation Invocation { get; }
 
-        public InvocationFailedException(InvocationInfo invocationInfo)
+        public InvocationFailedException(IInvocation invocationInfo)
            : base($"{invocationInfo} failed.", invocationInfo.Exception)
         {
             this.Invocation = invocationInfo;

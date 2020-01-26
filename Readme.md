@@ -31,7 +31,7 @@ amgbuild open
 
 ### [Once]
 
-With the `[Once]` attribut, you build a [directed acyclic dependency graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) of your build steps.
+With the `[Once]` attribute, you build a [directed acyclic dependency graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) of your build steps.
 
 All methods and properties in your code marked with the `[Once]` attribute will only be executed once and the return value will be cached. The second time the method or property getter is called, the code will not be executed, but the cached return value will be returned. 
 
@@ -82,6 +82,20 @@ If you want to use `Once.Create` on a class, it must
 * not contain mutable properties without `[Once]` attribute
 * declare all methods and properties marked with `[Once]` as `virtual`
 * be either `public` or `internal`. If your class is `internal`, you will need to make it visible to the underlying code injection framework with `[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]`.
+
+#### Special Case: Property Setters with [Once]
+
+Properties with a `set` method that are decorated with `[Once]` behave like this:
+
+The setter of the property can be called as many times as you like *before* the getter of the property was called. After that, calling the setter again will throw an `OncePropertyCanOnlyBeSetBeforeFirstGetException`.
+
+This allows you to create a `Once` object, then configure it by using the public setters and then call a method.
+
+### Caching
+
+Calculations made by `[Once]` method will be cached in the file system by adding a `[Cached]` attribute.
+
+The cached results are stored in directory `.\.amgbuild`.
 
 ### Automatic Command Line Interface
 

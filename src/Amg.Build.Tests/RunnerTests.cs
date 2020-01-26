@@ -27,11 +27,11 @@ namespace Amg.Build
             Assert.That(exitCode, Is.EqualTo(ExitCode.HelpDisplayed));
         }
 
-        static void AssertCalled(object c, string id)
+        static void AssertCalled(object c, string method)
         {
             var i = (c as IInvocationSource)!.Invocations;
             Console.WriteLine(i.Join());
-            Assert.That(i.Any(_ => _.Id.Equals(id)));
+            Assert.That(i.Any(_ => _.Id.Method.Equals(method)));
         }
 
         [Test]

@@ -225,7 +225,7 @@ namespace Amg.Build
                     await dir.Move(toBeDeleted);
                     await toBeDeleted.EnsureNotExists();
                 }
-                catch(Exception ex)
+                catch(System.UnauthorizedAccessException ex)
                 {
                     Logger.Debug("Cannot delete {dir} at the moment: {ex}", dir, ex);
                 }

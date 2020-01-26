@@ -272,7 +272,7 @@ Details:
             return Process.GetCurrentProcess().StartTime.ToUniversalTime();
         }
 
-        InvocationInfo GetStartupInvocation()
+        IInvocation GetStartupInvocation()
         {
             var begin = GetStartupTime();
             var end = DateTime.UtcNow;

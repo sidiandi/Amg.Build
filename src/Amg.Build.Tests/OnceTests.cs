@@ -49,6 +49,12 @@ namespace Amg.Build
     {
         [Once]
         public virtual string? Name { get; set; } = null;
+
+        [Once]
+        public virtual string Greet()
+        {
+            return $"Hello, {Name}!";
+        }
     }
 
     [TestFixture]
@@ -76,13 +82,29 @@ namespace Amg.Build
         {
             var once = Once.Create<AClassWithOnceProperty>();
             once.Name = "Alice";
-            Assert.Throws<OncePropertyCanOnlyBeCalledOnceException>(() =>
+            once.Name = "Bob";
+            Assert.That(once.Name, Is.EqualTo("Bob"));
+
+            Assert.Throws<OncePropertyCanOnlyBeSetBeforeFirstGetException>(() =>
             {
                 once.Name = "Bob";
             });
         }
 
-       [Test]
+        [Test]
+        public void OnceInstanceCanBeConfiguredWithPublicProperties()
+        {
+            var once = Once.Create<AClassWithOnceProperty>();
+            once.Name = "Alice";
+            Assert.That(once.Greet(), Is.EqualTo("Hello, Alice!"));
+
+            Assert.Throws<OncePropertyCanOnlyBeSetBeforeFirstGetException>(() =>
+            {
+                once.Name = "Bob";
+            });
+        }
+
+        [Test]
         public void OnlyExecutesOnce()
         {
             var name = "Alice";

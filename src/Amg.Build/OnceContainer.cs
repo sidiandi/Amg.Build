@@ -1,11 +1,11 @@
-﻿using Amg.Extensions;
-using Castle.DynamicProxy;
+﻿using Castle.DynamicProxy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using YamlDotNet.Serialization;
 
 namespace Amg.Build
 {
@@ -80,19 +80,26 @@ namespace Amg.Build
 
         class InvocationSource : IInvocationSource
         {
-            public InvocationSource(IEnumerable<InvocationInfo> invocations)
+            public InvocationSource(IEnumerable<IInvocation> invocations)
             {
                 Invocations = invocations;
             }
 
-            public IEnumerable<InvocationInfo> Invocations { get; private set; }
+            public IEnumerable<IInvocation> Invocations { get; private set; }
         }
 
         readonly IDictionary<string, object> _cache = new Dictionary<string, object>();
 
+        static ISerializer serializer = new YamlDotNet.Serialization.SerializerBuilder().Build();
+
         static string GenerateCacheKey(Type type, object?[] arguments)
         {
-            return $"{type.FullName}({arguments.Join(", ")})";
+            var id = new
+            {
+                Type = type,
+                Arguments = arguments
+            };
+            return serializer.Serialize(id);
         }
 
         /// <summary>
