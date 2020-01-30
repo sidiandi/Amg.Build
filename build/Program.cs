@@ -8,6 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Amg.FileSystem;
 using Amg.Extensions;
+using Amg.GetOpt;
 
 namespace Build
 {

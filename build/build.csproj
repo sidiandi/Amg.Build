@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Amg.Build" Version="0.35.0" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="7.17.0.9346">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
