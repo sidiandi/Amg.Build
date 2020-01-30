@@ -1,23 +1,27 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Amg.Extensions;
 using Castle.DynamicProxy;
 
 namespace Amg.Build
 {
-    partial class InvocationInfo
+    partial class InvocationInfo : IInvocation
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-        private readonly IInvocation? invocation;
+        private readonly Castle.DynamicProxy.IInvocation? invocation;
         private readonly OnceInterceptor? interceptor;
         public Exception? Exception { get; private set; }
 
         public InvocationInfo(string id, DateTime begin, DateTime end)
         {
-            this.Id = id;
+            this.Id = new InvocationId
+            (
+                instanceId: String.Empty,
+                method: id,
+                arguments: new object[] { }
+            );
+
             Begin = begin;
             End = end;
             invocation = null;
@@ -25,7 +29,7 @@ namespace Amg.Build
             Exception = null;
         }
 
-        public InvocationInfo(OnceInterceptor interceptor, string id, IInvocation invocation)
+        public InvocationInfo(OnceInterceptor interceptor, InvocationId id, Castle.DynamicProxy.IInvocation invocation)
         {
             this.interceptor = interceptor;
             this.invocation = invocation;
@@ -73,6 +77,16 @@ namespace Amg.Build
             return false;
         }
 
+        internal static Type? TryGetTaskResultType(Type taskType)
+        {
+            if (taskType.IsGenericType && (!taskType.GenericTypeArguments[0].Name.Equals("VoidTaskResult")))
+            {
+                return taskType.GenericTypeArguments[0];
+            }
+
+            return null;
+        }
+
         void Complete()
         {
             End = DateTime.UtcNow;
@@ -83,7 +97,7 @@ namespace Amg.Build
         {
             End = DateTime.UtcNow;
             this.Exception = exception;
-            Logger.Fatal(@"{target} failed. Reason: {exception}", this, 
+            Logger.Fatal(@"{target} failed. Reason: {exception}", this,
                 Logger.IsEnabled(Serilog.Events.LogEventLevel.Information)
                     ? Summary.ErrorDetails(this)
                     : Summary.ShortErrorDetails(this)
@@ -94,7 +108,7 @@ namespace Amg.Build
 
         public virtual DateTime? Begin { get; set; }
         public virtual DateTime? End { get; set; }
-        public string Id { get; }
+        public InvocationId Id { get; }
         public virtual TimeSpan Duration
         {
             get
@@ -110,19 +124,11 @@ namespace Amg.Build
             return x;
         }
 
-        public override string ToString() => $"{Id.OneLine().Truncate(32)}";
+        public override string ToString() => Id.ToString();
 
         public object? ReturnValue => invocation.Map(_ => _.ReturnValue);
 
-        public enum States
-        {
-            Pending,
-            InProgress,
-            Done,
-            Failed
-        }
-
-        public States State
+        public InvocationState State
         {
             get
             {
@@ -132,34 +138,24 @@ namespace Amg.Build
                     {
                         if (Exception == null)
                         {
-                            return States.Done;
+                            return InvocationState.Done;
                         }
                         else
                         {
-                            return States.Failed;
+                            return InvocationState.Failed;
                         }
                     }
                     else
                     {
-                        return States.InProgress;
+                        return InvocationState.InProgress;
                     }
                 }
                 else
                 {
-                    return States.Pending;
+                    return InvocationState.Pending;
                 }
             }
         }
 
-        public bool Failed => Exception != null;
     }
-
-    static class InvocationInfoExtensions
-    {
-        public static bool Failed(this IEnumerable<InvocationInfo> invocations)
-        {
-            return invocations.Any(_ => _.Failed);
-        }
-    }
-
 }

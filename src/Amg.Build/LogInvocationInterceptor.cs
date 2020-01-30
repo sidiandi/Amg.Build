@@ -16,14 +16,14 @@ namespace Amg.Build
 
         public bool Proceed = true;
 
-        protected override void PreProceed(IInvocation invocation)
+        protected override void PreProceed(Castle.DynamicProxy.IInvocation invocation)
         {
             invocations.Add(invocation.Method.Name);
             sb.Append(String.Format("{0} ", invocation.Method.Name));
             Logger.Information("{name}", invocation.Method.Name);
         }
 
-        protected override void PerformProceed(IInvocation invocation)
+        protected override void PerformProceed(Castle.DynamicProxy.IInvocation invocation)
         {
             if (Proceed)
             {

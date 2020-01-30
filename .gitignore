@@ -6,3 +6,6 @@ nuget.config
 /nuget.exe
 TestResults
 launchSettings.json
+.amgbuild 
+src/greeting 
+src/name 

@@ -9,7 +9,7 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Run build.cmd script
-      run: build.cmd pack
+      run: ./build.cmd pack
 
     - name: Install NuGet client
       uses: warrenbuckley/Setup-Nuget@v1

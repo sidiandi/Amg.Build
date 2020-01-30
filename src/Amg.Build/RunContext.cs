@@ -205,11 +205,6 @@ namespace Amg.Build
                     Summary.PrintTimeline(invocations).Write(Console.Out);
                 }
 
-                if (combinedOptions.Options.AsciiArt)
-                {
-                    Summary.PrintAsciiArt(invocations);
-                }
-
                 return invocations.Failed()
                     ? ExitCode.CommandFailed
                     : ExitCode.Success;
@@ -277,7 +272,7 @@ Details:
             return Process.GetCurrentProcess().StartTime.ToUniversalTime();
         }
 
-        InvocationInfo GetStartupInvocation()
+        IInvocation GetStartupInvocation()
         {
             var begin = GetStartupTime();
             var end = DateTime.UtcNow;

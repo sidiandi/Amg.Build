@@ -41,5 +41,4 @@ namespace Amg.Build
             public object ReturnValue => GetReturnValue();
         }
     }
-
 }

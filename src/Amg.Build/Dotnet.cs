@@ -16,7 +16,7 @@ namespace Amg.Build
         /// Dotnet tool
         /// </summary>
         [Once]
-        public virtual Task<Tool> Tool() => Task.FromResult(new Tool("dotnet"));
+        public virtual Task<ITool> Tool() => Task.FromResult(Tools.Default.WithFileName("dotnet.exe"));
 
         /// <summary>
         /// dotnet version

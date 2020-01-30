@@ -218,12 +218,14 @@ namespace Build
                 {
                     var result = await build.Run();
                     AssertExitCode(result, 0);
+                    Logger.Information("{result}", result);
                     if (!result.Output.Contains(version.NuGetVersionV2))
                     {
-                        throw new InvalidOperationException();
+                        throw new InvalidOperationException($"output does not contain ${version.NuGetVersionV2}");
                     }
                     if (!String.IsNullOrEmpty(result.Error))
                     {
+                        Logger.Error(result.Error);
                         throw new InvalidOperationException(result.Error);
                     }
                 }
@@ -253,17 +255,17 @@ namespace Build
 
             async Task TestPack()
             {
-                await amgbuildTool.Run("--script", name, "pack");
+                await amgbuildTool.Run("pack", name);
             }
 
             async Task TestInstall()
             {
-                await amgbuildTool.Run("--script", name, "install");
+                await amgbuildTool.Run("install", name);
             }
 
             async Task TestAddToPath()
             {
-                await amgbuildTool.Run("--script", name, "add-to-path");
+                await amgbuildTool.Run("add-to-path", name);
             }
 
             await ScriptRuns();
@@ -432,6 +434,7 @@ namespace Build
         public virtual async Task<string> Release()
         {
             await Git.EnsureNoPendingChanges();
+            await EndToEndTest();
             var git = Git.Create(this.Root);
             var v = await git.GetVersion();
             Logger.Information("Tagging with {version}", v.MajorMinorPatch);
@@ -448,7 +451,6 @@ namespace Build
                 }
             }
             await gitTool.Run("push", "--tags");
-            await Push();
             return v.NuGetVersionV2;
         }
 

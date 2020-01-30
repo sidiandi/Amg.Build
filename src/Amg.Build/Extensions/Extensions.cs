@@ -16,12 +16,19 @@ namespace Amg.Extensions
     {
         private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
+        public static string HumanReadable(this TimeSpan? duration)
+        {
+            return duration is { }
+                ? duration.Value.HumanReadable()
+                : String.Empty;
+        }
+
         /// <summary>
         /// Easy readable text format for a TimeSpan
         /// </summary>
         /// <param name="duration"></param>
         /// <returns></returns>
-        internal static string HumanReadable(this TimeSpan duration)
+        public static string HumanReadable(this TimeSpan duration)
         {
             var days = duration.TotalDays;
             if (days > 10)

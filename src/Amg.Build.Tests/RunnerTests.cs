@@ -27,18 +27,11 @@ namespace Amg.Build
             Assert.That(exitCode, Is.EqualTo(ExitCode.HelpDisplayed));
         }
 
-        static void AssertCalled(object c, string id)
+        static void AssertCalled(object c, string method)
         {
             var i = (c as IInvocationSource)!.Invocations;
             Console.WriteLine(i.Join());
-            Assert.That(i.Any(_ => _.Id.Equals(id)));
-        }
-
-        [Test]
-        public void Ascii()
-        {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "--ascii-art" });
-            Assert.That(exitCode, Is.EqualTo(0));
+            Assert.That(i.Any(_ => _.Id.Method.Equals(method)));
         }
 
         [Test]
@@ -58,7 +51,7 @@ namespace Amg.Build
         [Test]
         public void Fail()
         {
-            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq", "--ascii" });
+            var exitCode = Runner.Run<MyBuild>(new string[] { "always-fails", "-vq" });
             Assert.That(exitCode, Is.EqualTo(ExitCode.CommandFailed));
         }
 

@@ -31,21 +31,94 @@ amgbuild open
 
 ### [Once]
 
-`Once.Create` creates proxy types for your classes where all virtual methods decorated with the `[Once]` attribute are only executed once. The results are cached in memory.
+With the `[Once]` attribute, you build a [directed acyclic dependency graph](https://en.wikipedia.org/wiki/Directed_acyclic_graph) of your build steps.
 
-This helps you to build up and acyclic graph of your build dependencies.
+All methods and properties in your code marked with the `[Once]` attribute will only be executed once and the return value will be cached. The second time the method or property getter is called, the code will not be executed, but the cached return value will be returned. 
 
-If you want to use [Once], you must not use mutable fields or properties in your class. Exceptions are command line properties (`[Description]` attribute). See below.
+Let's hava a look at an example:
+
+````csharp
+    internal class OnceExample
+    {
+        [Once]
+        public virtual async Task Compile()
+        {
+            await Task.CompletedTask;
+        }
+
+        [Once]
+        public virtual async Task Test()
+        {
+            await Compile();
+
+            // ... testing done here ...
+        }
+
+        [Once]
+        public virtual async Task Package()
+        {
+            await Compile();
+            // ... packaging the compiled binaries here ...
+        }
+
+        [Once]
+        public virtual async Task Release()
+        {
+            await Task.WhenAll(Test(), Package());
+        }
+    }
+```` 
+
+When you call `Release` here, it will run `Test` and `Package` in parallel. Although `Compile` is called in both methods, the code in `Compile` will only executed once and `Package()` and `Test()` can start their own activities as soon as the `Compile()` results are available.
+
+To activate the `[Once]` attributes in your classes, you create a derived proxy class from your class with
+````csharp
+	var example = Once.Create<OnceExample>();
+	example.Release();
+````
+
+If you want to use `Once.Create` on a class, it must
+* not contain mutable fields
+* not contain mutable properties without `[Once]` attribute
+* declare all methods and properties marked with `[Once]` as `virtual`
+* be either `public` or `internal`. If your class is `internal`, you will need to make it visible to the underlying code injection framework with `[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]`.
+
+#### Special Case: Property Setters with [Once]
+
+Properties with a `set` method that are decorated with `[Once]` behave like this:
+
+The setter of the property can be called as many times as you like *before* the getter of the property was called. After that, calling the setter again will throw an `OncePropertyCanOnlyBeSetBeforeFirstGetException`.
+
+This allows you to create a `Once` object, then configure it by using the public setters and then call a method.
+
+### Caching
+
+Calculations made by `[Once]` method will be cached in the file system by adding a `[Cached]` attribute.
+
+The cached results are stored in directory `.\.amgbuild`.
 
 ### Automatic Command Line Interface
 
 Properties of the Targets container are available as build commands on the command line if
 * they are public
-* they have a System.Component.Description attribute
+* they have a `[System.Component.Description]` attribute
 
 Properties of the Targets container are available as build properties on the command line if
 * they have a public setter
-* they have a System.Component.Description attribute
+* they have a `[System.Component.Description]` attribute
+
+### Support of Cake Build Addins
+
+[Cake Build](https://cakebuild.net/) comes with a huge collection of [addins](https://cakebuild.net/addins/) for all kinds of build use cases.
+
+You can use all Cake addins directly in Amg.Build by adding the `Amg.Build.Cake` package and creating a Cake context:
+
+````
+[Once]
+protected virtual Cake.Core.ICakeContext Cake => Amg.Build.Cake.Cake.CreateContext();
+````
+
+See a [full example here](src/hello/CakeAddinExample.cs).
 
 ### `amgbuild`
 
@@ -61,83 +134,3 @@ amgbuild can
 * fix the script files of an existing Amg.Build script (`fix`)
 * open the script in Visual Studio (`open`)
 
-## Todo
-
-* complete Amg.FileSystem (copying)
-* How-to documentation: create script, the concept of [Once], Cake
-
-## Done
-
-* amgbuild add scripts to user's PATH
-* amgbuild packs scripts and installs them as global dotnet tool
-* gitignore
-* complete Amg.FileSystem (RelativeTo, IsDescendantOrSelf)
-* remove warning when removing old build results
-
-### 0.29
-
-* Starting without command line arguments shows help if no default command is given.
-* Namespace refactoring
-
-### 0.28
-
-* [Once] properties with setters can only be set once
-* command line parser can handle arrays
-* command line parser can handle default method parameters
-* allow more than one command on the command line (e.g. build.cmd clean build)
-
-### 0.27
-
-* Adapter to use Cake extensions
-
-### 0.26
-
-* file system watcher
-
-### 0.25
-
-* enforce that [Once] class does not have mutable fields
-* --debug
-* --edit
-* improved Rebuild
-
-### 0.24
-
-* Print return value of Commands
-* Prepend class name to once methods in log
-* Terminate on the first failed [Once] call.
-* show result as acii art.
-* clear all Sonar Analyzer findings
-* creator tool "amgbuild.exe" creates and fixes Amg.Build scripts
-* nullable references
-* netcoreapp3.0
-* Improve error logging
-* option to fix source files
-* check source files
-* output options for ITool
-* improved logging of process start failures
-* better logging of failures
-* more file system extensions
-* Display exit codes in help message
-* Exit code for command line error
-* -vquiet does not show result summary
-* build assembly is forced to rebuild after 60 minutes
-* rebuild check can be disabled
-* Logging shows current target
-* timeline: shorten long invocation names
-* GetOpt compliant target names for command line
-* Make rebuild decisions based on the git hash of source files: GitExtensions.IfChanged
-* Progress information for IEnumerable 
-* CopyTree
-* Remove old "DefineTarget" syntax
-* Make Build classes callable from code, not only via Runner.Run => Runner.Once
-* error summary
-* nice diagnostic message for IsOutOfDate (... are out of date because of ...)
-* Improve Target syntax
-* Less clumsy target class syntax with [Once]
-* Target logging
-* ReduceLines, SplitLines
-* Improve ITool error loggging
-* ITool supports environment variables
-* Glob
-* Subtargets

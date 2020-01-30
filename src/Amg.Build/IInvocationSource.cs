@@ -11,6 +11,6 @@ namespace Amg.Build
 
     internal interface IInvocationSource
     {
-        IEnumerable<InvocationInfo> Invocations { get; }
+        IEnumerable<IInvocation> Invocations { get; }
     }
 }
