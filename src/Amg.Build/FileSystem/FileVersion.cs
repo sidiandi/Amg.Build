@@ -108,25 +108,11 @@ namespace Amg.FileSystem
             return Childs.SequenceEqual(other.Childs);
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj switch
-            {
-                FileVersion f => Equals(f),
-                _ => false
-            };
-        }
-
-        public override int GetHashCode()
-        {
-            return LastWriteTimeUtc.GetHashCode() + 23 * Name.GetHashCode();
-        }
-
         public override bool Equals(object obj) => obj is FileVersion r && Equals(r);
 
         public override int GetHashCode()
         {
-            return this.Name.GetHashCode();
+            return LastWriteTimeUtc.GetHashCode() + 23 * Name.GetHashCode();
         }
 
         public bool IsNewer(FileVersion current)
