@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using System.ComponentModel;
 using Amg.GetOpt;
 using Amg.Build;
+using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using NUnit.Framework;
 
 namespace ReplaceWithName
