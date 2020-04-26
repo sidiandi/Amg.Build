@@ -171,9 +171,11 @@ namespace Build
 
             // create script
             var name = "end-to-end-test-of-build";
-            var amgbuildTool = (await Dotnet.Tool())
+            
+            var amgbuildTool = Tools.Default
+                .WithFileName(Root.Combine("src", Amgbuild, "bin", Configuration, TargetFramework, "amgbuild.exe"))
                 .WithWorkingDirectory(testDir)
-                .WithArguments(Root.Combine("src", Amgbuild, "bin", Configuration, TargetFramework, "amgbuild.dll"));
+                .WithArguments();
 
             await amgbuildTool.Run("new", name);
 
