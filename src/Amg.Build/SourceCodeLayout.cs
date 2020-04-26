@@ -82,9 +82,10 @@ namespace Amg.Build
                 .WithWorkingDirectory(s.SourceDir)
                 .WithArguments("add", "package");
 
+            await dotnetAddPackage.Run(AmgBuildPackageName, "-v", s.NugetVersion);
+
             var packages = new[]
             {
-                AmgBuildPackageName,
                 "nunit",
                 "Nunit3TestAdapter",
                 "Microsoft.NET.Test.Sdk"
