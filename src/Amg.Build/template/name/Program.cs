@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using Amg.GetOpt;
 using Amg.Build;
-using Nunit;
+using NUnit.Framework;
 
 namespace ReplaceWithName
 {
@@ -13,7 +13,7 @@ namespace ReplaceWithName
 	
 	    static int Main(string[] args) => Runner.Run(args);
 
-	    [Once, Description("example command line option")]
+        [Once, Description("example command line option")]
 	    public virtual string ExampleOption {get; set;}
 	
 	    [Once, Description("example action")]
@@ -34,7 +34,7 @@ namespace ReplaceWithName
 		public class Test
         {
 			[Test]
-			public void Test()
+			public void Test1()
             {
 				Assert.That(true);
             }
