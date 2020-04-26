@@ -309,6 +309,7 @@ namespace Build
   <packageSources>
     <clear /> 
     <add key=""EndToEndTestDefault"" value={packageSource.Quote()} />
+    <add key=""nuget.org"" value={"https://api.nuget.org/v3/index.json".Quote()} />
   </packageSources>
 </configuration>");
         }
