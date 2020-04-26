@@ -434,28 +434,33 @@ namespace Build
         }
 
         [Once]
-        [Description("Build a release version and push to nuget.org")]
-        public virtual async Task<string> Release()
+        [Description("Build a release version")]
+        public virtual async Task<IEnumerable<string>> Release()
         {
             await Git.EnsureNoPendingChanges();
-            await EndToEndTest();
+
             var git = Git.Create(this.Root);
             var v = await git.GetVersion();
             Logger.Information("Tagging with {version}", v.MajorMinorPatch);
             var gitTool = Git.GitTool;
-            try
-            {
-                await gitTool.Run("tag", v.MajorMinorPatch);
-            }
-            catch (ToolException te)
-            {
-                if (te.Result.Error.Contains("already exists"))
-                {
-                    await gitTool.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
-                }
-            }
+            await gitTool.Run("tag", v.MajorMinorPatch);
             await gitTool.Run("push", "--tags");
-            return v.NuGetVersionV2;
+
+            await EndToEndTest();
+
+            var packages = await Pack();
+
+            return packages;
+        }
+
+        [Once, Description("Publish to nuget.org")]
+        public virtual async Task<string> Publish()
+        {
+            var packages = await Release();
+            foreach (var package in packages)
+            {
+                await this.Nuget.Run("push", package);
+            }
         }
 
         [Once]
