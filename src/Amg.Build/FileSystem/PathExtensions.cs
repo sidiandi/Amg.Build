@@ -1029,7 +1029,7 @@ are more recent.
         public static bool IsDescendantOrSelf(this string path, string parent)
         {
             return parent.SplitDirectories()
-                .ZipPadSecond(path.SplitDirectories(), (a, b) => FileNameEqual(a, b))
+                .ZipOr(path.SplitDirectories(), (a, b) => FileNameEqual(a, b), a => false)
                 .All(_ => _);
         }
 

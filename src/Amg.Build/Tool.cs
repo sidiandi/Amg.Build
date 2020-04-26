@@ -184,23 +184,19 @@ namespace Amg.Build
 
                 startInfo.EnvironmentVariables.Add(this.environment);
 
-                Process Start()
+                Process p;
+                try
                 {
-                    try
-                    {
-                        return Process.Start(startInfo);
-                    }
-                    catch (System.ComponentModel.Win32Exception e)
-                    {
-                        if ((uint)e.HResult == 0x80004005)
-                        {
-                            throw new ToolStartException(e.Message, startInfo);
-                        }
-                        throw;
-                    }
+                    p = Process.Start(startInfo);
                 }
-
-                var p = Start();
+                catch (System.ComponentModel.Win32Exception e)
+                {
+                    if ((uint)e.HResult == 0x80004005)
+                    {
+                        throw new ToolStartException(e.Message, startInfo);
+                    }
+                    throw;
+                }
 
                 var processLog = Serilog.Log.Logger.ForContext("pid", p.Id);
 
@@ -221,7 +217,7 @@ namespace Amg.Build
                     p.StartInfo.Arguments);
 
 
-                var result = (IToolResult)new ResultImpl(
+                IToolResult result = new ResultImpl(
                     exitCode: p.ExitCode,
                     output: output.Result,
                     error: error.Result);

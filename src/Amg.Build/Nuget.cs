@@ -57,7 +57,7 @@ namespace Amg.Build
             var installDir = await Get(packageId, version);
 
             var path = executable == null
-                ? GetDefaultExecutable(installDir)
+                ? GetDefaultExecutable(installDir, packageId)
                 : installDir.Combine(executable);
 
             Logger.Information("nuget tool {packageId} uses {path}", packageId, path);
@@ -126,12 +126,19 @@ namespace Amg.Build
             return installDir;
         }
 
-        static string GetDefaultExecutable(string nugetPackageInstallDir)
+        static string GetDefaultExecutable(string nugetPackageInstallDir, string packageId)
         {
             try
             {
-                return nugetPackageInstallDir.Combine("tools")
-                    .Glob("*.exe").EnumerateFiles().Single();
+                var candidates = nugetPackageInstallDir.Combine("tools")
+                    .Glob("*.exe").ToList();
+
+                if (candidates.Count == 1)
+                {
+                    return candidates.Single();
+                }
+
+                return candidates.Single(_ => _.FileNameWithoutExtension().Equals(packageId, StringComparison.OrdinalIgnoreCase));
             }
             catch (Exception e)
             {

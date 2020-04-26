@@ -82,13 +82,17 @@ namespace Amg.Build
                 .WithWorkingDirectory(s.SourceDir)
                 .WithArguments("add", "package");
 
-            var r = await dotnetAddPackage
-                .DoNotCheckExitCode()
-                .Run(AmgBuildPackageName,
-                "--version", s.NugetVersion);
-            if (r.ExitCode != 0)
+            var packages = new[]
             {
-                await dotnetAddPackage.Run(AmgBuildPackageName);
+                AmgBuildPackageName,
+                "nunit",
+                "Nunit3TestAdapter",
+                "Microsoft.NET.Test.Sdk"
+            }; 
+
+            foreach (var package in packages)
+            { 
+                await dotnetAddPackage.Run(package);
             }
             return s;
         }

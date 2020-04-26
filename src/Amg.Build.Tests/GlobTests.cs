@@ -140,7 +140,7 @@ namespace Amg.FileSystem
         {
             Assert.That(actual.SequenceEqual(expected), () => $@"Sequences do not match.
 
-{actual.ZipOrDefault(expected, (a, e) => new { actual = a, expected = e}).ToTable()}
+{actual.ZipPad(expected, (a, e) => new { actual = a, expected = e}).ToTable()}
 ");
         }
 

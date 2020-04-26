@@ -39,8 +39,7 @@ namespace amgbuild
             return cmdFile;
         }
 
-        [Once]
-        [Description("Create an Amg.Build script")]
+        [Once, Description("Create an Amg.Build script")]
         public virtual async Task<string> New(string? scriptName = null)
         {
             var resolvedCmdFile = ResolveNewCmdFile(scriptName);

@@ -50,9 +50,9 @@ namespace Amg.Extensions
             var originalCount = 3;
             var e = Enumerable.Range(0, originalCount).Select(_ => _.ToString());
             var padCount = 10;
-            var padded = e.Pad(padCount).ToList();
+            var padded = e.Pad(padCount, String.Empty).ToList();
             Assert.That(padded.Count, Is.EqualTo(padCount));
-            Assert.That(padded.NotNull().SequenceEqual(e));
+            Assert.That(padded.Where(_ => !String.IsNullOrEmpty(_)).SequenceEqual(e));
         }
 
         [Test]

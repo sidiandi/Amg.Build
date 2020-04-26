@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using Amg.GetOpt;
 using Amg.Build;
+using Nunit;
 
 namespace ReplaceWithName
 {
@@ -28,5 +29,15 @@ namespace ReplaceWithName
 		    Console.WriteLine("Hello, World!");
 		    await Task.CompletedTask;
 	    }
+
+		[TestFixture]
+		public class Test
+        {
+			[Test]
+			public void Test()
+            {
+				Assert.That(true);
+            }
+        }
     }
 }

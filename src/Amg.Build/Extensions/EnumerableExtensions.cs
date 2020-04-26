@@ -82,7 +82,12 @@ namespace Amg.Extensions
         /// <param name="second"></param>
         /// <param name="resultSelector"></param>
         /// <returns></returns>
-        public static IEnumerable<TResult> ZipOrDefaultValue<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
+        public static IEnumerable<TResult> ZipPad<TFirst, TSecond, TResult>(
+            this IEnumerable<TFirst> first, 
+            IEnumerable<TSecond> second, 
+            Func<TFirst> padFirst, 
+            Func<TSecond> padSecond, 
+            Func<TFirst, TSecond, TResult> resultSelector) 
         {
             using (var i0 = first.GetEnumerator())
             using (var i1 = second.GetEnumerator())
@@ -94,8 +99,8 @@ namespace Amg.Extensions
                     if (firstHasElement || secondHasElement)
                     {
                         yield return resultSelector(
-                            firstHasElement ? i0.Current : default,
-                            secondHasElement ? i1.Current : default
+                            firstHasElement ? i0.Current : padFirst(),
+                            secondHasElement ? i1.Current : padSecond()
                             );
                     }
                     else
@@ -106,55 +111,13 @@ namespace Amg.Extensions
             }
         }
 
-        /// <summary>
-        /// Zips together two sequences. The shorter sequence is padded with default values.
-        /// </summary>
-        /// <typeparam name="TFirst"></typeparam>
-        /// <typeparam name="TSecond"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="first"></param>
-        /// <param name="second"></param>
-        /// <param name="resultSelector"></param>
-        /// <returns></returns>
-        public static IEnumerable<TResult> ZipPadSecond<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
-        {
-            using (var i0 = first.GetEnumerator())
-            using (var i1 = second.GetEnumerator())
-            {
-                while (true)
-                {
-                    var firstHasElement = i0.MoveNext();
-                    var secondHasElement = i1.MoveNext();
-                    if (firstHasElement)
-                    {
-                        yield return resultSelector(
-                            i0.Current,
-                            secondHasElement ? i1.Current : default
-                            );
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-        }
-
-#nullable disable
-        /// <summary>
-        /// Zips together two sequences. The shorter sequence is padded with default values.
-        /// </summary>
-        /// <typeparam name="TFirst"></typeparam>
-        /// <typeparam name="TSecond"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="first"></param>
-        /// <param name="second"></param>
-        /// <param name="resultSelector"></param>
-        /// <returns></returns>
-        public static IEnumerable<TResult> ZipOrDefault<TFirst, TSecond, TResult>(this IEnumerable<TFirst> first, IEnumerable<TSecond> second, Func<TFirst, TSecond, TResult> resultSelector)
-            where TResult : class
-            where TFirst : class
+        public static IEnumerable<TResult> ZipPad<TFirst, TSecond, TResult>(
+            this IEnumerable<TFirst> first,
+            IEnumerable<TSecond> second,
+            Func<TFirst?, TSecond?, TResult> resultSelector)
+where TFirst : class
             where TSecond : class
+
         {
             using (var i0 = first.GetEnumerator())
             using (var i1 = second.GetEnumerator())
@@ -179,13 +142,86 @@ namespace Amg.Extensions
         }
 
         /// <summary>
-        /// Pads the sequence with null if it is not long enough
+        /// Zips together two sequences. The second sequence is padded with default values.
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <param name="resultSelector"></param>
+        /// <returns></returns>
+        public static IEnumerable<TResult> ZipPad<TFirst, TSecond, TResult>(
+            this IEnumerable<TFirst> first, 
+            IEnumerable<TSecond> second, 
+            Func<TSecond> padSecond,
+            Func<TFirst, TSecond, TResult> resultSelector)
+        {
+            using (var i0 = first.GetEnumerator())
+            using (var i1 = second.GetEnumerator())
+            {
+                while (true)
+                {
+                    var firstHasElement = i0.MoveNext();
+                    var secondHasElement = i1.MoveNext();
+                    if (firstHasElement)
+                    {
+                        yield return resultSelector(i0.Current, secondHasElement
+                            ? i1.Current
+                            : padSecond());
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <typeparam name="TFirst"></typeparam>
+        /// <typeparam name="TSecond"></typeparam>
+        /// <typeparam name="TResult"></typeparam>
+        /// <param name="first"></param>
+        /// <param name="second"></param>
+        /// <param name="resultSelector"></param>
+        /// <returns></returns>
+        public static IEnumerable<TResult> ZipOr<TFirst, TSecond, TResult>(
+            this IEnumerable<TFirst> first,
+            IEnumerable<TSecond> second,
+            Func<TFirst, TSecond, TResult> resultSelector,
+            Func<TFirst, TResult> resultSelectorIfSecondElementIsMissing)
+        {
+            using (var i0 = first.GetEnumerator())
+            using (var i1 = second.GetEnumerator())
+            {
+                while (true)
+                {
+                    var firstHasElement = i0.MoveNext();
+                    var secondHasElement = i1.MoveNext();
+                    if (firstHasElement)
+                    {
+                        yield return secondHasElement
+                            ? resultSelector(i0.Current, i1.Current)
+                            : resultSelectorIfSecondElementIsMissing(i0.Current);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Pads the sequence with defaultValue if it is not long enough
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="e"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        public static IEnumerable<T> Pad<T>(this IEnumerable<T> e, int count)
+        public static IEnumerable<T> Pad<T>(this IEnumerable<T> e, int count, T defaultValue)
         {
             using (var currentItem = e.GetEnumerator())
             {
@@ -193,11 +229,10 @@ namespace Amg.Extensions
                 {
                     yield return currentItem.MoveNext()
                         ? currentItem.Current
-                        : default(T);
+                        : defaultValue;
                 }
             }
         }
-#nullable enable
 
         /// <summary>
         /// Returns the element i for which selector(i) is maximal
@@ -575,7 +610,7 @@ namespace Amg.Extensions
 
         public static bool StartsWith<T>(this IEnumerable<T> e, IEnumerable<T> start)
         {
-            return start.ZipPadSecond(e, (i1, i2) => object.Equals(i1, i2)).All(_ => _);
+            return start.ZipOr(e, (i1, i2) => object.Equals(i1, i2), i1 => false).All(_ => _);
         }
 
         public static int IndexOf<T>(this IEnumerable<T> e, T searchValue)

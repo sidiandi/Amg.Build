@@ -119,7 +119,7 @@ namespace Amg.Extensions
         {
             IEnumerable<int> Max(IEnumerable<int> e0, IEnumerable<int> e1)
             {
-                return e0.ZipOrDefaultValue(e1, Math.Max);
+                return e0.ZipPad(e1, () => 0, () => 0, Math.Max);
             }
 
             return GetWritable(w =>
