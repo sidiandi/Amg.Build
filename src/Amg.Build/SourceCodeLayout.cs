@@ -142,7 +142,7 @@ namespace Amg.Build
         string ProgramCsText => ReadTemplate("name.Program.cs")
             .Replace("ReplaceWithNamespace", Namespace);
 
-        string BuildCsProjText => ReadTemplate("build.csproj.template")
+        string BuildCsProjText => ReadTemplate("name.name.csproj")
             .Replace("ReplaceWithNamespace", Namespace);
 
         string BuildCmdText => ReadTemplate("name.cmd");
