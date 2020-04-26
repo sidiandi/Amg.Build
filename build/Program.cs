@@ -437,13 +437,25 @@ namespace Build
         [Description("Build a release version")]
         public virtual async Task<IEnumerable<string>> Release()
         {
-            await Git.EnsureNoPendingChanges();
-
             var git = Git.Create(this.Root);
+            git.EnsureNoPendingChanges();
+
             var v = await git.GetVersion();
             Logger.Information("Tagging with {version}", v.MajorMinorPatch);
-            var gitTool = Git.GitTool;
-            await gitTool.Run("tag", v.MajorMinorPatch);
+            var gitTool = git.GitTool;
+            try
+            {
+                await gitTool.Run("tag", v.MajorMinorPatch);
+            }
+            catch (ToolException te)
+            {
+                if (te.Result.Error.Contains("already exists"))
+                {
+                    var nextVersion = IncreasePatchVersion(v.MajorMinorPatch);
+                    await gitTool.Run("tag", nextVersion);
+                }
+            }
+
             await gitTool.Run("push", "--tags");
 
             await EndToEndTest();
