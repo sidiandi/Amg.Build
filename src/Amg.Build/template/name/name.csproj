@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <RootNamespace>ReplaceWithNamespace</RootNamespace>
     <OutputType>Exe</OutputType>
     <StartupObject>ReplaceWithNamespace.Program</StartupObject>
     <TargetFramework>netcoreapp3.0</TargetFramework>

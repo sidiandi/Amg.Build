@@ -75,7 +75,7 @@ namespace Amg.Build
                 : null;
 
             await Create(s.CmdFile, "name.cmd", backup);
-            await Create(s.CsprojFile, "name.name.csproj", backup);
+            await CreateFromText(s.BuildCsProjText, "name.name.csproj", backup);
             await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
             await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
             var dotnetAddPackage = (await Once.Create<Dotnet>().Tool())
