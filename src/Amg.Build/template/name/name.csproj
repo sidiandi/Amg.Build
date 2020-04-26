@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <StartupObject>ReplaceWithNamespace.Program</StartupObject>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
   </PropertyGroup>
-
 </Project>

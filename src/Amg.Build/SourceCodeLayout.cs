@@ -140,7 +140,10 @@ namespace Amg.Build
             .Replace("{AmgBuildVersion}", NugetVersion);
 
         string ProgramCsText => ReadTemplate("name.Program.cs")
-            .Replace("ReplaceWithName", Namespace);
+            .Replace("ReplaceWithNamespace", Namespace);
+
+        string BuildCsProjText => ReadTemplate("build.csproj.template")
+            .Replace("ReplaceWithNamespace", Namespace);
 
         string BuildCmdText => ReadTemplate("name.cmd");
 
@@ -196,8 +199,6 @@ namespace Amg.Build
             // delete old Amg.Build.props file
             SourceDir.Combine("Amg.Build.props").EnsureFileNotExists();
         }
-
-        string BuildCsProjText => ReadTemplate("build.csproj.template");
 
         async Task FixFile(string file, string expected, BackupDirectory backup)
         {

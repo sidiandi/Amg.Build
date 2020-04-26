@@ -5,7 +5,7 @@ using Amg.Build;
 using DescriptionAttribute = System.ComponentModel.DescriptionAttribute;
 using NUnit.Framework;
 
-namespace ReplaceWithName
+namespace ReplaceWithNamespace
 {
     public class Program
     {
@@ -14,7 +14,7 @@ namespace ReplaceWithName
 	    static int Main(string[] args) => Runner.Run(args);
 
         [Once, Description("example command line option")]
-	    public virtual string ExampleOption {get; set;}
+	    public virtual string? ExampleOption {get; set;}
 	
 	    [Once, Description("example action")]
 	    public virtual async Task ExampleAction()
