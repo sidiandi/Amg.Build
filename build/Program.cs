@@ -459,7 +459,7 @@ namespace Build
             var packages = await Release();
             foreach (var package in packages)
             {
-                await this.Nuget.Run("push", package);
+                await this.Nuget.Run("push", package, "-Source", "nuget.org");
             }
             return packages;
         }
