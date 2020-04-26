@@ -454,13 +454,14 @@ namespace Build
         }
 
         [Once, Description("Publish to nuget.org")]
-        public virtual async Task<string> Publish()
+        public virtual async Task<IEnumerable<string>> Publish()
         {
             var packages = await Release();
             foreach (var package in packages)
             {
                 await this.Nuget.Run("push", package);
             }
+            return packages;
         }
 
         [Once]
