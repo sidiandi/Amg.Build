@@ -4,8 +4,9 @@
 
 * complete Amg.FileSystem (copying)
 
-## Done
+## 0.36.0
 
+* Fix end-to-end test
 * Caching
 * `make` style rules
 * improved handling of property setters
