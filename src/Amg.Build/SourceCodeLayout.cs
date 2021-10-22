@@ -30,11 +30,15 @@ namespace Amg.Build
         public string Name => CmdFile.FileNameWithoutExtension();
         public string Namespace => Name.ToCsharpIdentifier();
         public string SourceDir => CmdFile.Parent().Combine(Name);
-        public string ProgramCs => SourceDir.Combine("Program.cs");
+        public string ProgramCs => ExeDir.Combine("Program.cs");
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
         public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
         public string Configuration => "Debug";
         public string TargetFramework => "netcoreapp3.0";
+
+        public string ExeDir => SourceDir.Combine(Name);
+        public string TestDir => SourceDir.Combine(TestName);
+        public string TestName => Name + ".Tests";
 
         static async Task Create(string path, string templateName, BackupDirectory? backup)
         {
@@ -60,7 +64,6 @@ namespace Amg.Build
                 .EnsureParentDirectoryExists()
                 .WriteAllTextIfChangedAsync(text);
         }
-
         public static async Task<SourceCodeLayout> Create(string cmdFilePath, bool overwrite = false)
         {
             var s = new SourceCodeLayout(cmdFilePath);
@@ -74,27 +77,44 @@ namespace Amg.Build
                 ? new BackupDirectory(s.RootDir)
                 : null;
 
-            await Create(s.CmdFile, "name.cmd", backup);
-            await CreateFromText(s.CsprojFile, s.BuildCsProjText, backup);
+            var dotnet = (await Once.Create<Dotnet>().Tool()).WithWorkingDirectory(s.SourceDir)
+                .WithEnvironment("DOTNET_CLI_TELEMETRY_OPTOUT", "1");
+
+            // create console program
+            var t = dotnet.WithWorkingDirectory(s.ExeDir.EnsureDirectoryExists());
+            await t.Run("new", "console");
+            s.ProgramCs.EnsureFileNotExists();
             await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
-            await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
-            var dotnetAddPackage = (await Once.Create<Dotnet>().Tool())
-                .WithWorkingDirectory(s.SourceDir)
-                .WithArguments("add", "package");
-
-            await dotnetAddPackage.Run(AmgBuildPackageName, "-v", s.NugetVersion);
-
-            var packages = new[]
+            var packages = new string[]
             {
-                "nunit",
-                "Nunit3TestAdapter",
-                "Microsoft.NET.Test.Sdk"
-            }; 
-
+                "Amg.Build",
+                "Serilog",
+                "Serilog.Sinks.Console"
+            };
             foreach (var package in packages)
-            { 
-                await dotnetAddPackage.Run(package);
+            {
+                await t.Run("add", "package", package);
             }
+
+            t = dotnet.WithWorkingDirectory(s.TestDir.EnsureDirectoryExists());
+            await t.Run("new", "nunit");
+            await t.Run("new", "nunit-test", "-n", "ProgramTests", "-o", ".");
+            s.TestDir.Combine("UnitTest1.cs").EnsureFileNotExists();
+            await t.Run("add", "reference", s.ExeDir);
+
+            await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
+
+            t = dotnet.WithWorkingDirectory(s.SourceDir);
+            await t.Run("new", "solution");
+            foreach (var p in new[] {s.Name, s.TestName})
+            {
+                await t.Run("sln", "add", p);
+            }
+
+            await t.Run("test");
+
+            await CreateFromText(s.CmdFile, s.BuildCmdText, backup);
+
             return s;
         }
 
