@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Remove="template/name/Program.cs" />
+    <Compile Remove="template\name\GlobalUsings.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -14,6 +15,7 @@
     <EmbeddedResource Include="template/name.cmd" />
     <EmbeddedResource Include="template/name/Program.cs" />
     <EmbeddedResource Include="template/name/name.csproj" />
+    <EmbeddedResource Include="template\name\GlobalUsings.cs" />
   </ItemGroup>
 
   <ItemGroup>
