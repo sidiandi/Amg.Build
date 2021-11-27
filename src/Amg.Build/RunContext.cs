@@ -4,232 +4,227 @@ using Amg.GetOpt;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
-namespace Amg.Build
+namespace Amg.Build;
+
+/// <summary>
+/// Runs classes with [Once] 
+/// </summary>
+internal class RunContext
 {
-    /// <summary>
-    /// Runs classes with [Once] 
-    /// </summary>
-    internal class RunContext
+    private static Serilog.ILogger Logger => Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+
+    private readonly Func<object> commandObjectFactory;
+    private readonly string[] commandLineArguments;
+
+    public RunContext(
+        Func<object> commandObjectFactory,
+        string[] commandLineArguments
+        )
     {
-        private static Serilog.ILogger Logger => Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+        this.commandObjectFactory = commandObjectFactory;
+        this.commandLineArguments = commandLineArguments;
+    }
 
-        private readonly Func<object> commandObjectFactory;
-        private readonly string[] commandLineArguments;
-
-        public RunContext(
-            Func<object> commandObjectFactory,
-            string[] commandLineArguments
-            )
+    async Task<int?> Watch()
+    {
+        if (!String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(nowatchEnvironmentVariable)))
         {
-            this.commandObjectFactory = commandObjectFactory;
-            this.commandLineArguments = commandLineArguments;
+            return null;
         }
 
-        async Task<int?> Watch()
+        var instance = commandObjectFactory();
+
+        var sourceCodeLayout = SourceCodeLayout.Get(instance);
+        if (sourceCodeLayout != null)
         {
-            if (!String.IsNullOrEmpty(System.Environment.GetEnvironmentVariable(nowatchEnvironmentVariable)))
-            {
-                return null;
-            }
-
-            var instance = commandObjectFactory();
-
-            var sourceCodeLayout = SourceCodeLayout.Get(instance);
-            if (sourceCodeLayout != null)
-            {
-                await WatchInternal(sourceCodeLayout, this.commandLineArguments);
-                return ExitCode.Success;
-            }
-            else
-            {
-                return ExitCode.CommandFailed;
-            }
+            await WatchInternal(sourceCodeLayout, this.commandLineArguments);
+            return ExitCode.Success;
         }
-
-        const string nowatchEnvironmentVariable = "Amg.Build_nowatch";
-
-        async Task WatchInternal(SourceCodeLayout source, string[] commandLineArgs)
+        else
         {
+            return ExitCode.CommandFailed;
+        }
+    }
 
-            var watchedDir = source.CmdFile.Parent();
-            using (var fsw = new FileSystemWatcher
+    const string nowatchEnvironmentVariable = "Amg.Build_nowatch";
+
+    async Task WatchInternal(SourceCodeLayout source, string[] commandLineArgs)
+    {
+
+        var watchedDir = source.CmdFile.Parent();
+        using (var fsw = new FileSystemWatcher
+        {
+            Path = watchedDir,
+            IncludeSubdirectories = true,
+        })
+        {
+            var tool = Tools.Cmd.WithArguments(source.CmdFile)
+                .WithEnvironment(nowatchEnvironmentVariable, true.ToString())
+                .Passthrough();
+
+            Task run = Task.CompletedTask;
+
+            void Changed(object sender, FileSystemEventArgs e)
             {
-                Path = watchedDir,
-                IncludeSubdirectories = true,
-            })
-            {
-                var tool = Tools.Cmd.WithArguments(source.CmdFile)
-                    .WithEnvironment(nowatchEnvironmentVariable, true.ToString())
-                    .Passthrough();
-
-                Task run = Task.CompletedTask;
-
-                void Changed(object sender, FileSystemEventArgs e)
+                if (run.IsCompleted)
                 {
-                    if (run.IsCompleted)
-                    {
-                        run = tool.Run(commandLineArgs);
-                    }
+                    run = tool.Run(commandLineArgs);
+                }
+            }
+
+            fsw.Changed += Changed;
+            fsw.Created += Changed;
+            fsw.Deleted += Changed;
+            fsw.Renamed += Changed;
+
+            fsw.EnableRaisingEvents = true;
+
+            Console.Write($"Watching {watchedDir}...");
+            await Task.Delay(-1);
+
+            fsw.EnableRaisingEvents = false;
+
+            fsw.Changed -= Changed;
+            fsw.Created -= Changed;
+            fsw.Deleted -= Changed;
+            fsw.Renamed -= Changed;
+        }
+    }
+
+    public async Task<int> Run()
+    {
+        try
+        {
+            RecordStartupTime();
+
+            var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
+            bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
+            if (needConfigureLogger)
+            {
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.ControlledBy(levelSwitch)
+                    .WriteTo.Console(LogEventLevel.Verbose,
+                    standardErrorFromLevel: LogEventLevel.Error,
+                    outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}"
+                    )
+                    .CreateLogger();
+            }
+
+            await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
+
+            var commandObject = commandObjectFactory();
+            var source = SourceCodeLayout.Get(commandObject);
+
+            var combinedOptions = new CombinedOptions(commandObject);
+            if (source != null)
+            {
+                combinedOptions.SourceOptions = new SourceOptions();
+            }
+
+            var commandProvider = CommandProviderFactory.FromObject(combinedOptions);
+            var parser = new Parser(commandProvider);
+            parser.Parse(commandLineArguments);
+
+            if (combinedOptions.Options.Help)
+            {
+                Help.PrintHelpMessage(Console.Out, commandProvider);
+                return Amg.GetOpt.ExitCode.HelpDisplayed;
+            }
+
+            levelSwitch.MinimumLevel = SerilogLogEventLevel(combinedOptions.Options.Verbosity);
+
+            if (combinedOptions.SourceOptions != null && source != null)
+            {
+                var sourceOptions = combinedOptions.SourceOptions;
+                if (sourceOptions.Edit)
+                {
+                    await Tools.Cmd.Run("start", source.CsprojFile);
+                    return Amg.GetOpt.ExitCode.Success;
                 }
 
-                fsw.Changed += Changed;
-                fsw.Created += Changed;
-                fsw.Deleted += Changed;
-                fsw.Renamed += Changed;
+                if (sourceOptions.Debug)
+                {
+                    System.Diagnostics.Debugger.Launch();
+                }
 
-                fsw.EnableRaisingEvents = true;
-
-                Console.Write($"Watching {watchedDir}...");
-                await Task.Delay(-1);
-
-                fsw.EnableRaisingEvents = false;
-
-                fsw.Changed -= Changed;
-                fsw.Created -= Changed;
-                fsw.Deleted -= Changed;
-                fsw.Renamed -= Changed;
+                if (sourceOptions.Watch)
+                {
+                    await Watch();
+                }
             }
-        }
 
-        public async Task<int> Run()
-        {
+            var amgBuildAssembly = Assembly.GetExecutingAssembly();
+            Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
+
             try
             {
-                RecordStartupTime();
+                var results = await parser.Run();
+                results.Destructure().Write(Console.Out);
+            }
+            catch (NoDefaultCommandException)
+            {
+                Help.PrintHelpMessage(Console.Out, commandProvider);
+                return GetOpt.ExitCode.HelpDisplayed;
+            }
+            catch (AggregateException aex)
+            {
+                int exitCode = ExitCode.Success;
 
-                var levelSwitch = new LoggingLevelSwitch(LogEventLevel.Information);
-                bool needConfigureLogger = Log.Logger.GetType().Name.Equals("SilentLogger");
-                if (needConfigureLogger)
+                aex.Handle(exception =>
                 {
-                    Log.Logger = new LoggerConfiguration()
-                        .MinimumLevel.ControlledBy(levelSwitch)
-                        .WriteTo.Console(LogEventLevel.Verbose,
-                        standardErrorFromLevel: LogEventLevel.Error,
-                        outputTemplate: "{Timestamp:o}|{Level:u3}|{Message:lj}{NewLine}{Exception}"
-                        )
-                        .CreateLogger();
-                }
-
-                await RebuildMyself.BuildIfSourcesChanged(commandLineArguments);
-
-                var commandObject = commandObjectFactory();
-                var source = SourceCodeLayout.Get(commandObject);
-
-                var combinedOptions = new CombinedOptions(commandObject);
-                if (source != null)
-                {
-                    combinedOptions.SourceOptions = new SourceOptions();
-                }
-
-                var commandProvider = CommandProviderFactory.FromObject(combinedOptions);
-                var parser = new Parser(commandProvider);
-                parser.Parse(commandLineArguments);
-
-                if (combinedOptions.Options.Help)
-                {
-                    Help.PrintHelpMessage(Console.Out, commandProvider);
-                    return Amg.GetOpt.ExitCode.HelpDisplayed;
-                }
-
-                levelSwitch.MinimumLevel = SerilogLogEventLevel(combinedOptions.Options.Verbosity);
-
-                if (combinedOptions.SourceOptions != null && source != null)
-                {
-                    var sourceOptions = combinedOptions.SourceOptions;
-                    if (sourceOptions.Edit)
+                    if (exception is NoDefaultCommandException)
                     {
-                        await Tools.Cmd.Run("start", source.CsprojFile);
-                        return Amg.GetOpt.ExitCode.Success;
+                        Help.PrintHelpMessage(Console.Out, commandProvider);
+                        exitCode = ExitCode.HelpDisplayed;
+                        return true;
                     }
-
-                    if (sourceOptions.Debug)
+                    else
                     {
-                        System.Diagnostics.Debugger.Launch();
+                        Console.Error.WriteLine(exception);
+                        exitCode = ExitCode.UnknownError;
+                        return true;
                     }
+                });
 
-                    if (sourceOptions.Watch)
-                    {
-                        await Watch();
-                    }
-                }
-
-                var amgBuildAssembly = Assembly.GetExecutingAssembly();
-                Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
-
-                try
-                {
-                    var results = await parser.Run();
-                    results.Destructure().Write(Console.Out);
-                }
-                catch (NoDefaultCommandException)
-                {
-                    Help.PrintHelpMessage(Console.Out, commandProvider);
-                    return GetOpt.ExitCode.HelpDisplayed;
-                }
-                catch (AggregateException aex)
-                {
-                    int exitCode = ExitCode.Success;
-
-                    aex.Handle(exception =>
-                    {
-                        if (exception is NoDefaultCommandException)
-                        {
-                            Help.PrintHelpMessage(Console.Out, commandProvider);
-                            exitCode = ExitCode.HelpDisplayed;
-                            return true;
-                        }
-                        else
-                        {
-                            Console.Error.WriteLine(exception);
-                            exitCode = ExitCode.UnknownError;
-                            return true;
-                        }
-                    });
-
-                    return exitCode;
-                }
-
-                var invocations = new[] { GetStartupInvocation() }
-                    .Concat(((IInvocationSource)commandObject).Invocations);
-
-                if (combinedOptions.Options.Summary)
-                {
-                    Summary.PrintTimeline(invocations).Write(Console.Out);
-                }
-
-                return invocations.Failed()
-                    ? ExitCode.CommandFailed
-                    : ExitCode.Success;
+                return exitCode;
             }
-            catch (OnceException ex)
+
+            var invocations = new[] { GetStartupInvocation() }
+                .Concat(((IInvocationSource)commandObject).Invocations);
+
+            if (combinedOptions.Options.Summary)
             {
-                Console.Error.WriteLine(ex);
-                Console.Error.WriteLine();
-                Console.Error.WriteLine("See https://github.com/sidiandi/Amg.Build/ for instructions.");
-                return Amg.GetOpt.ExitCode.CommandFailed;
+                Summary.PrintTimeline(invocations).Write(Console.Out);
             }
-            catch (Amg.GetOpt.CommandLineException ex)
-            {
-                Console.Error.WriteLine(ex.Message);
-                Console.Error.WriteLine();
-                Console.Error.WriteLine("Run with --help to get help.");
-                return Amg.GetOpt.ExitCode.CommandLineError;
-            }
-            catch (InvocationFailedException)
-            {
-                return Amg.GetOpt.ExitCode.CommandFailed;
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($@"An unknown error has occured.
+
+            return invocations.Failed()
+                ? ExitCode.CommandFailed
+                : ExitCode.Success;
+        }
+        catch (OnceException ex)
+        {
+            Console.Error.WriteLine(ex);
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("See https://github.com/sidiandi/Amg.Build/ for instructions.");
+            return Amg.GetOpt.ExitCode.CommandFailed;
+        }
+        catch (Amg.GetOpt.CommandLineException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            Console.Error.WriteLine();
+            Console.Error.WriteLine("Run with --help to get help.");
+            return Amg.GetOpt.ExitCode.CommandLineError;
+        }
+        catch (InvocationFailedException)
+        {
+            return Amg.GetOpt.ExitCode.CommandFailed;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($@"An unknown error has occured.
 
 This is a bug in Amg.Build.
 
@@ -238,67 +233,66 @@ Submit here: https://github.com/sidiandi/Amg.Build/issues
 Details:
 {ex}
 ");
-                return Amg.GetOpt.ExitCode.UnknownError;
-            }
+            return Amg.GetOpt.ExitCode.UnknownError;
         }
+    }
 
-        string StartupFile => BuildScriptDll + ".startup";
+    string StartupFile => BuildScriptDll + ".startup";
 
-        void RecordStartupTime()
+    void RecordStartupTime()
+    {
+        if (!StartupFile.IsFile())
         {
-            if (!StartupFile.IsFile())
+            Json.Write(StartupFile, DateTime.UtcNow);
+        }
+    }
+
+    DateTime GetStartupTime()
+    {
+        if (StartupFile.IsFile())
+        {
+            try
             {
-                Json.Write(StartupFile, DateTime.UtcNow);
+                return Json.Read<DateTime>(StartupFile).Result;
             }
-        }
-
-        DateTime GetStartupTime()
-        {
-            if (StartupFile.IsFile())
+            catch
             {
-                try
-                {
-                    return Json.Read<DateTime>(StartupFile).Result;
-                }
-                catch
-                {
-                    // ignore read errors
-                }
-                finally
-                {
-                    StartupFile.EnsureFileNotExists();
-                }
+                // ignore read errors
             }
-            return Process.GetCurrentProcess().StartTime.ToUniversalTime();
-        }
-
-        IInvocation GetStartupInvocation()
-        {
-            var begin = GetStartupTime();
-            var end = DateTime.UtcNow;
-            var startupDuration = end - begin;
-            Logger.Debug("Startup duration: {startupDuration}", startupDuration);
-            var startupInvocation = new InvocationInfo("startup", begin, end);
-            return startupInvocation;
-        }
-
-        string BuildScriptDll => Assembly.GetEntryAssembly().Location;
-
-        private static LogEventLevel SerilogLogEventLevel(Verbosity verbosity)
-        {
-            switch (verbosity)
+            finally
             {
-                case Verbosity.Detailed:
-                    return LogEventLevel.Debug;
-                case Verbosity.Normal:
-                    return LogEventLevel.Information;
-                case Verbosity.Minimal:
-                    return LogEventLevel.Error;
-                case Verbosity.Quiet:
-                    return LogEventLevel.Fatal;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(verbosity), verbosity, "no enum value");
+                StartupFile.EnsureFileNotExists();
             }
+        }
+        return Process.GetCurrentProcess().StartTime.ToUniversalTime();
+    }
+
+    IInvocation GetStartupInvocation()
+    {
+        var begin = GetStartupTime();
+        var end = DateTime.UtcNow;
+        var startupDuration = end - begin;
+        Logger.Debug("Startup duration: {startupDuration}", startupDuration);
+        var startupInvocation = new InvocationInfo("startup", begin, end);
+        return startupInvocation;
+    }
+
+    string BuildScriptDll => Assembly.GetEntryAssembly().Location;
+
+    private static LogEventLevel SerilogLogEventLevel(Verbosity verbosity)
+    {
+        switch (verbosity)
+        {
+            case Verbosity.Detailed:
+                return LogEventLevel.Debug;
+            case Verbosity.Normal:
+                return LogEventLevel.Information;
+            case Verbosity.Minimal:
+                return LogEventLevel.Error;
+            case Verbosity.Quiet:
+                return LogEventLevel.Fatal;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(verbosity), verbosity, "no enum value");
         }
     }
 }

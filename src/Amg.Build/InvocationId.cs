@@ -1,10 +1,8 @@
-﻿
-namespace Amg.Build
+﻿namespace Amg.Build;
+
+public partial class InvocationId
 {
-    public partial class InvocationId
-    {
-        public string InstanceId { get; }
-        public string Method { get; }
-        public object[] Arguments { get; }
-    }
+    public string InstanceId { get; }
+    public string Method { get; }
+    public object[] Arguments { get; }
 }

@@ -14,7 +14,7 @@ namespace Build
 {
     public partial class Program
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
         static int Main(string[] args) => Amg.Build.Runner.Run<Program>(args);
 
@@ -351,7 +351,7 @@ namespace Build
             var nupkgFiles = await Pack();
             var push = Nuget.WithArguments("push", "-NonInteractive");
 
-            if (nugetPushSource != null)
+            if (nugetPushSource is { })
             {
                 push = push.WithArguments("-Source", nugetPushSource);
             }
@@ -362,7 +362,7 @@ namespace Build
                 {
                     await push.Run(nupkgFile);
                 }
-                return new[] { nugetPushSource };
+                return nupkgFiles;
             }
             catch (ToolException)
             {

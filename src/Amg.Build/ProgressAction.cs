@@ -1,19 +1,16 @@
-﻿using System;
+﻿namespace Amg.Extensions;
 
-namespace Amg.Extensions
+internal class ProgressAction<T> : IProgress<T>
 {
-    internal class ProgressAction<T> : IProgress<T>
+    readonly private Action<T> onProgress;
+
+    public ProgressAction(Action<T> onProgress)
     {
-        readonly private Action<T> onProgress;
+        this.onProgress = onProgress;
+    }
 
-        public ProgressAction(Action<T> onProgress)
-        {
-            this.onProgress = onProgress;
-        }
-
-        public void Report(T value)
-        {
-            onProgress(value);
-        }
+    public void Report(T value)
+    {
+        onProgress(value);
     }
 }

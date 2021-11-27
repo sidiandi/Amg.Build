@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29326.143
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Amg.Build", "Amg.Build\Amg.Build.csproj", "{99EF0AE6-F66D-4CF5-A27F-7DDC6D5385F6}"
 EndProject
@@ -12,6 +12,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "amgbuild", "amgbuild\amgbuild.csproj", "{00AA1F89-EC43-4B25-AB3F-23392F4B1027}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Amg.Build.Cake", "Amg.Build.Cake\Amg.Build.Cake.csproj", "{22B719B7-1A7B-4CB7-AD21-B04B5DCA55A9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7E78D8A-807E-49C5-B4D7-04FEA61D7EA0}"
+	ProjectSection(SolutionItems) = preProject
+		..\Changes.md = ..\Changes.md
+		..\Readme.md = ..\Readme.md
+		..\Todo.md = ..\Todo.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

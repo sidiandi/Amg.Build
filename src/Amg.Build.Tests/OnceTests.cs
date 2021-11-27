@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
@@ -26,7 +25,7 @@ namespace Amg.Build
         public virtual string Greeting => $"Hello, {Name}";
 
         [Once]
-        public virtual WebClient Web => new WebClient();
+        public virtual HttpClient Web => new HttpClient();
 
         public Queue<int> Count { get; } = new Queue<int>();
     }
