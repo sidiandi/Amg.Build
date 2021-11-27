@@ -151,7 +151,7 @@ namespace Build
             return (await this.Git.GetVersion()).NuGetVersionV2;
         }
 
-        string TargetFramework => "netcoreapp3.0";
+        string TargetFramework => "net6.0";
 
         [Once, Description("Complete test with .cmd bootstrapper file")]
         public virtual async Task EndToEndTest()
