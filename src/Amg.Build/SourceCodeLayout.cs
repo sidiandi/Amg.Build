@@ -30,7 +30,7 @@ namespace Amg.Build
         public string CsprojFile => SourceDir.Combine(Name + ".csproj");
         public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
         public string Configuration => "Debug";
-        public string TargetFramework => "netcoreapp3.0";
+        public string TargetFramework => "net6.0";
 
         static async Task Create(string path, string templateName, BackupDirectory? backup)
         {

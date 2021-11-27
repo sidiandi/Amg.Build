@@ -14,12 +14,12 @@ namespace Amg.Build
     /// The obj and bin directories are ignored when for determining the source file version.
     /// 
     /// When the versions are not identical, the assembly is built new in
-    /// {sourceDir}\obj\temp\Debug\netcoreapp3.0
+    /// {sourceDir}\obj\temp\Debug\net6.0
     /// The new assembly is executed from within the old assembly and the exit code is passed through
     /// to the caller.
     /// As last step before exiting the process of the old assembly, the new assembly is started again
     /// without waiting for process end. This run of the new assembly will then 
-    /// delete the original assembly directory {sourceDir}\bin\Debug\netcoreapp3.0 and hardlink copy
+    /// delete the original assembly directory {sourceDir}\bin\Debug\net6.0 and hardlink copy
     /// the new assembly directory to this location.
     /// The parameters for this operation are passed in an environment variable MoveToKey.
     /// 
