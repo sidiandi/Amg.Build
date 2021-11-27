@@ -1,10 +1,6 @@
 ﻿using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Amg.Extensions;
+using Amg.Test;
 
 namespace Amg.FileSystem
 {
@@ -82,7 +78,7 @@ namespace Amg.FileSystem
             Assert.That(Glob.Match(e, Enumerable.Range(0, 3).Select(c => new Func<int, bool>(_ => c == _))));
             Assert.That(Glob.Match(e, Enumerable.Range(99, 1).Select(c => new Func<int, bool>(_ => c == _))));
             Assert.That(Glob.Match(e, Enumerable.Range(50, 3).Select(c => new Func<int, bool>(_ => c == _))));
-            Assert.That(!Glob.Match(e, Enumerable.Range(0, 3).Select(c => new Func<int, bool>(_ => 2*c == _))));
+            Assert.That(!Glob.Match(e, Enumerable.Range(0, 3).Select(c => new Func<int, bool>(_ => 2 * c == _))));
         }
 
         [Test]
@@ -136,11 +132,11 @@ namespace Amg.FileSystem
                 });
         }
 
-        private static void AssertSequencesAreEqual<T>(IEnumerable<T> actual, IEnumerable<T> expected) where T: class
+        private static void AssertSequencesAreEqual<T>(IEnumerable<T> actual, IEnumerable<T> expected) where T : class
         {
             Assert.That(actual.SequenceEqual(expected), () => $@"Sequences do not match.
 
-{actual.ZipPad(expected, (a, e) => new { actual = a, expected = e}).ToTable()}
+{actual.ZipPad(expected, (a, e) => new { actual = a, expected = e }).ToTable()}
 ");
         }
 
@@ -155,4 +151,3 @@ namespace Amg.FileSystem
         }
     }
 }
- 

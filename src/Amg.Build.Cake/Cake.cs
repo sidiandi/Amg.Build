@@ -1,6 +1,5 @@
 ﻿using Cake.Core;
 using Cake.Frosting;
-using System;
 using System.Reflection;
 
 namespace Amg.Build.Cake

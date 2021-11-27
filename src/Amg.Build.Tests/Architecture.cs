@@ -1,6 +1,4 @@
 ﻿using NUnit.Framework;
-using System;
-using System.Linq;
 using System.Reflection;
 using Amg.Extensions;
 
@@ -36,7 +34,7 @@ namespace Amg.Build
             var publicMethods = t.GetMethods(
                 BindingFlags.Public |
                 BindingFlags.Instance |
-                BindingFlags.Static|
+                BindingFlags.Static |
                 BindingFlags.DeclaredOnly
                 );
 

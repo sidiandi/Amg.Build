@@ -3,43 +3,44 @@ using System.Collections;
 using System.Reflection;
 using System.Text;
 
-namespace Amg.Build;
-
-internal class LogInvocationInterceptor : StandardInterceptor
+namespace Amg.Build
 {
-    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
-
-    private readonly StringBuilder sb = new StringBuilder();
-    private readonly List<string> invocations = new List<string>();
-
-    public bool Proceed = true;
-
-    protected override void PreProceed(Castle.DynamicProxy.IInvocation invocation)
+    internal class LogInvocationInterceptor : StandardInterceptor
     {
-        invocations.Add(invocation.Method.Name);
-        sb.Append(String.Format("{0} ", invocation.Method.Name));
-        Logger.Information("{name}", invocation.Method.Name);
-    }
+        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
 
-    protected override void PerformProceed(Castle.DynamicProxy.IInvocation invocation)
-    {
-        if (Proceed)
+        private readonly StringBuilder sb = new StringBuilder();
+        private readonly List<string> invocations = new List<string>();
+
+        public bool Proceed = true;
+
+        protected override void PreProceed(Castle.DynamicProxy.IInvocation invocation)
         {
-            base.PerformProceed(invocation);
+            invocations.Add(invocation.Method.Name);
+            sb.Append(String.Format("{0} ", invocation.Method.Name));
+            Logger.Information("{name}", invocation.Method.Name);
         }
-        else if (invocation.Method.ReturnType.GetTypeInfo().IsValueType && invocation.Method.ReturnType != typeof(void))
+
+        protected override void PerformProceed(Castle.DynamicProxy.IInvocation invocation)
         {
-            invocation.ReturnValue = Activator.CreateInstance(invocation.Method.ReturnType); // set default return value
+            if (Proceed)
+            {
+                base.PerformProceed(invocation);
+            }
+            else if (invocation.Method.ReturnType.GetTypeInfo().IsValueType && invocation.Method.ReturnType != typeof(void))
+            {
+                invocation.ReturnValue = Activator.CreateInstance(invocation.Method.ReturnType); // set default return value
+            }
         }
-    }
 
-    public String LogContents
-    {
-        get { return sb.ToString(); }
-    }
+        public String LogContents
+        {
+            get { return sb.ToString(); }
+        }
 
-    public IList Invocations
-    {
-        get { return invocations; }
+        public IList Invocations
+        {
+            get { return invocations; }
+        }
     }
 }

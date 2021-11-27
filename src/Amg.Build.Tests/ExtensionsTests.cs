@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System.Linq;
 
 namespace Amg.Extensions
 {
@@ -52,7 +51,7 @@ C: 3
             var table = cells.Table();
 
             Assert.AreEqual(
-@"Name  Number 
+    @"Name  Number 
 Hello 1      
 H     1234234
 ", table.ToString());

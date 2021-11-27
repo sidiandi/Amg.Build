@@ -1,20 +1,17 @@
-﻿using Amg.Build;
-using Amg.FileSystem;
-using Cake.Common.IO;
+﻿using Cake.Common.IO;
 
-namespace hello
+namespace hello;
+
+internal class CakeAddinExample
 {
-    internal class CakeAddinExample
-    {
-        [Once]
-        protected virtual Cake.Core.ICakeContext Cake => Amg.Build.Cake.Cake.CreateContext();
+    [Once]
+    protected virtual Cake.Core.ICakeContext Cake => Amg.Build.Cake.Cake.CreateContext();
 
-        [Once]
-        public virtual void ZipSomethingWithCake()
-        {
-            Cake.Zip(
-                Runner.RootDirectory().Combine("hello"),
-                Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
-        }
+    [Once]
+    public virtual void ZipSomethingWithCake()
+    {
+        Cake.Zip(
+            Runner.RootDirectory().Combine("hello"),
+            Runner.RootDirectory().Combine("out", "z.zip").EnsureParentDirectoryExists());
     }
 }

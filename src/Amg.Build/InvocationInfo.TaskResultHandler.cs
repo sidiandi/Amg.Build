@@ -1,40 +1,41 @@
-﻿namespace Amg.Build;
-
-partial class InvocationInfo
+﻿namespace Amg.Build
 {
-    class TaskResultHandler<Result> : IReturnValueSource where Result : class
+    partial class InvocationInfo
     {
-        private readonly InvocationInfo invocationInfo;
-        private readonly Task<Result?> task;
-
-        public TaskResultHandler(InvocationInfo invocationInfo, Task<Result?> task)
+        class TaskResultHandler<Result> : IReturnValueSource where Result : class
         {
-            this.invocationInfo = invocationInfo;
-            this.task = task;
-        }
+            private readonly InvocationInfo invocationInfo;
+            private readonly Task<Result?> task;
 
-        async Task<Result?> GetReturnValue()
-        {
-            var result = GetReturnValue2();
-            await Task.WhenAny(result, this.invocationInfo.interceptor!._waitUntilCancelled);
-            return await result;
-        }
-
-        async Task<Result?> GetReturnValue2()
-        {
-            try
+            public TaskResultHandler(InvocationInfo invocationInfo, Task<Result?> task)
             {
-                var r = await task;
-                r = (Result?)invocationInfo.InterceptReturnValue(r);
-                invocationInfo.Complete();
-                return r;
+                this.invocationInfo = invocationInfo;
+                this.task = task;
             }
-            catch (Exception ex)
-            {
-                throw invocationInfo.Fail(ex);
-            }
-        }
 
-        public object ReturnValue => GetReturnValue();
+            async Task<Result?> GetReturnValue()
+            {
+                var result = GetReturnValue2();
+                await Task.WhenAny(result, this.invocationInfo.interceptor!._waitUntilCancelled);
+                return await result;
+            }
+
+            async Task<Result?> GetReturnValue2()
+            {
+                try
+                {
+                    var r = await task;
+                    r = (Result?)invocationInfo.InterceptReturnValue(r);
+                    invocationInfo.Complete();
+                    return r;
+                }
+                catch (Exception ex)
+                {
+                    throw invocationInfo.Fail(ex);
+                }
+            }
+
+            public object ReturnValue => GetReturnValue();
+        }
     }
 }

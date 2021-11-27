@@ -1,34 +1,35 @@
 ﻿using Amg.Extensions;
 using System.Runtime.Serialization;
 
-namespace Amg.Build;
-
-[Serializable]
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
-internal class InvocationFailedException : Exception
+namespace Amg.Build
 {
-    public IInvocation Invocation { get; }
-
-    public InvocationFailedException(IInvocation invocationInfo)
-       : base($"{invocationInfo} failed.", invocationInfo.Exception)
+    [Serializable]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S3871:Exception types should be \"public\"", Justification = "<Pending>")]
+    internal class InvocationFailedException : Exception
     {
-        this.Invocation = invocationInfo;
-    }
+        public IInvocation Invocation { get; }
 
-    protected InvocationFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        Invocation = null!;
-    }
-
-    public static IWritable ShortMessage(Exception ex) => TextFormatExtensions.GetWritable(w =>
-    {
-        if (ex is InvocationFailedException i)
+        public InvocationFailedException(IInvocation invocationInfo)
+           : base($"{invocationInfo} failed.", invocationInfo.Exception)
         {
-            w.Write(i.Message);
+            this.Invocation = invocationInfo;
         }
-        else
+
+        protected InvocationFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
-            w.Write(ex);
+            Invocation = null!;
         }
-    });
+
+        public static IWritable ShortMessage(Exception ex) => TextFormatExtensions.GetWritable(w =>
+        {
+            if (ex is InvocationFailedException i)
+            {
+                w.Write(i.Message);
+            }
+            else
+            {
+                w.Write(ex);
+            }
+        });
+    }
 }

@@ -1,21 +1,22 @@
 ﻿using Serilog;
 using System.Runtime.CompilerServices;
 
-namespace Amg.Build;
-
-/// <summary>
-/// Utilities for Serilog
-/// </summary>
-public static class SerilogExtensions
+namespace Amg.Build
 {
-    public static void Debug(
-        this ILogger logger,
-        object x,
-        [CallerFilePath] string? sourceFile = null)
+    /// <summary>
+    /// Utilities for Serilog
+    /// </summary>
+    public static class SerilogExtensions
     {
-        if (logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+        public static void Debug(
+            this ILogger logger,
+            object x,
+            [CallerFilePath] string? sourceFile = null)
         {
-            logger.Debug("{@ToString} {sourceFile}", x.ToString(), sourceFile);
+            if (logger.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+            {
+                logger.Debug("{@ToString} {sourceFile}", x.ToString(), sourceFile);
+            }
         }
     }
 }

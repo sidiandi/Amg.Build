@@ -15,6 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Amg.Build.Cake", "Amg.Build
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7E78D8A-807E-49C5-B4D7-04FEA61D7EA0}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		..\Changes.md = ..\Changes.md
 		..\Readme.md = ..\Readme.md
 		..\Todo.md = ..\Todo.md

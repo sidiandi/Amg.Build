@@ -1,10 +1,6 @@
 ﻿using NUnit.Framework;
-using System;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using Amg.Extensions;
 using Amg.Build;
 
@@ -192,7 +188,7 @@ namespace Amg.FileSystem
         public async Task Hardlinks()
         {
             var testDir = CreateEmptyTestDirectory();
-            var source = await 
+            var source = await
                 testDir.Combine("original.txt")
                 .WriteAllTextAsync("hello");
 

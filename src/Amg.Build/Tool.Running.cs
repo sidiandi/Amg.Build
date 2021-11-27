@@ -1,32 +1,33 @@
 ﻿using System.Diagnostics;
 
-namespace Amg.Build;
-
-public partial class Tool
+namespace Amg.Build
 {
-    class Running : IRunning
+    public partial class Tool
     {
-        readonly private Process process;
-
-        public Running(Process p)
+        class Running : IRunning
         {
-            this.process = p;
-            lock (RunningProcesses)
+            readonly private Process process;
+
+            public Running(Process p)
             {
-                RunningProcesses.Add(this);
+                this.process = p;
+                lock (RunningProcesses)
+                {
+                    RunningProcesses.Add(this);
+                }
             }
-        }
 
-        public Process Process => process;
+            public Process Process => process;
 
-        public override string ToString() => Process.Id.ToString();
+            public override string ToString() => Process.Id.ToString();
 
-        public void WaitForExit()
-        {
-            Process.WaitForExit();
-            lock (RunningProcesses)
+            public void WaitForExit()
             {
-                RunningProcesses.Remove(this);
+                Process.WaitForExit();
+                lock (RunningProcesses)
+                {
+                    RunningProcesses.Remove(this);
+                }
             }
         }
     }

@@ -1,8 +1,5 @@
-﻿using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using Amg.Test;
+using NUnit.Framework;
 
 namespace Amg.Extensions
 {

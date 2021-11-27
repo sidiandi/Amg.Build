@@ -1,18 +1,19 @@
-﻿namespace Amg.Build;
-
-public partial class Tool
+﻿namespace Amg.Build
 {
-    class ResultImpl : IToolResult
+    public partial class Tool
     {
-        public ResultImpl(int exitCode, string output, string error)
+        class ResultImpl : IToolResult
         {
-            ExitCode = exitCode;
-            Output = output;
-            Error = error;
-        }
+            public ResultImpl(int exitCode, string output, string error)
+            {
+                ExitCode = exitCode;
+                Output = output;
+                Error = error;
+            }
 
-        public int ExitCode { get; set; }
-        public string Output { get; set; }
-        public string Error { get; set; }
+            public int ExitCode { get; set; }
+            public string Output { get; set; }
+            public string Error { get; set; }
+        }
     }
 }

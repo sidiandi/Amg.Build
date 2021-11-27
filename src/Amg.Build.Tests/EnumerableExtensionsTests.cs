@@ -1,9 +1,6 @@
-﻿using NUnit.Framework;
+﻿using Amg.Test;
+using NUnit.Framework;
 using Serilog;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
 
 namespace Amg.Extensions
 {

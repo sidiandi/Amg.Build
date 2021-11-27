@@ -1,6 +1,5 @@
 ﻿using LibGit2Sharp;
 using NUnit.Framework;
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Amg.FileSystem

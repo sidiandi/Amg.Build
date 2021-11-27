@@ -1,28 +1,29 @@
-namespace Amg.Build;
-
-/// <summary>
-/// Subtargets for the dotnet core framework
-/// </summary>
-public class Dotnet
+namespace Amg.Build
 {
     /// <summary>
-    /// Only construct via <![CDATA[Runner.Once<Dotnet>()]]> 
+    /// Subtargets for the dotnet core framework
     /// </summary>
-    protected Dotnet() { }
-
-    /// <summary>
-    /// Dotnet tool
-    /// </summary>
-    [Once]
-    public virtual Task<ITool> Tool() => Task.FromResult(Tools.Default.WithFileName("dotnet.exe"));
-
-    /// <summary>
-    /// dotnet version
-    /// </summary>
-    [Once]
-    public virtual async Task<string> Version()
+    public class Dotnet
     {
-        var d = await Tool();
-        return (await d.Run("--version")).Output.Trim();
+        /// <summary>
+        /// Only construct via <![CDATA[Runner.Once<Dotnet>()]]> 
+        /// </summary>
+        protected Dotnet() { }
+
+        /// <summary>
+        /// Dotnet tool
+        /// </summary>
+        [Once]
+        public virtual Task<ITool> Tool() => Task.FromResult(Tools.Default.WithFileName("dotnet.exe"));
+
+        /// <summary>
+        /// dotnet version
+        /// </summary>
+        [Once]
+        public virtual async Task<string> Version()
+        {
+            var d = await Tool();
+            return (await d.Run("--version")).Output.Trim();
+        }
     }
 }

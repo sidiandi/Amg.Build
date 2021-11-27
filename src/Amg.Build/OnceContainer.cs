@@ -2,133 +2,134 @@
 using System.Reflection;
 using YamlDotNet.Serialization;
 
-namespace Amg.Build;
-
-internal class OnceContainer
+namespace Amg.Build
 {
-    /// <summary>
-    /// Default instance
-    /// </summary>
-    public static OnceContainer Instance { get; } = new OnceContainer();
-
-    public OnceContainer()
+    internal class OnceContainer
     {
-        waitUntilCancelled = Task.Delay(-1, cancelAll.Token);
-    }
+        /// <summary>
+        /// Default instance
+        /// </summary>
+        public static OnceContainer Instance { get; } = new OnceContainer();
 
-    internal static bool HasOnceMethods(object? x)
-    {
-        if (x == null)
+        public OnceContainer()
         {
-            return false;
+            waitUntilCancelled = Task.Delay(-1, cancelAll.Token);
         }
-        else
-        {
-            var type = x.GetType();
-            return type.GetMethods(
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic)
-                .Any(_ => HasOnceAttribute(_));
-        }
-    }
 
-    /// <summary>
-    /// Get the property info for a getter or setter method.
-    /// </summary>
-    /// <param name="getterOrSetterMethod"></param>
-    /// <returns>property info, or null if property info for the passed method does not exist.</returns>
-    internal static PropertyInfo? GetPropertyInfo(MethodInfo getterOrSetterMethod)
-    {
-        if (!getterOrSetterMethod.IsSpecialName) return null;
-        return getterOrSetterMethod.DeclaringType.GetProperty(getterOrSetterMethod.Name.Substring(4),
-          BindingFlags.Instance |
-          BindingFlags.Static |
-          BindingFlags.NonPublic |
-          BindingFlags.Public);
-    }
-
-    public static bool HasOnceAttribute(MemberInfo member)
-    {
-        var r = member.GetCustomAttribute<OnceAttribute>() != null;
-        if (r)
+        internal static bool HasOnceMethods(object? x)
         {
-            return true;
-        }
-        else
-        {
-            if (member is MethodInfo method)
+            if (x == null)
             {
-                var property = GetPropertyInfo(method);
-                return property == null
-                    ? r
-                    : HasOnceAttribute(property);
+                return false;
             }
             else
             {
-                return r;
+                var type = x.GetType();
+                return type.GetMethods(
+                    BindingFlags.Instance |
+                    BindingFlags.Public |
+                    BindingFlags.NonPublic)
+                    .Any(_ => HasOnceAttribute(_));
             }
         }
-    }
 
-    static ProxyGenerator generator = new ProxyGenerator(new DefaultProxyBuilder());
-
-    class InvocationSource : IInvocationSource
-    {
-        public InvocationSource(IEnumerable<IInvocation> invocations)
+        /// <summary>
+        /// Get the property info for a getter or setter method.
+        /// </summary>
+        /// <param name="getterOrSetterMethod"></param>
+        /// <returns>property info, or null if property info for the passed method does not exist.</returns>
+        internal static PropertyInfo? GetPropertyInfo(MethodInfo getterOrSetterMethod)
         {
-            Invocations = invocations;
+            if (!getterOrSetterMethod.IsSpecialName) return null;
+            return getterOrSetterMethod.DeclaringType.GetProperty(getterOrSetterMethod.Name.Substring(4),
+              BindingFlags.Instance |
+              BindingFlags.Static |
+              BindingFlags.NonPublic |
+              BindingFlags.Public);
         }
 
-        public IEnumerable<IInvocation> Invocations { get; private set; }
-    }
-
-    readonly IDictionary<string, object> _cache = new Dictionary<string, object>();
-
-    static ISerializer serializer = new YamlDotNet.Serialization.SerializerBuilder().Build();
-
-    static string GenerateCacheKey(Type type, object?[] arguments)
-    {
-        var id = new
+        public static bool HasOnceAttribute(MemberInfo member)
         {
-            Type = type,
-            Arguments = arguments
-        };
-        return serializer.Serialize(id);
-    }
+            var r = member.GetCustomAttribute<OnceAttribute>() != null;
+            if (r)
+            {
+                return true;
+            }
+            else
+            {
+                if (member is MethodInfo method)
+                {
+                    var property = GetPropertyInfo(method);
+                    return property == null
+                        ? r
+                        : HasOnceAttribute(property);
+                }
+                else
+                {
+                    return r;
+                }
+            }
+        }
 
-    /// <summary>
-    /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
-    /// </summary>
-    /// <returns></returns>
-    public T Get<T>(params object?[] ctorArguments) => (T)Get(typeof(T), ctorArguments);
+        static ProxyGenerator generator = new ProxyGenerator(new DefaultProxyBuilder());
 
-    /// <summary>
-    /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
-    /// </summary>
-    /// <returns></returns>
-    public object Get(Type type, params object?[] ctorArguments)
-    {
-        var interceptor = new OnceInterceptor(waitUntilCancelled);
-
-        var options = new ProxyGenerationOptions
+        class InvocationSource : IInvocationSource
         {
-            Hook = new OnceHook(),
-        };
-        options.AddMixinInstance(new InvocationSource(interceptor.Invocations));
+            public InvocationSource(IEnumerable<IInvocation> invocations)
+            {
+                Invocations = invocations;
+            }
 
-        return generator.CreateClassProxy(
-            type,
-            options,
-            ctorArguments,
-            interceptor);
+            public IEnumerable<IInvocation> Invocations { get; private set; }
+        }
+
+        readonly IDictionary<string, object> _cache = new Dictionary<string, object>();
+
+        static ISerializer serializer = new YamlDotNet.Serialization.SerializerBuilder().Build();
+
+        static string GenerateCacheKey(Type type, object?[] arguments)
+        {
+            var id = new
+            {
+                Type = type,
+                Arguments = arguments
+            };
+            return serializer.Serialize(id);
+        }
+
+        /// <summary>
+        /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <returns></returns>
+        public T Get<T>(params object?[] ctorArguments) => (T)Get(typeof(T), ctorArguments);
+
+        /// <summary>
+        /// Get an instance of type that executes methods marked with [Once] only once and caches the result.
+        /// </summary>
+        /// <returns></returns>
+        public object Get(Type type, params object?[] ctorArguments)
+        {
+            var interceptor = new OnceInterceptor(waitUntilCancelled);
+
+            var options = new ProxyGenerationOptions
+            {
+                Hook = new OnceHook(),
+            };
+            options.AddMixinInstance(new InvocationSource(interceptor.Invocations));
+
+            return generator.CreateClassProxy(
+                type,
+                options,
+                ctorArguments,
+                interceptor);
+        }
+
+        public void CancelAll()
+        {
+            cancelAll.Cancel();
+        }
+
+        readonly CancellationTokenSource cancelAll = new CancellationTokenSource();
+        readonly Task waitUntilCancelled;
     }
-
-    public void CancelAll()
-    {
-        cancelAll.Cancel();
-    }
-
-    readonly CancellationTokenSource cancelAll = new CancellationTokenSource();
-    readonly Task waitUntilCancelled;
 }
