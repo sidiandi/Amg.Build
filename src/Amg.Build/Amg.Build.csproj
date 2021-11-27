@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="4.4.0" />
-    <PackageReference Include="GitVersionCore" Version="5.8.1" />
+    <PackageReference Include="GitVersion.Core" Version="5.8.1" />
     <PackageReference Include="Amg.GetOpt" Version="0.2.2" />
     <PackageReference Include="Serilog" Version="2.9.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
