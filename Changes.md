@@ -6,7 +6,7 @@
 
 ## 0.37.0
 
-* Migrate to .net 6 and C# 10
+* Now using .NET 6 and C# 10
 
 ## 0.36.0
 
