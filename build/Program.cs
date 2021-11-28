@@ -60,7 +60,8 @@ public partial class Program
         await (await Dotnet.Tool()).Run("build", 
             SlnFile,
             "--configuration", this.Configuration,
-            $"/p:Version={version}");
+            $"/p:VersionPrefix={version}")
+            ;
     }
 
     [Once, Description("run unit tests")]
@@ -96,7 +97,8 @@ public partial class Program
             "--no-build",
             "--include-source",
             "--include-symbols",
-            "--output", PackagesDir.EnsureDirectoryExists()
+            "--output", PackagesDir.EnsureDirectoryExists(),
+            $"/p:VersionPrefix={version}"
             );
 
         var packages = r.Output.SplitLines()
