@@ -47,9 +47,16 @@ public partial class Program
     protected virtual Git Git => Git.Create(Runner.RootDirectory());
 
     [Once]
+    protected virtual async Task PrepareBuild()
+    {
+        await Task.CompletedTask;
+    }
+
+    [Once]
     [Description("Build")]
     public virtual async Task Build()
     {
+        await PrepareBuild();
         await (await Dotnet.Tool()).Run("build", 
             SlnFile,
             "--configuration", this.Configuration,
