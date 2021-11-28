@@ -368,7 +368,7 @@ public partial class Program
     {
         var output = (await DotnetTool.WithArguments("dotnet-gitversion").Run()).Output;
         var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(output);
-        return json.GetProperty("NuGetVersionV2").GetString();
+        return json.GetProperty("NuGetVersionV2").GetString()!;
     } 
 
     [Once, Description("install amgbuild tool")]
