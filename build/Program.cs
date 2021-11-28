@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Amg.FileSystem;
 using Amg.Extensions;
 using Amg.GetOpt;
+using System.Text.RegularExpressions;
 
 namespace Build;
 
@@ -96,7 +97,14 @@ public partial class Program
             );
 
         Logger.Information(r.Output);
-        return r.Output.SplitLines();
+        var packages = r.Output.SplitLines()
+            .Select(_ => Regex.Match(_, @"Successfully created package '\([^']+)'."))
+            .Where(_ => _.Success)
+            .Select(_ => _.Groups[1].Value)
+            .ToList();
+
+        Logger.Information(packages.Join());
+        return packages;
     }
 
     [Once, Description("Commit pending changes and run end to end test")]
