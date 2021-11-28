@@ -369,7 +369,7 @@ public partial class Program
     [Once]
     protected virtual async Task<string> NugetVersionV2()
     {
-        return Task.FromResult(version);
+        return await Task.FromResult(version);
     } 
 
     [Once, Description("install amgbuild tool")]
