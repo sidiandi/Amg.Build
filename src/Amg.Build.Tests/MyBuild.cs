@@ -45,7 +45,7 @@ public class MyBuild
     [Once, Description("Print the dotnet version")]
     public virtual async Task Version()
     {
-        await Task.WhenAll(Git.GetVersion(), Dotnet.Version());
+        await Task.WhenAll(Dotnet.Version());
         var vt = Dotnet.Version();
         var v = await vt;
         Console.WriteLine(v);

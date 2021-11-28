@@ -6,7 +6,7 @@ namespace Amg.Extensions
 {
     public static class Json
     {
-        public static Task<T> Read<T>(string path) => Task.Factory.StartNew(() =>
+        public static Task<T?> Read<T>(string path) => Task.Factory.StartNew(() =>
         {
             // deserialize JSON directly from a file
             using (var file = new StreamReader(path))

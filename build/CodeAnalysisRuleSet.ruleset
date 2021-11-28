@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Name="SonarQube - SonarAnalyzer .Net C# QP for .NET Analyzers" Description="This rule set was automatically generated from SonarQube https://sonarcloud.io/profiles/show?key=AWT63_RpV-oLu4FdMlyI" ToolsVersion="14.0">
+  <Rules AnalyzerId="SonarAnalyzer.CSharp" RuleNamespace="SonarAnalyzer.CSharp">
+    <Rule Id="S3903" Action="None" />
+    <Rule Id="S2479" Action="None" />
+  </Rules>
+</RuleSet>

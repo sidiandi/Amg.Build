@@ -62,6 +62,10 @@ namespace Amg.Build
             }
 
             var args = JsonConvert.DeserializeObject<Args>(argsJson);
+            if (args is null)
+            {
+                throw new InvalidOperationException("no args");
+            }
             return args;
         }
 

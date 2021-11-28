@@ -34,30 +34,6 @@ namespace Amg.Build
         public virtual ITool GitTool => Tools.Default.WithFileName("git.exe").WithArguments("-C", RootDirectory);
 
         /// <summary>
-        /// Use GitVersion to extract the application version
-        /// </summary>
-        [Once]
-        public virtual Task<GitVersion.VersionVariables> GetVersion()
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                var gitVersionExecuteCore = new GitVersion.ExecuteCore(new GitVersion.Helpers.FileSystem());
-                string templateString = @"GitVersion: {message}";
-                GitVersion.Logger.SetLoggers(
-                _ => Logger.Debug(templateString, _),
-                _ => Logger.Debug(templateString, _),
-                _ => Logger.Warning(templateString, _),
-                _ => Logger.Error(templateString, _));
-                if (!gitVersionExecuteCore.TryGetVersion(RootDirectory, out var versionVariables, true, null))
-                {
-                    throw new System.InvalidOperationException("Cannot read version");
-                }
-                Logger.Information("GitVersion: {InformationalVersion}", versionVariables.InformationalVersion);
-                return versionVariables;
-            }, TaskCreationOptions.LongRunning);
-        }
-
-        /// <summary>
         ///  Fails if the git repository contains uncommited changes.
         /// </summary>
         /// Use this target to prevent the release of binaries built with local, uncommitted changes.
