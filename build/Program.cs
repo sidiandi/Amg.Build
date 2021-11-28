@@ -98,7 +98,7 @@ public partial class Program
 
         Logger.Information(r.Output);
         var packages = r.Output.SplitLines()
-            .Select(_ => Regex.Match(_, @"Successfully created package '\([^']+)'."))
+            .Select(_ => Regex.Match(_, @"Successfully created package '([^']+)'."))
             .Where(_ => _.Success)
             .Select(_ => _.Groups[1].Value)
             .ToList();
