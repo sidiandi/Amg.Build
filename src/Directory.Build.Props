@@ -29,11 +29,7 @@
 		</PackageReference>
 	</ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="GitVersion.MsBuild" Version="5.6.10*">
-			<PrivateAssets>All</PrivateAssets>
-		</PackageReference>
-	</ItemGroup>
+	<VersionPrefix>0.40.0</VersionPrefix>
 
 	<PropertyGroup>
 		<CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)CodeAnalysisRuleSet.ruleset</CodeAnalysisRuleSet>
