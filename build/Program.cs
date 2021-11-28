@@ -369,9 +369,7 @@ public partial class Program
     [Once]
     protected virtual async Task<string> NugetVersionV2()
     {
-        var output = (await DotnetTool.WithArguments("dotnet-gitversion").Run()).Output;
-        var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(output);
-        return json.GetProperty("FullSemVer").GetString()!;
+        return Task.FromResult(version);
     } 
 
     [Once, Description("install amgbuild tool")]
