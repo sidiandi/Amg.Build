@@ -1,4 +1,6 @@
 <Project>
+	<Import Project=".\tasks\MSBuild.Community.Tasks.Targets"/>
+	
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
