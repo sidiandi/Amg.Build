@@ -85,8 +85,8 @@ public partial class Program
     [Once, Description("pack nuget package")]
     public virtual async Task<IEnumerable<string>> Pack()
     {
-        var version = (await Git.GetVersion()).NuGetVersionV2;
         await Build();
+        var version = await NugetVersionV2();
         await DotnetTool.Run("pack", "--nologo",
             SlnFile,
             "--configuration", Configuration,
@@ -106,7 +106,7 @@ public partial class Program
     }
 
     [Once, Description("Commit pending changes and run end to end test")]
-    public virtual async Task<string> CommitAndRunEndToEndTest(string message)
+    public virtual async Task CommitAndRunEndToEndTest(string message)
     {
         var git = Git.GitTool.DoNotCheckExitCode();
         await git.Run("add", ".");
@@ -114,7 +114,6 @@ public partial class Program
         await Test();
         await EndToEndTest();
         await Install();
-        return (await this.Git.GetVersion()).NuGetVersionV2;
     }
 
     string TargetFramework => "net6.0";
@@ -124,6 +123,7 @@ public partial class Program
     {
         await Git.EnsureNoPendingChanges();
         await Pack();
+        var version = await NugetVersionV2();
 
         var testDir = OutDir.Combine("EndToEndTest");
         await testDir.EnsureNotExists();
@@ -152,10 +152,8 @@ public partial class Program
             await testDir.Combine("build", d).EnsureNotExists();
         }
 
-        var version = await Git.GetVersion();
-
         var build = Tools.Default.WithFileName(script).DoNotCheckExitCode()
-            .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version.NuGetVersion } })
+            .WithEnvironment(new Dictionary<string, string> { { "AmgBuildVersion", version } })
             .WithArguments("--summary", "-vd")
             ;
 
@@ -188,9 +186,9 @@ public partial class Program
                 var result = await build.Run();
                 AssertExitCode(result, 0);
                 Logger.Information("{result}", result);
-                if (!result.Output.Contains(version.NuGetVersionV2))
+                if (!result.Output.Contains(version))
                 {
-                    throw new InvalidOperationException($"output does not contain ${version.NuGetVersionV2}");
+                    throw new InvalidOperationException($"output does not contain ${version}");
                 }
                 if (!String.IsNullOrEmpty(result.Error))
                 {
@@ -365,10 +363,13 @@ public partial class Program
 
     string Amgbuild => "amgbuild";
 
+    [Once]
+    protected virtual Task<string> NugetVersionV2() => Task.FromResult("0.37.0-net6-0014");
+
     [Once, Description("install amgbuild tool")]
     public virtual async Task Install()
     {
-        var version = (await Git.GetVersion()).NuGetVersionV2;
+        var version = await NugetVersionV2();
         await Pack();
 
         await DotnetTool
@@ -405,23 +406,22 @@ public partial class Program
     {
         await Git.EnsureNoPendingChanges();
         await EndToEndTest();
-        var git = Git.Create(this.Root);
-        var v = await git.GetVersion();
-        Logger.Information("Tagging with {version}", v.MajorMinorPatch);
+        var version = await NugetVersionV2();
+        Logger.Information("Tagging with {version}", version);
         var gitTool = Git.GitTool;
         try
         {
-            await gitTool.Run("tag", v.MajorMinorPatch);
+            await gitTool.Run("tag", version);
         }
         catch (ToolException te)
         {
             if (te.Result.Error.Contains("already exists"))
             {
-                await gitTool.Run("tag", IncreasePatchVersion(v.MajorMinorPatch));
+                await gitTool.Run("tag", IncreasePatchVersion(version));
             }
         }
         await gitTool.Run("push", "--tags");
-        return v.NuGetVersionV2;
+        return version;
     }
 
     [Once]
