@@ -9,6 +9,10 @@
 		<NoWarn>CS0618</NoWarn>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<VersionPrefix>0.40.0</VersionPrefix>
+	</ItemGroup>
+
 	<PropertyGroup>
 		<RepositoryUrl>https://github.com/sidiandi/Amg.Build</RepositoryUrl>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -28,8 +32,6 @@
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
-
-	<VersionPrefix>0.40.0</VersionPrefix>
 
 	<PropertyGroup>
 		<CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)CodeAnalysisRuleSet.ruleset</CodeAnalysisRuleSet>
