@@ -132,7 +132,14 @@ namespace Amg.Build
             }
         }
 
-        string NugetVersion => GitVersionInformation.FullSemVer;
+        string NugetVersion
+        {
+            get
+            {
+                var amgBuildAssembly = Assembly.GetExecutingAssembly();
+                return amgBuildAssembly.GetCustomAttribute<AssemblyVersionAttribute>()!.Version;
+            }
+        }
 
         string PropsText => ReadTemplate("name.Directory.Build.props")
             .Replace("{AmgBuildVersion}", NugetVersion);
