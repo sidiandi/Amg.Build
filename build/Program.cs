@@ -367,8 +367,8 @@ public partial class Program
     protected virtual async Task<string> NugetVersionV2()
     {
         var output = (await DotnetTool.WithArguments("dotnet-gitversion").Run()).Output;
-        dynamic json = System.Text.Json.JsonSerializer.Deserialize<object>(output)!;
-        return json.NuGetVersionV2;
+        var json = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(output);
+        return json.GetProperty("NuGetVersionV2").GetString();
     } 
 
     [Once, Description("install amgbuild tool")]
