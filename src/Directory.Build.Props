@@ -9,9 +9,9 @@
 		<NoWarn>CS0618</NoWarn>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<PropertyGroup>
 		<VersionPrefix>0.40.0</VersionPrefix>
-	</ItemGroup>
+	</PropertyGroup>
 
 	<PropertyGroup>
 		<RepositoryUrl>https://github.com/sidiandi/Amg.Build</RepositoryUrl>
