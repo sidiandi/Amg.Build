@@ -127,7 +127,7 @@ internal class Program
     [Once, Description("Print version")]
     public virtual async Task<string> Version()
     {
-        var version = Assembly.GetEntryAssembly()!.NugetVersion();
+        var version = GitVersionInformation.NuGetVersionV2;
         return await Task.FromResult(version);
     }
 
