@@ -364,7 +364,12 @@ public partial class Program
     string Amgbuild => "amgbuild";
 
     [Once]
-    protected virtual Task<string> NugetVersionV2() => Task.FromResult("0.37.0-net6-0014");
+    protected virtual async Task<string> NugetVersionV2()
+    {
+        var packages = await Pack();
+        var version = packages.First().FileNameWithoutExtension().Split('.').TakeLast(3).Join(".");
+        return version;
+    } 
 
     [Once, Description("install amgbuild tool")]
     public virtual async Task Install()

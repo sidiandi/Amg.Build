@@ -44,6 +44,4 @@
 		<SolutionDir Condition=" '$(SolutionDir)' == '' ">$(MSBuildThisFileDirectory)</SolutionDir>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
-
-	<Message Text="GitVersion_InformationalVersion: $(GitVersion_InformationalVersion)"/>
 </Project>
