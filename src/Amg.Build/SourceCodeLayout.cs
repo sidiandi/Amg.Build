@@ -137,6 +137,10 @@ namespace Amg.Build
             get
             {
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
+                if (amgBuildAssembly is null)
+                {
+                    Logger.Warning("amgBuildAssembly is null");
+                }
                 return amgBuildAssembly.GetCustomAttribute<AssemblyVersionAttribute>()!.Version;
             }
         }
