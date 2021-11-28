@@ -23,6 +23,8 @@ public partial class Program
     string year => DateTime.UtcNow.ToString("yyyy");
     string copyright => $"Copyright (c) {Company} {year}";
 
+    string version => "0.41.0";
+
     [Once, Description("Release or Debug. Default: Release")]
     public virtual string Configuration { get; set; } = ConfigurationRelease;
 
@@ -45,19 +47,13 @@ public partial class Program
     protected virtual Git Git => Git.Create(Runner.RootDirectory());
 
     [Once]
-    protected virtual async Task PrepareBuild()
-    {
-        await Task.CompletedTask;
-    }
-
-    [Once]
     [Description("Build")]
     public virtual async Task Build()
     {
-        await PrepareBuild();
         await (await Dotnet.Tool()).Run("build", 
             SlnFile,
-            "--configuration", this.Configuration);
+            "--configuration", this.Configuration,
+            $"/p:Version={version}");
     }
 
     [Once, Description("run unit tests")]
