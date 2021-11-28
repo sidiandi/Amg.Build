@@ -157,7 +157,7 @@ namespace Amg.Build
                 }
 
                 var amgBuildAssembly = Assembly.GetExecutingAssembly();
-                Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, amgBuildAssembly.NugetVersion());
+                Logger.Debug("{name} {version}", amgBuildAssembly.GetName().Name, GitVersionInformation.NuGetVersionV2);
 
                 try
                 {
