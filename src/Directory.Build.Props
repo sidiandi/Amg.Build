@@ -10,8 +10,17 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<Version>0.40.0</Version>
+		<Version>0.0.0</Version>
 	</PropertyGroup>
+
+	<AssemblyInfo CodeLanguage="CS"
+         OutputFile="$(VersionFile)"
+         AssemblyCompany="Amg"
+         AssemblyProduct="Amg.Build"
+         AssemblyCopyright="Copyright © Amg 2011"
+         ComVisible="false"
+         AssemblyVersion="$(Version)"
+         AssemblyFileVersion="$(Version)" />
 
 	<PropertyGroup>
 		<RepositoryUrl>https://github.com/sidiandi/Amg.Build</RepositoryUrl>
