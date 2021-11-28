@@ -126,7 +126,6 @@ public partial class Program
     {
         await Git.EnsureNoPendingChanges();
         await Pack();
-        var version = await NugetVersionV2();
 
         var testDir = OutDir.Combine("EndToEndTest");
         await testDir.EnsureNotExists();
@@ -366,16 +365,9 @@ public partial class Program
 
     string Amgbuild => "amgbuild";
 
-    [Once]
-    protected virtual async Task<string> NugetVersionV2()
-    {
-        return await Task.FromResult(version);
-    } 
-
     [Once, Description("install amgbuild tool")]
     public virtual async Task Install()
     {
-        var version = await NugetVersionV2();
         await Pack();
 
         await DotnetTool
@@ -412,7 +404,6 @@ public partial class Program
     {
         await Git.EnsureNoPendingChanges();
         await EndToEndTest();
-        var version = await NugetVersionV2();
         Logger.Information("Tagging with {version}", version);
         var gitTool = Git.GitTool;
         try
