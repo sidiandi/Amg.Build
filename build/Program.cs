@@ -367,7 +367,8 @@ public partial class Program
     protected virtual async Task<string> NugetVersionV2()
     {
         var packages = await Pack();
-        var version = packages.First().FileNameWithoutExtension().Split('.').TakeLast(3).Join(".");
+        var p = packages.First().FileNameWithoutExtension().Split('.').ToArray();
+        var version = p.Skip(p.Length-3).Join(".");
         Logger.Information(version);
         return version;
     } 
