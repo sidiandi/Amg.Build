@@ -86,8 +86,7 @@ public partial class Program
     public virtual async Task<IEnumerable<string>> Pack()
     {
         await Build();
-        var version = await NugetVersionV2();
-        await DotnetTool.Run("pack", "--nologo",
+        var r = await DotnetTool.Run("pack", "--nologo",
             SlnFile,
             "--configuration", Configuration,
             "--no-build",
@@ -96,13 +95,8 @@ public partial class Program
             "--output", PackagesDir.EnsureDirectoryExists()
             );
 
-        return new[]
-        {
-            "Amg.Build",
-            "Amg.Build.Cake",
-            Amgbuild
-        }
-        .Select(name => PackagesDir.Combine($"{name}.{version}.nupkg"));
+        Logger.Information(r.Output);
+        return r.Output.SplitLines();
     }
 
     [Once, Description("Commit pending changes and run end to end test")]
