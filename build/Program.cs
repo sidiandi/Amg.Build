@@ -23,7 +23,7 @@ public partial class Program
     string year => DateTime.UtcNow.ToString("yyyy");
     string copyright => $"Copyright (c) {Company} {year}";
 
-    string version => "0.42.0";
+    string version => "0.43.0";
 
     [Once, Description("Release or Debug. Default: Release")]
     public virtual string Configuration { get; set; } = ConfigurationRelease;
