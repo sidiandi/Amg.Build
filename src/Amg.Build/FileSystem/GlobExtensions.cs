@@ -2,29 +2,28 @@
 using System.IO;
 using System.Linq;
 
-namespace Amg.FileSystem
+namespace Amg.FileSystem;
+
+/// <summary>
+/// Convenience extensions for Glob
+/// </summary>
+public static class GlobExtensions
 {
     /// <summary>
-    /// Convenience extensions for Glob
+    /// Enumerate files
     /// </summary>
-    public static class GlobExtensions
+    /// <returns></returns>
+    public static IEnumerable<FileInfo> EnumerateFileInfos(this Glob glob)
     {
-        /// <summary>
-        /// Enumerate files
-        /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<FileInfo> EnumerateFileInfos(this Glob glob)
-        {
-            return glob.EnumerateFileSystemInfos().OfType<FileInfo>();
-        }
+        return glob.EnumerateFileSystemInfos().OfType<FileInfo>();
+    }
 
-        /// <summary>
-        /// Enumerate files only, not directories
-        /// </summary>
-        /// <returns></returns>
-        public static IEnumerable<string> EnumerateFiles(this Glob glob)
-        {
-            return glob.EnumerateFileInfos().Select(_ => _.FullName);
-        }
+    /// <summary>
+    /// Enumerate files only, not directories
+    /// </summary>
+    /// <returns></returns>
+    public static IEnumerable<string> EnumerateFiles(this Glob glob)
+    {
+        return glob.EnumerateFileInfos().Select(_ => _.FullName);
     }
 }

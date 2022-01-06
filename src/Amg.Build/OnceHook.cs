@@ -3,84 +3,83 @@ using System.Runtime.CompilerServices;
 using Amg.Extensions;
 using Castle.DynamicProxy;
 
-namespace Amg.Build
+namespace Amg.Build;
+
+internal class OnceHook : IProxyGenerationHook
 {
-    internal class OnceHook : IProxyGenerationHook
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+
+    public void MethodsInspected()
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
-
-        public void MethodsInspected()
+        foreach (var type in types)
         {
-            foreach (var type in types)
-            {
-                AssertNoMutableFields(type);
-                AssertNoMutableProperties(type);
-            }
+            AssertNoMutableFields(type);
+            AssertNoMutableProperties(type);
         }
+    }
 
-        readonly HashSet<Type> types = new HashSet<Type>();
+    readonly HashSet<Type> types = new HashSet<Type>();
 
-        static void AssertNoMutableFields(Type type)
+    static void AssertNoMutableFields(Type type)
+    {
+        var fields = type.GetFields(
+            BindingFlags.Instance |
+            BindingFlags.Public |
+            BindingFlags.NonPublic);
+
+        var mutableFields = fields.Where(
+            f => !f.IsInitOnly &&
+            !f.GetCustomAttributes<CompilerGeneratedAttribute>().Any());
+
+        if (mutableFields.Any())
         {
-            var fields = type.GetFields(
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic);
-
-            var mutableFields = fields.Where(
-                f => !f.IsInitOnly &&
-                !f.GetCustomAttributes<CompilerGeneratedAttribute>().Any());
-
-            if (mutableFields.Any())
-            {
-                throw new OnceException($@"All fields of {type} must be readonly. 
+            throw new OnceException($@"All fields of {type} must be readonly. 
 Following fields are not readonly:
 {mutableFields.Select(_ => _.Name).Join()}");
-            }
         }
+    }
 
-        static bool IsCommandLineProperty(PropertyInfo p)
+    static bool IsCommandLineProperty(PropertyInfo p)
+    {
+        return p.GetCustomAttributes<System.ComponentModel.DescriptionAttribute>().Any();
+    }
+
+    static void AssertNoMutableProperties(Type type)
+    {
+        var properties = type.GetProperties(
+            BindingFlags.Instance |
+            BindingFlags.Public |
+            BindingFlags.NonPublic);
+
+        var writableProperties = properties.Where(
+            f => f.CanWrite && !OnceContainer.HasOnceAttribute(f));
+
+        if (writableProperties.Any())
         {
-            return p.GetCustomAttributes<System.ComponentModel.DescriptionAttribute>().Any();
-        }
-
-        static void AssertNoMutableProperties(Type type)
-        {
-            var properties = type.GetProperties(
-                BindingFlags.Instance |
-                BindingFlags.Public |
-                BindingFlags.NonPublic);
-
-            var writableProperties = properties.Where(
-                f => f.CanWrite && !OnceContainer.HasOnceAttribute(f));
-
-            if (writableProperties.Any())
-            {
-                throw new OnceException($@"All properties of {type} must be readonly OR have the [Once] attribute.
+            throw new OnceException($@"All properties of {type} must be readonly OR have the [Once] attribute.
 Following properties do not fulfill the condition:
 {writableProperties.Select(_ => _.Name).Join()}");
-            }
         }
+    }
 
-        public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
+    public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
+    {
+        if (OnceContainer.HasOnceAttribute(memberInfo))
         {
-            if (OnceContainer.HasOnceAttribute(memberInfo))
-            {
-                throw new OnceException($"{memberInfo} must be virtual because it has the [Once] attribute.");
-            }
+            throw new OnceException($"{memberInfo} must be virtual because it has the [Once] attribute.");
         }
+    }
 
-        public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
+    public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
+    {
+        if (OnceContainer.HasOnceAttribute(methodInfo))
         {
-            if (OnceContainer.HasOnceAttribute(methodInfo))
-            {
-                types.Add(methodInfo.DeclaringType);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            types.Add(methodInfo.DeclaringType);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }

@@ -1,7 +1,6 @@
-﻿namespace Amg.FileSystem
+﻿namespace Amg.FileSystem;
+
+public interface IGitIgnore
 {
-    public interface IGitIgnore
-    {
-        bool IsIgnored(string path);
-    }
+    bool IsIgnored(string path);
 }

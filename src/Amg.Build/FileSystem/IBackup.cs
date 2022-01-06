@@ -1,9 +1,8 @@
 ﻿using System.Threading.Tasks;
 
-namespace Amg.FileSystem
+namespace Amg.FileSystem;
+
+public interface IBackup : System.IDisposable
 {
-    public interface IBackup : System.IDisposable
-    {
-        Task<string> Move(string path);
-    }
+    Task<string> Move(string path);
 }

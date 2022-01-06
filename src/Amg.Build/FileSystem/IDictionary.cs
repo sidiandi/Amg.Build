@@ -1,6 +1,5 @@
-﻿namespace Amg.FileSystem
+﻿namespace Amg.FileSystem;
+
+internal interface IDictionary<T>
 {
-    internal interface IDictionary<T>
-    {
-    }
 }

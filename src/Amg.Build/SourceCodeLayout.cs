@@ -5,282 +5,277 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("amgbuild")]
 
-namespace Amg.Build
+namespace Amg.Build;
+
+internal class SourceCodeLayout
 {
-    internal class SourceCodeLayout
+    private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
+    public static string CmdExtension => ".cmd";
+
+    public SourceCodeLayout(string cmdFile)
     {
-        private static readonly Serilog.ILogger Logger = Serilog.Log.Logger.ForContext(System.Reflection.MethodBase.GetCurrentMethod()!.DeclaringType);
-        public static string CmdExtension => ".cmd";
-
-        public SourceCodeLayout(string cmdFile)
+        if (!cmdFile.HasExtension(CmdExtension))
         {
-            if (!cmdFile.HasExtension(CmdExtension))
+            Logger.Information(nameof(cmdFile), cmdFile, $"Must have extension {SourceCodeLayout.CmdExtension}");
+        }
+        this.CmdFile = cmdFile;
+    }
+
+    public string CmdFile { get; }
+    public string RootDir => CmdFile.Parent();
+    public string Name => CmdFile.FileNameWithoutExtension();
+    public string Namespace => Name.ToCsharpIdentifier();
+    public string SourceDir => CmdFile.Parent().Combine(Name);
+    public string ProgramCs => SourceDir.Combine("Program.cs");
+    public string CsprojFile => SourceDir.Combine(Name + ".csproj");
+    public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
+    public string Configuration => "Debug";
+    public string TargetFramework => "net6.0";
+
+    static async Task Create(string path, string templateName, BackupDirectory? backup)
+    {
+        var text = ReadTemplate(templateName);
+        await CreateFromText(path, text, backup);
+    }
+
+    static async Task CreateFromText(string path, string text, BackupDirectory? backup)
+    {
+        if (path.Exists())
+        {
+            if (backup == null)
             {
-                Logger.Information(nameof(cmdFile), cmdFile, $"Must have extension {SourceCodeLayout.CmdExtension}");
+                throw new System.IO.IOException($"File {path} exists");
             }
-            this.CmdFile = cmdFile;
+            else
+            {
+                await backup.Move(path);
+            }
+        }
+        Logger.Information("Write {path}", path);
+        await path
+            .EnsureParentDirectoryExists()
+            .WriteAllTextIfChangedAsync(text);
+    }
+
+    public static async Task<SourceCodeLayout> Create(string cmdFilePath, bool overwrite = false)
+    {
+        var s = new SourceCodeLayout(cmdFilePath);
+        var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
+        if (!overwrite && existing.Any())
+        {
+            throw new System.IO.IOException($"Cannot create because these files already exist: {existing.Join(", ")}");
         }
 
-        public string CmdFile { get; }
-        public string RootDir => CmdFile.Parent();
-        public string Name => CmdFile.FileNameWithoutExtension();
-        public string Namespace => Name.ToCsharpIdentifier();
-        public string SourceDir => CmdFile.Parent().Combine(Name);
-        public string ProgramCs => SourceDir.Combine("Program.cs");
-        public string CsprojFile => SourceDir.Combine(Name + ".csproj");
-        public string DllFile => SourceDir.Combine("bin", Configuration, TargetFramework, Name + ".dll");
-        public string Configuration => "Debug";
-        public string TargetFramework => "net6.0";
+        var backup = overwrite
+            ? new BackupDirectory(s.RootDir)
+            : null;
 
-        static async Task Create(string path, string templateName, BackupDirectory? backup)
+        await Create(s.CmdFile, "name.cmd", backup);
+        await CreateFromText(s.CsprojFile, s.BuildCsProjText, backup);
+        await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
+        await Create(s.ProgramCs.Parent().Combine("GlobalUsings.cs"), "name.GlobalUsings.cs", backup);
+        await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
+        var dotnetAddPackage = (await Once.Create<Dotnet>().Tool())
+            .WithWorkingDirectory(s.SourceDir)
+            .WithArguments("add", "package");
+
+        await dotnetAddPackage.Run(AmgBuildPackageName, "-v", s.NugetVersion);
+
+        var packages = new[]
         {
-            var text = ReadTemplate(templateName);
-            await CreateFromText(path, text, backup);
-        }
-
-        static async Task CreateFromText(string path, string text, BackupDirectory? backup)
-        {
-            if (path.Exists())
-            {
-                if (backup == null)
-                {
-                    throw new System.IO.IOException($"File {path} exists");
-                }
-                else
-                {
-                    await backup.Move(path);
-                }
-            }
-            Logger.Information("Write {path}", path);
-            await path
-                .EnsureParentDirectoryExists()
-                .WriteAllTextIfChangedAsync(text);
-        }
-
-        public static async Task<SourceCodeLayout> Create(string cmdFilePath, bool overwrite = false)
-        {
-            var s = new SourceCodeLayout(cmdFilePath);
-            var existing = new[] { s.CmdFile, s.SourceDir }.Where(_ => _.Exists());
-            if (!overwrite && existing.Any())
-            {
-                throw new System.IO.IOException($"Cannot create because these files already exist: {existing.Join(", ")}");
-            }
-
-            var backup = overwrite
-                ? new BackupDirectory(s.RootDir)
-                : null;
-
-            await Create(s.CmdFile, "name.cmd", backup);
-            await CreateFromText(s.CsprojFile, s.BuildCsProjText, backup);
-            await CreateFromText(s.ProgramCs, s.ProgramCsText, backup);
-            await Create(s.ProgramCs.Parent().Combine("GlobalUsings.cs"), "name.GlobalUsings.cs", backup);
-            await Create(s.SourceDir.Combine(".gitignore"), "name..gitignore", backup);
-            var dotnetAddPackage = (await Once.Create<Dotnet>().Tool())
-                .WithWorkingDirectory(s.SourceDir)
-                .WithArguments("add", "package");
-
-            await dotnetAddPackage.Run(AmgBuildPackageName, "-v", s.NugetVersion);
-
-            var packages = new[]
-            {
                 "nunit",
                 "Nunit3TestAdapter",
                 "Microsoft.NET.Test.Sdk"
             };
 
-            foreach (var package in packages)
-            {
-                await dotnetAddPackage.Run(package);
-            }
-            return s;
-        }
-
-        const string AmgBuildPackageName = "Amg.Build";
-
-        public async Task Check()
+        foreach (var package in packages)
         {
-            await CheckFileEnd(CmdFile, BuildCmdText);
+            await dotnetAddPackage.Run(package);
         }
+        return s;
+    }
 
-        async Task CheckFile(string file, string expected)
+    const string AmgBuildPackageName = "Amg.Build";
+
+    public async Task Check()
+    {
+        await CheckFileEnd(CmdFile, BuildCmdText);
+    }
+
+    async Task CheckFile(string file, string expected)
+    {
+        if (!string.Equals(await file.ReadAllTextAsync(), expected))
         {
-            if (!string.Equals(await file.ReadAllTextAsync(), expected))
-            {
-                Logger.Warning(@"{cmdFile} does not have the expected contents
+            Logger.Warning(@"{cmdFile} does not have the expected contents
 ====
 {expected}
 ====
 ", file, expected);
-            }
+        }
+    }
+
+    async Task CheckFileEnd(string file, string expectedEnd)
+    {
+        var fileText = await file.ReadAllTextAsync();
+        if (fileText == null)
+        {
+            fileText = String.Empty;
         }
 
-        async Task CheckFileEnd(string file, string expectedEnd)
+        if (!fileText.EndsWith(expectedEnd))
         {
-            var fileText = await file.ReadAllTextAsync();
-            if (fileText == null)
-            {
-                fileText = String.Empty;
-            }
-
-            if (!fileText.EndsWith(expectedEnd))
-            {
-                Logger.Warning(@"{file} does not end with
+            Logger.Warning(@"{file} does not end with
 ====
 {expectedEnd}
 ====
 ", file, expectedEnd);
-            }
         }
+    }
 
-        string NugetVersion
+    string NugetVersion
+    {
+        get
         {
-            get
+            var amgBuildAssembly = Assembly.GetExecutingAssembly();
+            return amgBuildAssembly.GetCustomAttribute<AssemblyVersionAttribute>()!.Version;
+        }
+    }
+
+    string PropsText => ReadTemplate("name.Directory.Build.props")
+        .Replace("{AmgBuildVersion}", NugetVersion);
+
+    string ProgramCsText => ReadTemplate("name.Program.cs")
+        .Replace("ReplaceWithNamespace", Namespace);
+
+    string BuildCsProjText => ReadTemplate("name.name.csproj")
+        .Replace("ReplaceWithNamespace", Namespace);
+
+    string BuildCmdText => ReadTemplate("name.cmd");
+
+    static string ReadTemplate(string templateName)
+    {
+        return ReadStringFromEmbeddedResource("Amg.Build.template." + templateName);
+    }
+
+    static string ReadStringFromEmbeddedResource(string resourceFileName)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using (var resource = assembly.GetManifestResourceStream(resourceFileName))
+        {
+            if (resource == null)
             {
-                var amgBuildAssembly = Assembly.GetExecutingAssembly();
-                if (amgBuildAssembly is null)
-                {
-                    Logger.Warning("amgBuildAssembly is null");
-                }
-                return amgBuildAssembly.GetCustomAttribute<AssemblyVersionAttribute>()!.Version;
+                var available = assembly.GetManifestResourceNames();
+                throw new ArgumentOutOfRangeException(
+                    nameof(resourceFileName),
+                    resourceFileName,
+                    $"available resources:\r\n{ available.Join()}");
             }
+            return new StreamReader(resource).ReadToEnd();
+        }
+    }
+
+    public static SourceCodeLayout? Get(object commandObject)
+    {
+        return GetFromType(commandObject.GetType());
+    }
+
+    public static SourceCodeLayout? GetFromType(Type type)
+    {
+        var assembly = type.Assembly;
+        if (assembly.IsDynamic)
+        {
+            var interfaces = type.GetInterfaces();
+            return GetFromType(interfaces.First(_ => !_.Assembly.IsDynamic));
+        }
+        else
+        {
+            return FromDll(assembly.Location);
+        }
+    }
+
+    public async Task Fix()
+    {
+        var backup = new BackupDirectory(this.CmdFile.Parent());
+        await FixFile(CmdFile, BuildCmdText, backup);
+
+        // delete old Directory.props file
+        SourceDir.Combine("Directory.props").EnsureFileNotExists();
+
+        // delete old Amg.Build.props file
+        SourceDir.Combine("Amg.Build.props").EnsureFileNotExists();
+    }
+
+    async Task FixFile(string file, string expected, BackupDirectory backup)
+    {
+        var actualText = await file.ReadAllTextAsync();
+        if (!object.Equals(expected, actualText))
+        {
+            await backup.Move(file);
+            Logger.Information("Writing {file}", file);
+            await file
+                .EnsureParentDirectoryExists()
+                .WriteAllTextIfChangedAsync(expected);
+        }
+    }
+
+    static string? GetCmdFile(string dllFile)
+    {
+        var cmd = dllFile.Parent().Parent().Parent().Parent().Parent()
+            .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
+        if (cmd.IsFile())
+        {
+            return cmd;
         }
 
-        string PropsText => ReadTemplate("name.Directory.Build.props")
-            .Replace("{AmgBuildVersion}", NugetVersion);
-
-        string ProgramCsText => ReadTemplate("name.Program.cs")
-            .Replace("ReplaceWithNamespace", Namespace);
-
-        string BuildCsProjText => ReadTemplate("name.name.csproj")
-            .Replace("ReplaceWithNamespace", Namespace);
-
-        string BuildCmdText => ReadTemplate("name.cmd");
-
-        static string ReadTemplate(string templateName)
+        cmd = dllFile.Parent().Parent().Parent().Parent()
+            .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
+        if (cmd.IsFile())
         {
-            return ReadStringFromEmbeddedResource("Amg.Build.template." + templateName);
+            return cmd;
         }
+        return null;
+    }
 
-        static string ReadStringFromEmbeddedResource(string resourceFileName)
+    /// <summary>
+    /// Try to determine the source directory from which the assembly of targetType was built.
+    /// </summary>
+    /// <returns></returns>
+    internal static SourceCodeLayout? FromDll(string dllFile)
+    {
+        try
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            using (var resource = assembly.GetManifestResourceStream(resourceFileName))
+            Logger.Debug(new { dllFile });
+
+            var cmdFile = GetCmdFile(dllFile);
+            if (cmdFile == null)
             {
-                if (resource == null)
-                {
-                    var available = assembly.GetManifestResourceNames();
-                    throw new ArgumentOutOfRangeException(
-                        nameof(resourceFileName),
-                        resourceFileName,
-                        $"available resources:\r\n{ available.Join()}");
-                }
-                return new StreamReader(resource).ReadToEnd();
-            }
-        }
-
-        public static SourceCodeLayout? Get(object commandObject)
-        {
-            return GetFromType(commandObject.GetType());
-        }
-
-        public static SourceCodeLayout? GetFromType(Type type)
-        {
-            var assembly = type.Assembly;
-            if (assembly.IsDynamic)
-            {
-                var interfaces = type.GetInterfaces();
-                return GetFromType(interfaces.First(_ => !_.Assembly.IsDynamic));
-            }
-            else
-            {
-                return FromDll(assembly.Location);
-            }
-        }
-
-        public async Task Fix()
-        {
-            var backup = new BackupDirectory(this.CmdFile.Parent());
-            await FixFile(CmdFile, BuildCmdText, backup);
-
-            // delete old Directory.props file
-            SourceDir.Combine("Directory.props").EnsureFileNotExists();
-
-            // delete old Amg.Build.props file
-            SourceDir.Combine("Amg.Build.props").EnsureFileNotExists();
-        }
-
-        async Task FixFile(string file, string expected, BackupDirectory backup)
-        {
-            var actualText = await file.ReadAllTextAsync();
-            if (!object.Equals(expected, actualText))
-            {
-                await backup.Move(file);
-                Logger.Information("Writing {file}", file);
-                await file
-                    .EnsureParentDirectoryExists()
-                    .WriteAllTextIfChangedAsync(expected);
-            }
-        }
-
-        static string? GetCmdFile(string dllFile)
-        {
-            var cmd = dllFile.Parent().Parent().Parent().Parent().Parent()
-                .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
-            if (cmd.IsFile())
-            {
-                return cmd;
+                Logger.Debug("no cmd file found for {dllFile}", dllFile);
+                return null;
             }
 
-            cmd = dllFile.Parent().Parent().Parent().Parent()
-                .Combine(dllFile.FileNameWithoutExtension() + CmdExtension);
-            if (cmd.IsFile())
-            {
-                return cmd;
-            }
-            return null;
-        }
+            var sourceCodeLayout = new SourceCodeLayout(cmdFile);
 
-        /// <summary>
-        /// Try to determine the source directory from which the assembly of targetType was built.
-        /// </summary>
-        /// <returns></returns>
-        internal static SourceCodeLayout? FromDll(string dllFile)
-        {
-            try
-            {
-                Logger.Debug(new { dllFile });
-
-                var cmdFile = GetCmdFile(dllFile);
-                if (cmdFile == null)
-                {
-                    Logger.Debug("no cmd file found for {dllFile}", dllFile);
-                    return null;
-                }
-
-                var sourceCodeLayout = new SourceCodeLayout(cmdFile);
-
-                var paths = new[] {
+            var paths = new[] {
                     sourceCodeLayout.SourceDir,
                     sourceCodeLayout.CmdFile,
                 }.Select(path => new { path, exists = path.Exists() })
-                .ToList();
+            .ToList();
 
-                Logger.Debug(paths);
-                var hasSources = paths.All(_ => _.exists);
-                if (hasSources)
-                {
-                    Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
-                }
-                else
-                {
-                    Logger.Warning("Files not found: {@filesNotFound}", paths.Where(_ => !_.exists));
-                }
-                return hasSources ? sourceCodeLayout : null;
-            }
-            catch (Exception)
+            Logger.Debug(paths);
+            var hasSources = paths.All(_ => _.exists);
+            if (hasSources)
             {
-                return null;
+                Logger.Debug("sources: {@sourceCodeLayout}", sourceCodeLayout);
             }
+            else
+            {
+                Logger.Warning("Files not found: {@filesNotFound}", paths.Where(_ => !_.exists));
+            }
+            return hasSources ? sourceCodeLayout : null;
+        }
+        catch (Exception)
+        {
+            return null;
         }
     }
 }

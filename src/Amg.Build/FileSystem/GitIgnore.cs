@@ -1,11 +1,10 @@
 ﻿
-namespace Amg.FileSystem
+namespace Amg.FileSystem;
+
+public static class GitIgnore
 {
-    public static class GitIgnore
+    public static IGitIgnore Create()
     {
-        public static IGitIgnore Create()
-        {
-            return new GitIgnoreImpl();
-        }
+        return new GitIgnoreImpl();
     }
 }
