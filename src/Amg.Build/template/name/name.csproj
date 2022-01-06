@@ -9,5 +9,6 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<IsPackable>true</IsPackable>
 		<PackAsTool>true</PackAsTool>
+		<NoWarn>NU5100</NoWarn>
 	</PropertyGroup>
 </Project>
