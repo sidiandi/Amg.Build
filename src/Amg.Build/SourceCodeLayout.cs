@@ -137,7 +137,7 @@ internal class SourceCodeLayout
         get
         {
             var amgBuildAssembly = Assembly.GetExecutingAssembly();
-            return amgBuildAssembly.GetCustomAttribute<AssemblyVersionAttribute>()!.Version;
+            return amgBuildAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
         }
     }
 

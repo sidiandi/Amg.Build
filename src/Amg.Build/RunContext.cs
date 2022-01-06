@@ -55,43 +55,41 @@ internal class RunContext
     {
 
         var watchedDir = source.CmdFile.Parent();
-        using (var fsw = new FileSystemWatcher
+        using var fsw = new FileSystemWatcher
         {
             Path = watchedDir,
             IncludeSubdirectories = true,
-        })
+        };
+        var tool = Tools.Cmd.WithArguments(source.CmdFile)
+            .WithEnvironment(nowatchEnvironmentVariable, true.ToString())
+            .Passthrough();
+
+        Task run = Task.CompletedTask;
+
+        void Changed(object sender, FileSystemEventArgs e)
         {
-            var tool = Tools.Cmd.WithArguments(source.CmdFile)
-                .WithEnvironment(nowatchEnvironmentVariable, true.ToString())
-                .Passthrough();
-
-            Task run = Task.CompletedTask;
-
-            void Changed(object sender, FileSystemEventArgs e)
+            if (run.IsCompleted)
             {
-                if (run.IsCompleted)
-                {
-                    run = tool.Run(commandLineArgs);
-                }
+                run = tool.Run(commandLineArgs);
             }
-
-            fsw.Changed += Changed;
-            fsw.Created += Changed;
-            fsw.Deleted += Changed;
-            fsw.Renamed += Changed;
-
-            fsw.EnableRaisingEvents = true;
-
-            Console.Write($"Watching {watchedDir}...");
-            await Task.Delay(-1);
-
-            fsw.EnableRaisingEvents = false;
-
-            fsw.Changed -= Changed;
-            fsw.Created -= Changed;
-            fsw.Deleted -= Changed;
-            fsw.Renamed -= Changed;
         }
+
+        fsw.Changed += Changed;
+        fsw.Created += Changed;
+        fsw.Deleted += Changed;
+        fsw.Renamed += Changed;
+
+        fsw.EnableRaisingEvents = true;
+
+        Console.Write($"Watching {watchedDir}...");
+        await Task.Delay(-1);
+
+        fsw.EnableRaisingEvents = false;
+
+        fsw.Changed -= Changed;
+        fsw.Created -= Changed;
+        fsw.Deleted -= Changed;
+        fsw.Renamed -= Changed;
     }
 
     public async Task<int> Run()

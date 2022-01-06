@@ -7,6 +7,7 @@
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<NoWarn>CS0618</NoWarn>
+		<VersionPrefix>0.41.0</VersionPrefix>
 	</PropertyGroup>
 
 	<PropertyGroup>

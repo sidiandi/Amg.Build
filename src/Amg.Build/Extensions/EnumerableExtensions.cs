@@ -57,17 +57,15 @@ public static class EnumerableExtensions
     {
         if (multiLineString != null)
         {
-            using (var r = new StringReader(multiLineString))
+            using var r = new StringReader(multiLineString);
+            while (true)
             {
-                while (true)
+                var line = r.ReadLine();
+                if (line == null)
                 {
-                    var line = r.ReadLine();
-                    if (line == null)
-                    {
-                        break;
-                    }
-                    yield return line;
+                    break;
                 }
+                yield return line;
             }
         }
     }

@@ -4,5 +4,6 @@
     <Rule Id="S3903" Action="None" />
     <Rule Id="S2479" Action="None" />
     <Rule Id="S3904" Action="None" />
+    <Rule Id="IDE0160" Action="None" />
   </Rules>
 </RuleSet>

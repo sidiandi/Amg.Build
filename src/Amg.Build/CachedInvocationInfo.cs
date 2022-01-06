@@ -55,11 +55,9 @@ internal class CachedInvocationInfo : IInvocation
                 {
                     if (_.TryGetResult(out var resultType, out var result))
                     {
-                        using (var writer = new StreamWriter(fileName.EnsureParentDirectoryExists()))
-                        {
-                            serializer.Serialize(writer, result!, resultType);
-                            Logger.Debug("{task} stored cached result at {fileName}", this, fileName);
-                        }
+                        using var writer = new StreamWriter(fileName.EnsureParentDirectoryExists());
+                        serializer.Serialize(writer, result!, resultType);
+                        Logger.Debug("{task} stored cached result at {fileName}", this, fileName);
                     }
                 });
             }
