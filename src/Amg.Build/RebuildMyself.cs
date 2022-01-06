@@ -192,6 +192,8 @@ class RebuildMyself
                 configuration: sourceInfo.Configuration,
                 targetFramework: sourceInfo.TargetFramework,
                 outputDirectory: tempOutputDirectory.EnsureDirectoryIsEmpty());
+
+            Logger.Information("copy {tempOutputDirectory} to {outputDirectory}", tempOutputDirectory, outputDirectory);
             await tempOutputDirectory.CopyTree(outputDirectory.EnsureParentDirectoryExists());
         }
         var tempAssembly = outputDirectory.Combine(sourceInfo.AssemblyFile.FileName());
